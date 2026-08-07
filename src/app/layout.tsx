@@ -1,23 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow, Barlow_Condensed, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import Nav from "@/components/Nav";
 
-const display = Barlow_Condensed({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
-const body = Barlow({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-});
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-mono",
-});
+const display = { variable: "display" };
+const body = { variable: "body" };
+const mono = { variable: "mono" };
 
 export const metadata: Metadata = {
   title: "RustiCulture — les outils d'agriculture de Rust",
@@ -39,6 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Nav />
           <main className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 lg:px-10">{children}</main>
         </div>
+        {/* Mesures hébergées par Vercel, sans cookie : aucun bandeau de
+            consentement à afficher. Inactives hors production.
+            Analytics = fréquentation. SpeedInsights = vitesse réellement
+            ressentie par les visiteurs. */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

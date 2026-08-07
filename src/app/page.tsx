@@ -51,6 +51,17 @@ export default function Accueil() {
       </nav>
 
       <div className="mt-12">
+        <Details titre="Pourquoi le grand bac, et lui seul">
+          <p className="text-[14px] leading-relaxed text-moss-200">
+            Le croisement se joue entre plants qui se touchent. Dans un grand bac, la grille 3×3 fait que le
+            plant central en touche huit, ceux des bords cinq, ceux des coins trois — c&apos;est cette
+            géométrie qui produit les probabilités. Un bac triangulaire ou un pot n&apos;ont pas la même
+            disposition, et donc pas les mêmes chances. Les outils de génétique de ce site raisonnent
+            uniquement sur le grand bac ; les autres contenants servent à produire, une fois que tu as tes
+            bonnes boutures.
+          </p>
+        </Details>
+
         <Details titre="Les cinq gènes">
           <LegendeGenes />
         </Details>

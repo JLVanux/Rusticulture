@@ -15,6 +15,21 @@ Puis http://localhost:3000
 
 Au premier lancement, Next affiche un message disant qu'il a reconfiguré `tsconfig.json` (`jsx` passé à `react-jsx`, ajout de `.next/dev/types` aux includes). C'est normal et sans conséquence — le fichier livré contient déjà ces valeurs, le message ne devrait donc plus réapparaître ensuite.
 
+## Mesures
+
+Deux composants dans le layout racine, complémentaires :
+
+- `<Analytics />` (`@vercel/analytics`) — **qui vient** : visiteurs, pages vues, provenance, pays, appareil.
+- `<SpeedInsights />` (`@vercel/speed-insights`) — **à quelle vitesse ça s'affiche chez eux** : les Core Web Vitals mesurés sur les vrais visiteurs, pas en laboratoire.
+
+Les deux injectent leur script côté client, uniquement en production sur Vercel. Ils n'apparaissent donc pas dans le HTML servi en local : c'est normal, on peut vérifier leur présence dans les bundles (`_vercel/insights/script.js` et `_vercel/speed-insights/script.js`).
+
+Chacun demande **une activation séparée dans le tableau de bord Vercel** — onglets Analytics et Speed Insights du projet. Le paquet seul ne suffit pas, c'est l'erreur classique.
+
+Aucun cookie, donc aucun bandeau de consentement. Sur le plan Hobby : 50 000 événements d'analytics et 10 000 points de Speed Insights par mois, pour un usage personnel non commercial.
+
+**À surveiller en particulier : l'INP** (Interaction to Next Paint). Le planificateur multi-générations tourne sur le fil principal et prend environ 250 ms sur une machine de bureau — bien davantage sur un téléphone d'entrée de gamme. C'est exactement le genre de blocage que cette métrique révèle, et elle dira si l'optimisation vaut l'effort.
+
 ## Déployer sur Vercel
 
 Pousse le dossier sur un dépôt GitHub, puis « Import Project » sur Vercel. Aucune variable d'environnement, aucun réglage : Vercel détecte Next.js tout seul. Le plan Hobby est gratuit et largement suffisant.

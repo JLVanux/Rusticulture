@@ -169,6 +169,13 @@ export default function PageGenesParfaits() {
         intro="Tu dis ce que tu as, tu dis ce que tu veux, le site te donne la disposition exacte et t'explique chaque case."
       />
 
+      <p className="-mt-4 mb-6 rounded border-l-2 border-soil-500 py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
+        Tout cet outil suppose un <span className="text-moss-100">grand bac</span>, et seulement lui. Le
+        croisement dépend du nombre de voisines qu&apos;un plant touche : un bac triangulaire ou un pot n&apos;ont
+        pas la même disposition, donc pas les mêmes probabilités. Garde-les pour la production, pas pour la
+        génétique.
+      </p>
+
       <AlerteConditions />
 
       {partageRecu && (

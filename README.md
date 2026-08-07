@@ -1,4 +1,4 @@
-# La Serre — outils d'agriculture Rust
+# RustiCulture — les outils d'agriculture de Rust
 
 Site d'aide en français pour l'agriculture dans Rust : génétique, croisement, rendement, thés, tartes, poulailler, minuteurs, et un calculateur de coût de raid.
 
@@ -133,8 +133,48 @@ La palette n'est pas codée en dur : elle s'apprend. On ne peut pas connaître d
 
 Rien ne sort du navigateur : l'analyse est faite sur la machine.
 
+## Planification sur plusieurs générations
+
+`planifierRoutes` (dans `crossbreed.ts`) fait une recherche en faisceau : à chaque génération elle teste si la cible est atteignable directement, puis explore les meilleurs ponts possibles, en ajoutant à la banque simulée trois boutures du pont obtenu. Elle retient la **meilleure route pour chaque nombre de générations** plutôt qu'une seule « meilleure », parce que l'arbitrage appartient à l'utilisateur.
+
+Métrique de comparaison : les **cycles de pousse attendus**, soit la somme des `1/p` de chaque étape — une étape à 50 % coûte deux cycles en moyenne puisqu'on la retente. Ce choix produit un résultat contre-intuitif et instructif : sur une banque de test, un coup unique à 50 % et une route en deux étapes à 100 % coûtent tous deux 2,0 cycles attendus. Même temps moyen, mais l'une est certaine et l'autre non — d'où le départage sur `pireEtape`.
+
+Quand aucune route n'existe, `diagnostiquerBanque` dit **pourquoi** : pour chaque case, combien de graines portent le gène visé. En dessous de deux, c'est mathématiquement bloqué (il faut deux verts pour déloger un rouge), et aucune patience n'y changera rien.
+
+Budget : environ 250 ms pour cinq générations avec un faisceau de 5. Recalculé uniquement quand la banque ou la cible changent.
+
+## Stockage local
+
+Toutes les données de l'utilisateur (banque de graines, minuteurs, coefficients, conditions, zone de scan, palette apprise) vivent dans `localStorage` sous le préfixe `rusticulture:`. Rien ne part sur un serveur.
+
+Deux mécanismes de sécurité, tous deux nés d'un bug réel :
+
+- **Versionnage des coefficients.** `facteurG` a changé de sens entre deux versions du modèle ; relire l'ancienne valeur avec la nouvelle formule produisait des cycles de quatre minutes. La clé porte désormais un numéro de version, et une valeur hors bornes déclenche un retour aux valeurs par défaut. Toute modification du sens d'une constante persistée doit incrémenter ce numéro.
+- **Migration de préfixe.** Le site s'appelait auparavant « La Serre » et stockait sous `rustfarm:`. `migrerAncienStockage` déplace les anciennes clés au premier chargement, sans jamais écraser une clé déjà présente sous le nouveau nom. Renommer un préfixe sans migration revient à effacer les données de tous les utilisateurs existants.
+
+## Navigation
+
+- **≥ 1024 px** — colonne latérale fixe, les dix pages groupées par thème.
+- **< 1024 px** — en-tête collant avec un bouton Menu qui ouvre un tiroir donnant accès aux **dix** pages. L'en-tête reste collant parce qu'il est le seul accès au menu et que les pages sont longues.
+
+Le tiroir se ferme à la navigation, à l'Échap et au clic sur le fond ; le défilement du fond est bloqué pendant son ouverture.
+
+Attention en ajoutant une page : il faut l'inscrire dans `GROUPES`, sinon elle devient inaccessible sur mobile. C'est exactement ce qui était arrivé à six pages — la barre du bas n'en affiche que quatre et rien d'autre ne menait aux autres.
+
+## Permaliens
+
+`src/lib/partage.ts`. Tout l'état tient dans le **fragment** d'URL (`#`) plutôt que la requête (`?`) : le fragment n'est jamais transmis au serveur, ne perturbe pas le rendu statique de Next, et se met à jour sans rechargement via `history.replaceState`.
+
+Format volontairement lisible plutôt que compressé, pour qu'un lien reste compréhensible et corrigeable à la main :
+
+```
+/bac#p=chanvre&c=GGGYYY&g=GGGYYWx2,GGXYYY,WGGYYY
+```
+
+À l'ouverture d'un lien partagé, les graines reçues ne sont **pas** écrites en banque : elles sont affichées avec un bouton d'import explicite, pour ne pas polluer la banque de la personne sans son accord.
+
 ## Idées pour la suite
 
-- Permaliens : encoder l'état d'un calcul dans l'URL pour le partager sur Discord
 - Version anglaise
 - Planificateur d'électricité et d'eau (plafonniers, arroseurs, pompes, panneaux)
+- Référencement, une fois l'outil validé à l'usage

@@ -77,12 +77,32 @@ export default function PageScanner() {
     }
   }
 
-  function pointVideo(e: React.MouseEvent) {
+  /** Coordonnées d'un pointeur, souris ou doigt, ramenées aux pixels de la vidéo. */
+  function pointVideo(clientX: number, clientY: number) {
     const video = videoRef.current;
     const boite = conteneurRef.current?.getBoundingClientRect();
     if (!video || !boite || !video.videoWidth) return null;
     const echelle = video.videoWidth / boite.width;
-    return { x: (e.clientX - boite.left) * echelle, y: (e.clientY - boite.top) * echelle };
+    return { x: (clientX - boite.left) * echelle, y: (clientY - boite.top) * echelle };
+  }
+
+  function debutTrace(clientX: number, clientY: number) {
+    const p = pointVideo(clientX, clientY);
+    if (!p) return;
+    setTrace(true);
+    setSelection({ x: p.x, y: p.y, largeur: 0, hauteur: 0 });
+  }
+
+  function pendantTrace(clientX: number, clientY: number) {
+    if (!trace || !selection) return;
+    const p = pointVideo(clientX, clientY);
+    if (!p) return;
+    setSelection({
+      x: Math.min(selection.x, p.x),
+      y: Math.min(selection.y, p.y),
+      largeur: Math.abs(p.x - selection.x),
+      hauteur: Math.abs(p.y - selection.y),
+    });
   }
 
   function finTrace() {
@@ -162,6 +182,13 @@ export default function PageScanner() {
     setTrouvailles((prec) => prec.filter((x) => x.id !== t.id));
   }
 
+  const [partageDisponible, setPartageDisponible] = useState(true);
+  useEffect(() => {
+    setPartageDisponible(
+      typeof navigator !== "undefined" && typeof navigator.mediaDevices?.getDisplayMedia === "function"
+    );
+  }, []);
+
   const lettresApprises = GENE_LETTERS.filter((l) => palette[l]);
   const prete = paletteComplete(palette);
 
@@ -184,12 +211,22 @@ export default function PageScanner() {
             Rien ne sort de ton navigateur. L&apos;image est analysée sur ta machine, aucune capture
             n&apos;est envoyée nulle part.
           </p>
-          <button type="button" className="bouton bouton-primaire mt-5" onClick={demarrer}>
-            Partager mon écran
-          </button>
-          <p className="mt-3 font-mono text-[12px] text-moss-400">
-            Lance Rust en fenêtré sans bordure — le plein écran exclusif se capture mal, voire pas du tout.
-          </p>
+          {partageDisponible ? (
+            <>
+              <button type="button" className="bouton bouton-primaire mt-5" onClick={demarrer}>
+                Partager mon écran
+              </button>
+              <p className="mt-3 font-mono text-[12px] text-moss-400">
+                Lance Rust en fenêtré sans bordure — le plein écran exclusif se capture mal, voire pas du tout.
+              </p>
+            </>
+          ) : (
+            <p className="mx-auto mt-5 max-w-md rounded border-l-2 border-ripe py-2 pl-3 text-left text-[14px] leading-relaxed text-moss-200">
+              Ton navigateur ne sait pas partager l&apos;écran. C&apos;est le cas de tous les navigateurs
+              mobiles : cette page n&apos;a de sens que sur l&apos;ordinateur où tourne Rust. Sur téléphone,
+              saisis tes gènes à la main depuis Mes graines.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-5">
@@ -197,26 +234,23 @@ export default function PageScanner() {
             <div
               ref={conteneurRef}
               className="relative select-none overflow-hidden rounded-lg border border-soil-600 bg-black"
-              onMouseDown={(e) => {
-                const p = pointVideo(e);
-                if (!p) return;
-                setTrace(true);
-                setSelection({ x: p.x, y: p.y, largeur: 0, hauteur: 0 });
-              }}
-              onMouseMove={(e) => {
-                if (!trace || !selection) return;
-                const p = pointVideo(e);
-                if (!p) return;
-                setSelection({
-                  x: Math.min(selection.x, p.x),
-                  y: Math.min(selection.y, p.y),
-                  largeur: Math.abs(p.x - selection.x),
-                  hauteur: Math.abs(p.y - selection.y),
-                });
-              }}
+              onMouseDown={(e) => debutTrace(e.clientX, e.clientY)}
+              onMouseMove={(e) => pendantTrace(e.clientX, e.clientY)}
               onMouseUp={finTrace}
               onMouseLeave={() => trace && finTrace()}
-              style={{ cursor: "crosshair" }}
+              onTouchStart={(e) => {
+                const t = e.touches[0];
+                if (t) debutTrace(t.clientX, t.clientY);
+              }}
+              onTouchMove={(e) => {
+                const t = e.touches[0];
+                if (!t) return;
+                // Sans ça, le doigt fait défiler la page au lieu de tracer.
+                e.preventDefault();
+                pendantTrace(t.clientX, t.clientY);
+              }}
+              onTouchEnd={finTrace}
+              style={{ cursor: "crosshair", touchAction: "none" }}
             >
               <video ref={videoRef} className="block w-full" muted playsInline />
               <Cadre zone={selection ?? zone} video={videoRef.current} conteneur={conteneurRef.current} />

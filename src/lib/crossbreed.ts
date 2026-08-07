@@ -544,53 +544,8 @@ export function optimiserProgres(banque: EntreeBanque[], cible: Genome): PlanPro
   return plansProgres(banque, cible)[0] ?? null;
 }
 
+
 // -----------------------------------------------------------------------------
-// Route en deux temps
-//
-// Plutot que de tout jouer sur un seul croisement, on fabrique d'abord une
-// graine intermediaire propre, on la clone, et on repart de la. Chaque etape
-// prise separement est bien plus sure que le coup unique.
-//
-// On ne se contente pas de proposer l'intermediaire au meilleur score : pour
-// chaque candidat, on verifie que la seconde etape aboutit vraiment, et on
-// garde le couple qui maximise la reussite bout en bout.
-// -----------------------------------------------------------------------------
-
-export interface RouteDeuxTemps {
-  etape1: PlanProgres;
-  etape2: Plan;
-  bouturesSupposees: number;
-  probaGlobale: number;
-}
-
-const BOUTURES = 3;
-
-export function optimiserDeuxTemps(
-  banque: EntreeBanque[],
-  cible: Genome,
-  maxCandidats = 6
-): RouteDeuxTemps | null {
-  const candidats = plansProgres(banque, cible).slice(0, maxCandidats);
-  let meilleure: RouteDeuxTemps | null = null;
-
-  for (const etape1 of candidats) {
-    if (etape1.probabilite <= 0) continue;
-
-    const banque2: EntreeBanque[] = [
-      ...banque,
-      { id: "intermediaire", genome: etape1.genomeProbable, quantite: BOUTURES },
-    ];
-    const etape2 = optimiserBac(banque2, cible);
-    if (!etape2) continue;
-
-    const probaGlobale = etape1.probabilite * etape2.probabilite;
-    if (!meilleure || probaGlobale > meilleure.probaGlobale) {
-      meilleure = { etape1, etape2, bouturesSupposees: BOUTURES, probaGlobale };
-    }
-  }
-
-  return meilleure;
-}
 
 export function parseGenome(s: string): Genome | null {
   const lettres = s.toUpperCase().replace(/[^GYHWX]/g, "").split("") as GeneLetter[];
@@ -621,4 +576,146 @@ export function extraireDepuisTexte(texte: string): Genome[] {
     }
   }
   return out;
+}
+
+// -----------------------------------------------------------------------------
+// Planification sur plusieurs générations
+//
+// Une graine sauvage ne devient presque jamais parfaite en un croisement. Le
+// vrai travail consiste à enchaîner des générations : fabriquer un pont, le
+// bouturer, repartir de cette base, recommencer.
+//
+// Recherche en faisceau. À chaque génération on teste d'abord si la cible est
+// atteignable directement, puis on explore les meilleurs ponts possibles. On
+// retient la meilleure route POUR CHAQUE nombre de générations, parce que le
+// choix n'est pas évident : une route plus longue mais sûre vaut souvent mieux
+// qu'un coup unique risqué, et c'est à la personne de trancher.
+//
+// Métrique de comparaison : les cycles de pousse attendus, soit la somme des
+// 1/p de chaque étape. Une étape à 50 % coûte deux cycles en moyenne, puisqu'on
+// la retente jusqu'à ce qu'elle passe.
+// -----------------------------------------------------------------------------
+
+export interface EtapeRoute {
+  centre: EntreeBanque;
+  donneurs: EntreeBanque[];
+  /** Ce que produit cette étape : un pont, ou la cible finale. */
+  resultat: Genome;
+  probabilite: number;
+  finale: boolean;
+}
+
+export interface Route {
+  generations: number;
+  etapes: EtapeRoute[];
+  /** Cycles de pousse attendus, en comptant les reprises après échec. */
+  cyclesAttendus: number;
+  /** Probabilité de l'étape la plus risquée. */
+  pireEtape: number;
+  /** Probabilité de tout réussir du premier coup. */
+  probaDuPremierCoup: number;
+}
+
+const BOUTURES_PAR_PONT = 3;
+
+export function planifierRoutes(
+  banque: EntreeBanque[],
+  cible: Genome,
+  options: { maxGenerations?: number; faisceau?: number; ponts?: number } = {}
+): Route[] {
+  const maxGenerations = options.maxGenerations ?? 5;
+  const faisceau = options.faisceau ?? 5;
+  const nbPonts = options.ponts ?? 5;
+
+  interface Etat {
+    banque: EntreeBanque[];
+    etapes: EtapeRoute[];
+    cycles: number;
+    justes: number;
+  }
+
+  let faisc: Etat[] = [{ banque, etapes: [], cycles: 0, justes: 0 }];
+  const meilleures = new Map<number, Route>();
+
+  for (let gen = 0; gen < maxGenerations; gen++) {
+    const suivant: Etat[] = [];
+
+    for (const etat of faisc) {
+      // La cible est-elle atteignable dès maintenant ?
+      const plan = optimiserBac(etat.banque, cible);
+      if (plan && plan.probabilite > 0) {
+        const etapes: EtapeRoute[] = [
+          ...etat.etapes,
+          { centre: plan.centre, donneurs: plan.donneurs, resultat: cible, probabilite: plan.probabilite, finale: true },
+        ];
+        const cycles = etat.cycles + 1 / plan.probabilite;
+        const n = etapes.length;
+        const existante = meilleures.get(n);
+        if (!existante || cycles < existante.cyclesAttendus) {
+          meilleures.set(n, {
+            generations: n,
+            etapes,
+            cyclesAttendus: cycles,
+            pireEtape: Math.min(...etapes.map((e) => e.probabilite)),
+            probaDuPremierCoup: etapes.reduce((a, e) => a * e.probabilite, 1),
+          });
+        }
+      }
+
+      if (gen === maxGenerations - 1) continue;
+
+      for (const pont of plansProgres(etat.banque, cible).slice(0, nbPonts)) {
+        if (pont.probabilite <= 0) continue;
+        const code = formatGenome(pont.genomeProbable);
+        // Un pont déjà présent en banque ne fait pas avancer.
+        if (etat.banque.some((e) => formatGenome(e.genome) === code)) continue;
+
+        suivant.push({
+          banque: [
+            ...etat.banque,
+            { id: `pont-${gen}-${code}`, genome: pont.genomeProbable, quantite: BOUTURES_PAR_PONT },
+          ],
+          etapes: [
+            ...etat.etapes,
+            {
+              centre: pont.centre,
+              donneurs: pont.donneurs,
+              resultat: pont.genomeProbable,
+              probabilite: pont.probabilite,
+              finale: false,
+            },
+          ],
+          cycles: etat.cycles + 1 / pont.probabilite,
+          justes: pont.casesApres,
+        });
+      }
+    }
+
+    if (suivant.length === 0) break;
+    suivant.sort((a, b) => b.justes - a.justes || a.cycles - b.cycles);
+    faisc = suivant.slice(0, faisceau);
+  }
+
+  return [...meilleures.values()].sort((a, b) => a.generations - b.generations);
+}
+
+/**
+ * Pourquoi une cible reste hors de portée.
+ *
+ * Pour chaque case, on regarde combien de graines de la banque portent le gène
+ * visé. En dessous de deux, c'est mathématiquement bloqué : il faut deux
+ * donneuses vertes pour déloger un rouge, quelle que soit la patience.
+ */
+export interface DiagnosticCase {
+  index: number;
+  geneCible: GeneLetter;
+  porteuses: number;
+  bloque: boolean;
+}
+
+export function diagnostiquerBanque(banque: EntreeBanque[], cible: Genome): DiagnosticCase[] {
+  return cible.map((geneCible, i) => {
+    const porteuses = banque.reduce((a, e) => a + (e.genome[i] === geneCible ? e.quantite : 0), 0);
+    return { index: i, geneCible, porteuses, bloque: porteuses < 2 };
+  });
 }

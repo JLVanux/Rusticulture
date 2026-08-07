@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { AlerteConditions } from "@/components/Conditions";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import { calculerCroissance, formatDuree } from "@/lib/model";
 import { useConditions, useConstantes, useMinuteurs, type Minuteur } from "@/lib/hooks";
@@ -88,6 +89,8 @@ export default function PageMinuteurs() {
         titre="Minuteurs"
         intro="Tu plantes, tu lances, tu pars farmer. Le site te prévient quand les gènes sont recalculés, puis à la récolte."
       />
+
+      <AlerteConditions />
 
       {permission === "default" && (
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-lamp/40 bg-lamp/8 p-4">

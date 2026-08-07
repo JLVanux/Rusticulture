@@ -20,9 +20,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Serre — outils d'agriculture Rust",
+  title: "RustiCulture — les outils d'agriculture de Rust",
   description:
-    "Croisement génétique, rendement, thés, minuteurs de plantation et poulailler. Les calculs d'agriculture de Rust, en français.",
+    "RustiCulture : croisement génétique, rendement, thés, tartes, minuteurs de plantation et poulailler. Tous les calculs d'agriculture de Rust, en français.",
 };
 
 export const viewport: Viewport = {
@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <div className="mx-auto flex min-h-screen w-full max-w-[1400px] flex-col lg:flex-row">
           <Nav />
-          <main className="min-w-0 flex-1 px-4 pb-24 pt-6 sm:px-6 lg:px-10 lg:pb-16">{children}</main>
+          <main className="min-w-0 flex-1 px-4 pb-16 pt-6 sm:px-6 lg:px-10">{children}</main>
         </div>
       </body>
     </html>

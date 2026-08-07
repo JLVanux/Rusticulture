@@ -2,7 +2,44 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const PREFIXE = "rustfarm:";
+const PREFIXE = "rusticulture:";
+const PREFIXE_ANCIEN = "rustfarm:";
+
+/**
+ * Reprise des données enregistrées sous l'ancien nom du site.
+ *
+ * Renommer le préfixe de stockage sans rien faire d'autre reviendrait à effacer
+ * les banques de graines, les minuteurs, les réglages, la zone de scan et la
+ * palette apprise de quiconque avait déjà utilisé le site. On déplace donc les
+ * anciennes clés vers les nouvelles au premier chargement.
+ *
+ * Une clé déjà présente sous le nouveau nom n'est jamais écrasée : les données
+ * récentes priment toujours sur d'anciennes qui traîneraient.
+ */
+let migrationFaite = false;
+
+function migrerAncienStockage() {
+  if (migrationFaite || typeof window === "undefined") return;
+  migrationFaite = true;
+  try {
+    // On liste avant de modifier : supprimer pendant l'itération décale les index.
+    const aDeplacer: [string, string][] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const cle = window.localStorage.key(i);
+      if (!cle || !cle.startsWith(PREFIXE_ANCIEN)) continue;
+      aDeplacer.push([cle, PREFIXE + cle.slice(PREFIXE_ANCIEN.length)]);
+    }
+    for (const [ancienne, nouvelle] of aDeplacer) {
+      const valeur = window.localStorage.getItem(ancienne);
+      if (valeur !== null && window.localStorage.getItem(nouvelle) === null) {
+        window.localStorage.setItem(nouvelle, valeur);
+      }
+      window.localStorage.removeItem(ancienne);
+    }
+  } catch {
+    // Stockage indisponible : on repartira simplement des valeurs par défaut.
+  }
+}
 
 /**
  * État persisté dans le navigateur. Rien ne part sur un serveur : la banque de
@@ -19,6 +56,7 @@ export function useStockage<T>(cle: string, valeurInitiale: T) {
 
   useEffect(() => {
     setCharge(false);
+    migrerAncienStockage();
     try {
       const brut = window.localStorage.getItem(PREFIXE + cle);
       setValeur(brut !== null ? (JSON.parse(brut) as T) : valeurInitiale);

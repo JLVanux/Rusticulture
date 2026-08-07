@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { EditeurGenes } from "@/components/Genes";
 import { Champ, Choix, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { AlerteConditions } from "@/components/Conditions";
 import { BAIES, type BaieId, type Genome } from "@/data/game";
 import { PALIERS, THES, type Palier } from "@/data/teas";
 import {
@@ -70,6 +71,8 @@ export default function PageThes() {
         titre="Thés"
         intro="Un thé pur coûte seize thés basiques, donc soixante-quatre baies. Dis combien tu en veux."
       />
+
+      <AlerteConditions />
 
       {/* Commande */}
       <section className="rounded-lg border border-soil-600 bg-soil-850 p-5">
@@ -232,7 +235,8 @@ export default function PageThes() {
           </div>
 
           {stockTotal > 0 && (
-            <table className="mt-5 w-full text-left text-[14px]">
+            <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[20rem] text-left text-[14px]">
               <thead>
                 <tr className="border-b border-soil-600">
                   {["Thé", "Basique", "Avancé", "Pur"].map((h) => (
@@ -259,6 +263,7 @@ export default function PageThes() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </Details>
 

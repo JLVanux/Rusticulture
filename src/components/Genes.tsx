@@ -3,10 +3,12 @@
 import { GENES, GENE_LETTERS, type GeneLetter, type Genome } from "@/data/game";
 import type { Distribution } from "@/lib/crossbreed";
 
+// Les six pastilles doivent tenir sur la largeur d'un téléphone étroit :
+// 6 × 48 px plus les espaces dépassait les 288 px utiles d'un écran de 320 px.
 const TAILLES = {
   sm: "h-6 w-6 text-[12px]",
-  md: "h-9 w-9 text-[15px]",
-  lg: "h-12 w-12 text-[19px]",
+  md: "h-8 w-8 text-[13px] sm:h-9 sm:w-9 sm:text-[15px]",
+  lg: "h-10 w-10 text-[16px] sm:h-12 sm:w-12 sm:text-[19px]",
 };
 
 /** Une chaîne de gènes en lecture seule. */

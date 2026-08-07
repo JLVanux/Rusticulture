@@ -1,0 +1,30 @@
+RustiCulture — outils d'agriculture Rust en français
+
+Site Next.js 16 / React 19 regroupant les calculs d'agriculture de Rust :
+croisement génétique, rendement, thés, tartes, poulailler, minuteurs et
+coût de raid. Tout est stocké dans le navigateur, aucun compte, aucun serveur.
+
+Moteur de croisement
+- Probabilités exactes par case (pas de simulation), calculées à partir des
+  poids du jeu : 0,6 pour G/Y/H, 1,0 pour W/X, dépassement strict requis.
+- Calcul de dérive : probabilité qu'un plant ressorte moins bon qu'à l'entrée,
+  ce qui rend visible la dégradation des donneuses.
+- Planificateur multi-générations en recherche en faisceau, jusqu'à cinq
+  cycles, comparant les routes par cycles de pousse attendus.
+- Diagnostic de banque quand la cible est hors de portée : indique pour chaque
+  case combien de graines portent le gène visé.
+
+Interface
+- Assistant guidé en trois étapes avec justification en français case par case.
+- Lecture des gènes à l'écran par partage d'écran, au choix par reconnaissance
+  de texte bridée aux cinq lettres possibles, ou par palette de couleurs
+  apprise auprès de l'utilisateur.
+- Permaliens : l'état complet d'un plan tient dans le fragment d'URL.
+- Navigation par tiroir sur mobile donnant accès aux dix pages.
+
+Modèle de croissance
+- Effet des gènes G géométrique et dégressif, calé sur les courbes publiées.
+- Sept stades nommés d'après les sources concordantes, proportions calées sur
+  la seule série de mesures disponible.
+- Coefficients calibrables depuis l'interface à partir de mesures faites en
+  jeu, et versionnés pour qu'une sauvegarde obsolète ne soit jamais relue.

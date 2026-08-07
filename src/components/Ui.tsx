@@ -31,7 +31,7 @@ export function Reponse({
 }) {
   return (
     <div className="rounded-lg border border-lamp/40 bg-lamp/8 p-6">
-      <div className="font-display text-6xl font-bold leading-none text-lamp-glow sm:text-7xl">
+      <div className="break-words font-display text-5xl font-bold leading-none text-lamp-glow sm:text-6xl md:text-7xl">
         {valeur}
         {unite && <span className="ml-2 text-2xl font-medium text-moss-400">{unite}</span>}
       </div>

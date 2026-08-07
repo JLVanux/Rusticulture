@@ -281,7 +281,7 @@ export default function PageReglages() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = "serre-sauvegarde.json";
+                a.download = "rusticulture-sauvegarde.json";
                 a.click();
                 URL.revokeObjectURL(url);
               }}

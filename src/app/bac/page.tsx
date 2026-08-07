@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { ExplicationCases } from "@/components/Explication";
 import { Details, EnTetePage, Note, Page } from "@/components/Ui";
@@ -11,16 +12,18 @@ import {
   expliquerPlant,
   extraireDepuisTexte,
   formatGenome,
+  diagnostiquerBanque,
   optimiserBac,
-  optimiserDeuxTemps,
-  optimiserProgres,
   parseGenome,
+  planifierRoutes,
   scoreGenome,
   type EntreeBanque,
-  type Plan,
+  type EtapeRoute,
+  type Route,
 } from "@/lib/crossbreed";
 import { useBanque, type Graine } from "@/lib/hooks";
 import { idUnique } from "@/lib/storage";
+import { decoderEtat, ecrireFragment, lienComplet } from "@/lib/partage";
 
 const AUTOUR = [0, 1, 2, 3, 5, 6, 7, 8];
 
@@ -30,7 +33,9 @@ export default function PageGenesParfaits() {
   const [cible, setCible] = useState<Genome>(["G", "G", "G", "Y", "Y", "Y"]);
   const [colle, setColle] = useState("");
   const [message, setMessage] = useState<string | null>(null);
-  const [route, setRoute] = useState<"une" | "deux">("deux");
+  const [choix, setChoix] = useState<number | null>(null);
+  const [lienCopie, setLienCopie] = useState(false);
+  const [partageRecu, setPartageRecu] = useState<{ genome: Genome; quantite: number }[] | null>(null);
 
   const graines = useMemo(
     () => banque.filter((g) => g.plante === plante && g.quantite > 0),
@@ -43,25 +48,90 @@ export default function PageGenesParfaits() {
     [graines]
   );
 
-  const direct = useMemo(() => (entrees.length > 0 ? optimiserBac(entrees, cible) : null), [entrees, cible]);
-  const deuxTemps = useMemo(
-    () => (entrees.length > 0 ? optimiserDeuxTemps(entrees, cible) : null),
-    [entrees, cible]
-  );
-  // Dernier recours : même si la deuxième étape n'aboutit pas encore, un pont
-  // qui rapproche de la cible vaut mieux que « impossible ».
-  const pont = useMemo(
-    () => (entrees.length > 0 ? optimiserProgres(entrees, cible) : null),
+  const routes = useMemo(
+    () => (entrees.length > 0 ? planifierRoutes(entrees, cible) : []),
     [entrees, cible]
   );
 
-  const pDirect = direct?.probabilite ?? 0;
-  const pDeux = deuxTemps?.probaGlobale ?? 0;
+  // Recommandation : la route qui coûte le moins de cycles en moyenne. À égalité
+  // — cas fréquent — on préfère celle dont l'étape la plus risquée est la plus
+  // sûre, parce qu'une route certaine évite les mauvaises surprises.
+  const recommandee = useMemo(() => {
+    if (routes.length === 0) return null;
+    return [...routes].sort(
+      (a, b) => a.cyclesAttendus - b.cyclesAttendus || b.pireEtape - a.pireEtape
+    )[0];
+  }, [routes]);
 
-  // Deux temps vaut le coup dès qu'il est plus sûr, ou dès que le coup unique
-  // n'est pas garanti.
-  const deuxRecommande = !!deuxTemps && pDeux > pDirect + 0.001;
-  const routeActive = deuxRecommande && route === "deux" ? "deux" : "une";
+  const routeActive =
+    routes.find((r) => r.generations === choix) ?? recommandee ?? null;
+
+  // Au-delà de trois options, la comparaison devient illisible — surtout sur
+  // téléphone, où les cartes s'empilent et repoussent le plan hors de l'écran.
+  // On garde les routes les plus courtes, en s'assurant que la recommandée y est.
+  const routesAffichees = useMemo(() => {
+    const gardees = routes.slice(0, 3);
+    if (recommandee && !gardees.some((r) => r.generations === recommandee.generations)) {
+      gardees[gardees.length - 1] = recommandee;
+    }
+    return gardees.sort((a, b) => a.generations - b.generations);
+  }, [routes, recommandee]);
+
+  const diagnostic = useMemo(
+    () => (entrees.length > 0 ? diagnostiquerBanque(entrees, cible) : []),
+    [entrees, cible]
+  );
+  const casesBloquees = diagnostic.filter((d) => d.bloque);
+
+  // --- Permalien -------------------------------------------------------------
+
+  useEffect(() => {
+    const recu = decoderEtat(window.location.hash);
+    if (!recu) return;
+    if (recu.plante) setPlante(recu.plante);
+    if (recu.cible) setCible(recu.cible);
+    if (recu.graines) setPartageRecu(recu.graines);
+  }, []);
+
+  useEffect(() => {
+    ecrireFragment({
+      plante,
+      cible,
+      graines: graines.map((g) => ({ genome: g.genome, quantite: g.quantite })),
+    });
+  }, [plante, cible, graines]);
+
+  async function copierLien() {
+    try {
+      await navigator.clipboard.writeText(
+        lienComplet({
+          plante,
+          cible,
+          graines: graines.map((g) => ({ genome: g.genome, quantite: g.quantite })),
+        })
+      );
+      setLienCopie(true);
+      setTimeout(() => setLienCopie(false), 2500);
+    } catch {
+      setMessage("Copie impossible — sélectionne l'adresse dans la barre du navigateur.");
+    }
+  }
+
+  function importerPartage() {
+    if (!partageRecu) return;
+    setBanque((prec) => {
+      const suivant = [...prec];
+      for (const { genome, quantite } of partageRecu) {
+        const code = formatGenome(genome);
+        const i = suivant.findIndex((g) => formatGenome(g.genome) === code && g.plante === plante);
+        if (i >= 0) suivant[i] = { ...suivant[i], quantite: suivant[i].quantite + quantite };
+        else suivant.push({ id: idUnique(), genome, quantite, plante } as Graine);
+      }
+      return suivant;
+    });
+    setPartageRecu(null);
+    setMessage("Graines du lien ajoutées.");
+  }
 
   const apercuImport = useMemo(() => extraireDepuisTexte(colle), [colle]);
 
@@ -98,6 +168,33 @@ export default function PageGenesParfaits() {
         titre="Obtenir les gènes parfaits"
         intro="Tu dis ce que tu as, tu dis ce que tu veux, le site te donne la disposition exacte et t'explique chaque case."
       />
+
+      <AlerteConditions />
+
+      {partageRecu && (
+        <div className="mb-6 rounded-lg border border-lamp/50 bg-lamp/10 p-4">
+          <div className="font-display text-[15px] font-semibold uppercase tracking-wide text-lamp-glow">
+            Plan partagé
+          </div>
+          <p className="mt-1 text-[14px] leading-relaxed text-moss-200">
+            Ce lien contient {partageRecu.reduce((a, g) => a + g.quantite, 0)} graines. Elles ne sont pas
+            encore dans ta banque — le plan ci-dessous se calcule sur les tiennes.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" className="bouton bouton-primaire" onClick={importerPartage}>
+              Ajouter à mes graines
+            </button>
+            <button type="button" className="bouton" onClick={() => setPartageRecu(null)}>
+              Ignorer
+            </button>
+            <span className="flex flex-wrap gap-1">
+              {partageRecu.slice(0, 8).map((g, i) => (
+                <ChaineGenes key={i} genome={g.genome} taille="sm" />
+              ))}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* ─────────── ÉTAPE 1 ─────────── */}
       <Etape numero={1} titre="Tes graines" resume={nbGraines > 0 ? `${nbGraines} en stock` : undefined}>
@@ -235,166 +332,129 @@ export default function PageGenesParfaits() {
       <Etape numero={3} titre="Ton plan" dernier>
         {nbGraines === 0 ? (
           <p className="text-[15px] text-moss-400">Commence par ajouter tes graines à l&apos;étape 1.</p>
+        ) : routes.length === 0 ? (
+          <div>
+            <Note ton="alerte">
+              Aucune route trouvée vers {formatGenome(cible)}, même en cinq générations.
+            </Note>
+            {casesBloquees.length > 0 && (
+              <div className="mt-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
+                <h3 className="titre text-lg">Ce qui bloque</h3>
+                <p className="mt-1 text-[14px] leading-relaxed text-moss-400">
+                  Il faut au moins deux graines portant le bon gène dans une case pour déloger un rouge. En
+                  dessous, c&apos;est mathématiquement impossible, quelle que soit ta patience.
+                </p>
+                <ul className="mt-4 space-y-1.5">
+                  {diagnostic.map((d) => (
+                    <li
+                      key={d.index}
+                      className={`flex items-center gap-3 rounded border px-3 py-2 ${
+                        d.bloque ? "border-gene-w/50 bg-gene-w/8" : "border-soil-600"
+                      }`}
+                    >
+                      <span className="font-mono text-[12px] text-moss-400">case {d.index + 1}</span>
+                      <span className="font-mono text-[14px] font-bold text-moss-100">{d.geneCible}</span>
+                      <span className={`ml-auto font-mono text-[13px] ${d.bloque ? "text-gene-w" : "text-moss-400"}`}>
+                        {d.porteuses} graine{d.porteuses > 1 ? "s" : ""} en stock
+                        {d.bloque && " — il en faut 2"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-4 text-[14px] leading-relaxed text-moss-200">
+                  Retourne ramasser des graines sauvages en visant précisément ces cases-là, ou choisis une
+                  cible moins exigeante à l&apos;étape 2.
+                </p>
+              </div>
+            )}
+          </div>
         ) : (
           <>
-            {/* Le choix de route, mis en balance */}
+            {/* Comparaison des routes */}
             <div className="grid gap-3 sm:grid-cols-2">
-              <CarteRoute
-                titre="En une fois"
-                sousTitre="Le coup direct"
-                proba={pDirect}
-                cycles={1}
-                choisie={routeActive === "une"}
-                recommandee={!deuxRecommande && pDirect > 0}
-                onClick={() => setRoute("une")}
-                argument={
-                  pDirect >= 0.999
-                    ? "Rien à jouer, ça passe à coup sûr."
-                    : pDirect > 0
-                      ? `Tu joues tout sur un croisement. En moyenne, ${Math.ceil(1 / pDirect)} tentatives.`
-                      : "Tes graines ne suffisent pas pour y aller directement."
-                }
-              />
-              <CarteRoute
-                titre="En deux fois"
-                sousTitre="Fabrique un pont, puis vise"
-                proba={pDeux}
-                cycles={2}
-                choisie={routeActive === "deux"}
-                recommandee={deuxRecommande}
-                onClick={() => deuxTemps && setRoute("deux")}
-                desactivee={!deuxTemps}
-                argument={
-                  deuxTemps
-                    ? `Un cycle de plus, mais chaque étape est prise séparément : ${(deuxTemps.etape1.probabilite * 100).toFixed(0)} % puis ${(deuxTemps.etape2.probabilite * 100).toFixed(0)} %.`
-                    : "Aucun intermédiaire utile trouvé avec ces graines."
-                }
-              />
+              {routesAffichees.map((r) => (
+                <CarteRoute
+                  key={r.generations}
+                  route={r}
+                  choisie={routeActive?.generations === r.generations}
+                  recommandee={recommandee?.generations === r.generations}
+                  onClick={() => setChoix(r.generations)}
+                />
+              ))}
             </div>
 
-            {deuxRecommande && (
+            {recommandee && recommandee.generations > 1 && (
               <div className="mt-4">
                 <Note>
-                  <span className="text-moss-100">Pourquoi deux fois est plus sûr.</span> Viser les gènes
-                  parfaits d&apos;un coup demande souvent de corriger trois ou quatre cases en même temps, et
-                  il suffit qu&apos;une seule tombe mal pour tout perdre. En passant par un intermédiaire, tu
-                  corriges la moitié des cases, tu <span className="text-moss-100">clones</span> le résultat —
-                  il est alors acquis pour de bon — et tu repars de cette base propre. Tu ne peux plus
-                  redescendre.
+                  <span className="text-moss-100">Pourquoi passer par plusieurs générations.</span> Viser les
+                  gènes parfaits d&apos;un coup demande de corriger plusieurs cases en même temps, et il suffit
+                  qu&apos;une seule tombe mal pour tout perdre. En fabriquant un pont, tu corriges une partie
+                  des cases, tu <span className="text-moss-100">bouture</span> le résultat — il est alors acquis
+                  pour de bon — et tu repars de cette base. Souvent, c&apos;est le même temps en moyenne, mais
+                  sans aucun coup de dé.
                 </Note>
               </div>
             )}
 
-            {routeActive === "deux" && deuxTemps ? (
+            {routeActive && (
               <div className="mt-8 space-y-8">
-                <BlocEtape
-                  numero={1}
-                  sur={2}
-                  titre="Fabrique le pont"
-                  plan={{
-                    centre: deuxTemps.etape1.centre.genome,
-                    donneurs: deuxTemps.etape1.donneurs.map((d) => d.genome),
-                  }}
-                  resultat={deuxTemps.etape1.genomeProbable}
-                  proba={deuxTemps.etape1.probabilite}
-                  cible={deuxTemps.etape1.genomeProbable}
-                  apres={
-                    <p className="mt-4 rounded border-l-2 border-lamp py-2 pl-3 text-[14px] leading-relaxed text-moss-200">
-                      <span className="text-moss-100">L&apos;étape à ne pas rater :</span> dès que ce plant
-                      passe en stade Croisement, prends-en{" "}
-                      <span className="text-moss-100">{deuxTemps.bouturesSupposees} boutures</span>. Elles
-                      copient les gènes à l&apos;identique — c&apos;est ce qui rend l&apos;étape 2 fiable.
-                      Sans ça, tu n&apos;as qu&apos;un seul exemplaire et tout repose encore sur la chance.
-                    </p>
-                  }
-                />
-
-                <BlocEtape
-                  numero={2}
-                  sur={2}
-                  titre="Vise les gènes parfaits"
-                  plan={{
-                    centre: deuxTemps.etape2.centre.genome,
-                    donneurs: deuxTemps.etape2.donneurs.map((d) => d.genome),
-                  }}
-                  resultat={cible}
-                  proba={deuxTemps.etape2.probabilite}
-                  cible={cible}
-                  explications={expliquerPlant(
-                    deuxTemps.etape2.centre.genome,
-                    deuxTemps.etape2.donneurs.map((d) => d.genome),
-                    cible
-                  )}
-                  note={`Ce plan suppose que tu as bien ${deuxTemps.bouturesSupposees} boutures du pont.`}
-                />
+                {routeActive.etapes.map((e, i) => (
+                  <BlocEtape
+                    key={i}
+                    numero={i + 1}
+                    sur={routeActive.etapes.length}
+                    titre={e.finale ? "Vise les gènes parfaits" : "Fabrique un pont"}
+                    plan={{ centre: e.centre.genome, donneurs: e.donneurs.map((d) => d.genome) }}
+                    resultat={e.resultat}
+                    proba={e.probabilite}
+                    cible={cible}
+                    explications={
+                      e.finale
+                        ? expliquerPlant(e.centre.genome, e.donneurs.map((d) => d.genome), cible)
+                        : undefined
+                    }
+                    apres={
+                      e.finale ? undefined : (
+                        <p className="mt-4 rounded border-l-2 border-lamp py-2 pl-3 text-[14px] leading-relaxed text-moss-200">
+                          <span className="text-moss-100">L&apos;étape à ne pas rater :</span> une fois ce plant
+                          passé en stade Croisement, prends-en{" "}
+                          <span className="text-moss-100">trois boutures</span>. Elles copient les gènes à
+                          l&apos;identique — c&apos;est ce qui rend l&apos;étape suivante fiable. Sans ça, tu
+                          n&apos;as qu&apos;un exemplaire et tout repose encore sur la chance.
+                        </p>
+                      )
+                    }
+                  />
+                ))}
 
                 <div className="rounded-lg border border-lamp/40 bg-lamp/8 p-5">
                   <div className="eyebrow">Bout en bout</div>
                   <div className="font-display text-3xl font-bold text-lamp-glow">
-                    {(pDeux * 100).toFixed(0)} %
+                    {routeActive.cyclesAttendus.toFixed(1)} cycles
                   </div>
                   <p className="mt-1 text-[14px] text-moss-200">
-                    de chances de réussir les deux étapes d&apos;affilée, contre{" "}
-                    {(pDirect * 100).toFixed(0)} % en une seule.
+                    de pousse en moyenne, reprises comprises.{" "}
+                    {routeActive.pireEtape >= 0.999
+                      ? "Aucune étape ne repose sur la chance."
+                      : `L'étape la plus risquée passe à ${(routeActive.pireEtape * 100).toFixed(0)} %.`}
                   </p>
                 </div>
               </div>
-            ) : direct && pDirect > 0 ? (
-              <div className="mt-8">
-                <BlocEtape
-                  titre="La disposition"
-                  plan={{
-                    centre: direct.centre.genome,
-                    donneurs: direct.donneurs.map((d) => d.genome),
-                  }}
-                  resultat={cible}
-                  proba={pDirect}
-                  cible={cible}
-                  explications={expliquerPlant(
-                    direct.centre.genome,
-                    direct.donneurs.map((d) => d.genome),
-                    cible
-                  )}
-                />
-                <AlerteDonneuses plan={direct} cible={cible} />
-              </div>
-            ) : (
-              <div className="mt-8">
-                {pont && pont.casesApres > pont.casesAvant + 0.05 && pont.probabilite > 0 ? (
-                  <>
-                    <Note>
-                      <span className="text-moss-100">Il faudra plus de deux cycles.</span> Tes graines sont
-                      trop abîmées pour viser {formatGenome(cible)} directement, mais tu peux déjà progresser.
-                      Fabrique le pont ci-dessous, prends-en des boutures, ajoute-les à tes graines, et
-                      reviens : le plan se recalculera avec cette nouvelle base.
-                    </Note>
-                    <div className="mt-6">
-                      <BlocEtape
-                        numero={1}
-                        sur={0}
-                        titre="Fabrique un premier pont"
-                        plan={{
-                          centre: pont.centre.genome,
-                          donneurs: pont.donneurs.map((d) => d.genome),
-                        }}
-                        resultat={pont.genomeProbable}
-                        proba={pont.probabilite}
-                        cible={cible}
-                        note={`Tu passes de ${pont.casesAvant} case${pont.casesAvant > 1 ? "s" : ""} juste${pont.casesAvant > 1 ? "s" : ""} à ${pont.casesApres.toFixed(1)} sur 6.`}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <Note ton="alerte">
-                    Tes graines ne permettent pas d&apos;atteindre {formatGenome(cible)}, et aucun
-                    intermédiaire utile n&apos;a été trouvé. Ramasse d&apos;autres graines sauvages, ou vise
-                    une combinaison moins exigeante à l&apos;étape 2.
-                  </Note>
-                )}
-              </div>
             )}
 
-            <MarcheASuivre deuxTemps={routeActive === "deux" && !!deuxTemps} />
+            <MarcheASuivre pont={(routeActive?.etapes.length ?? 1) > 1} />
+
+            <section className="mt-8 rounded-lg border border-soil-600 bg-soil-850 p-5">
+              <h3 className="titre text-lg">Partager ce plan</h3>
+              <p className="mt-1 text-[14px] leading-relaxed text-moss-400">
+                Le lien contient tes graines, ta cible et ta plante. La personne qui l&apos;ouvre voit
+                exactement le même plan, sans rien avoir à saisir.
+              </p>
+              <button type="button" className="bouton bouton-primaire mt-4" onClick={copierLien}>
+                {lienCopie ? "Lien copié" : "Copier le lien"}
+              </button>
+            </section>
+
           </>
         )}
       </Etape>
@@ -457,59 +517,49 @@ export default function PageGenesParfaits() {
 // -----------------------------------------------------------------------------
 
 function CarteRoute({
-  titre,
-  sousTitre,
-  proba,
-  cycles,
-  argument,
+  route,
   choisie,
   recommandee,
-  desactivee,
   onClick,
 }: {
-  titre: string;
-  sousTitre: string;
-  proba: number;
-  cycles: number;
-  argument: string;
+  route: Route;
   choisie: boolean;
   recommandee?: boolean;
-  desactivee?: boolean;
   onClick: () => void;
 }) {
+  const sur = route.pireEtape >= 0.999;
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={desactivee}
       className={`rounded-lg border p-5 text-left transition ${
-        desactivee
-          ? "cursor-not-allowed border-soil-700 opacity-40"
-          : choisie
-            ? "border-lamp bg-lamp/10"
-            : "border-soil-600 bg-soil-850 hover:border-soil-500"
+        choisie ? "border-lamp bg-lamp/10" : "border-soil-600 bg-soil-850 hover:border-soil-500"
       }`}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="font-display text-xl font-bold uppercase tracking-wide text-moss-100">{titre}</span>
-        {recommandee && (
-          <span className="puce border-gene-g/50 text-gene-g">recommandé</span>
-        )}
+        <span className="font-display text-xl font-bold uppercase tracking-wide text-moss-100">
+          {route.generations === 1
+            ? "En une fois"
+            : `En ${route.generations} fois`}
+        </span>
+        {recommandee && <span className="puce border-gene-g/50 text-gene-g">recommandé</span>}
       </div>
-      <div className="mt-0.5 text-[13px] text-moss-400">{sousTitre}</div>
+      <div className="mt-0.5 text-[13px] text-moss-400">
+        {route.generations === 1 ? "Le coup direct" : `${route.generations - 1} pont${route.generations > 2 ? "s" : ""}, puis la cible`}
+      </div>
 
-      <div
-        className={`mt-4 font-display text-4xl font-bold leading-none ${
-          proba >= 0.999 ? "text-gene-g" : proba > 0 ? "text-lamp-glow" : "text-gene-w"
-        }`}
-      >
-        {(proba * 100).toFixed(0)} %
+      <div className={`mt-4 font-display text-4xl font-bold leading-none ${sur ? "text-gene-g" : "text-lamp-glow"}`}>
+        {route.cyclesAttendus.toFixed(1)}
       </div>
       <div className="mt-1 font-mono text-[11px] uppercase tracking-wider text-moss-400">
-        {cycles} cycle{cycles > 1 ? "s" : ""} de pousse
+        cycles de pousse attendus
       </div>
 
-      <p className="mt-3 border-t border-soil-700 pt-3 text-[13px] leading-snug text-moss-200">{argument}</p>
+      <p className="mt-3 border-t border-soil-700 pt-3 text-[13px] leading-snug text-moss-200">
+        {sur
+          ? "Aucune étape ne repose sur la chance : le résultat est acquis à chaque cycle."
+          : `L'étape la plus risquée passe à ${(route.pireEtape * 100).toFixed(0)} %. Prévois des copies pour retenter.`}
+      </p>
     </button>
   );
 }
@@ -534,7 +584,7 @@ function BlocEtape({
   cible: Genome;
   explications?: ReturnType<typeof expliquerPlant>;
   note?: string;
-  apres?: React.ReactNode;
+  apres?: ReactNode;
 }) {
   const grille: (Genome | null)[] = Array(9).fill(null);
   grille[4] = plan.centre;
@@ -577,7 +627,7 @@ function BlocEtape({
         </div>
       </div>
 
-      <div className="mt-5 grid max-w-xs grid-cols-3 gap-1.5">
+      <div className="mt-5 grid w-full max-w-xs grid-cols-3 gap-1.5">
         {grille.map((g, i) => (
           <div
             key={i}
@@ -586,7 +636,7 @@ function BlocEtape({
             }`}
           >
             {g ? (
-              <span className="font-mono text-[11px] text-moss-100">{formatGenome(g)}</span>
+              <span className="font-mono text-[10px] text-moss-100 sm:text-[11px]">{formatGenome(g)}</span>
             ) : (
               <span className="font-mono text-[10px] text-moss-400">vide</span>
             )}
@@ -616,28 +666,7 @@ function BlocEtape({
   );
 }
 
-function AlerteDonneuses({ plan, cible }: { plan: Plan; cible: Genome }) {
-  const grille: (Genome | null)[] = Array(9).fill(null);
-  grille[4] = plan.centre.genome;
-  plan.donneurs.forEach((d, i) => {
-    if (i < AUTOUR.length) grille[AUTOUR[i]] = d.genome;
-  });
-  const analyse = analyserBac(grille, cible);
-  const menacees = AUTOUR.map((i) => analyse[i]).filter((r) => r.genome && r.derive.probaPerte >= 0.25).length;
-
-  if (menacees === 0) return null;
-  return (
-    <div className="mt-4">
-      <Note ton="alerte">
-        {menacees} de tes donneuses risquent de ressortir moins bonnes qu&apos;elles n&apos;y sont entrées :
-        elles se font réécrire par leurs voisines, exactement comme le plant du milieu. Garde des copies en
-        caisse avant de lancer le cycle.
-      </Note>
-    </div>
-  );
-}
-
-function MarcheASuivre({ deuxTemps }: { deuxTemps: boolean }) {
+function MarcheASuivre({ pont }: { pont: boolean }) {
   const etapes = [
     "Mets en caisse une copie de chaque graine du plan. Si le croisement rate, tu recommences ; si tu n'as plus de donneuse, tu repars de zéro.",
     "Plante la graine du milieu sur la case centrale du grand bac.",
@@ -645,8 +674,8 @@ function MarcheASuivre({ deuxTemps }: { deuxTemps: boolean }) {
     "Eau, lumière et température au maximum. Un plafonnier par bac suffit pour la lumière.",
     "Lance un minuteur, puis va faire autre chose.",
     "Quand le plant du milieu passe en stade Croisement, reviens : c'est là que ses gènes sont recalculés, et c'est là que tu peux enfin lire son résultat.",
-    deuxTemps
-      ? "Inspecte-le. Si le pont est bon, prends-en trois boutures — hache en main — puis passe à l'étape 2. Sinon, récolte et recommence avec tes copies."
+    pont
+      ? "Inspecte-le. Si le pont est bon, prends-en trois boutures — hache en main — puis passe à l'étape suivante. Sinon, récolte et recommence avec tes copies."
       : "Inspecte-le. Si le résultat est bon, bouture-le — hache en main. Sinon, récolte et recommence avec tes copies.",
   ];
 
@@ -682,7 +711,7 @@ function Etape({
   titre: string;
   resume?: string;
   dernier?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section className={`relative pl-11 ${dernier ? "" : "pb-10"}`}>

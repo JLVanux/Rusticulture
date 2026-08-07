@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
-import { Champ, Choix, Curseur, Details, EnTetePage, Page, Reponse } from "@/components/Ui";
+import { Champ, Choix, Details, EnTetePage, Page, Reponse } from "@/components/Ui";
+import { AlerteConditions, ReglageConditions } from "@/components/Conditions";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import { THES } from "@/data/teas";
 import { calculerCroissance, calculerRendement, formatDuree, formatNombre } from "@/lib/model";
@@ -14,7 +15,7 @@ const THE_RECOLTE = THES.find((t) => t.id === "recolte");
 
 export default function PageRendement() {
   const [constantes] = useConstantes();
-  const [conditions, setConditions] = useConditions();
+  const [conditions] = useConditions();
   const [genome, setGenome] = useState<Genome>(["G", "G", "G", "Y", "Y", "Y"]);
   const [plante, setPlante] = useState<PlanteId>("chanvre");
   const [nbBacs, setNbBacs] = useState(4);
@@ -55,6 +56,8 @@ export default function PageRendement() {
   return (
     <Page>
       <EnTetePage titre="Rendement" intro="Ce que des gènes rapportent, et en combien de temps." />
+
+      <AlerteConditions />
 
       <div className="space-y-5 rounded-lg border border-soil-600 bg-soil-850 p-5">
         <Champ label="Gènes">
@@ -166,32 +169,7 @@ export default function PageRendement() {
         </Details>
 
         <Details titre="Conditions du bac">
-          <div className="space-y-4">
-            <Curseur label="Eau" valeur={conditions.eau} onChange={(v) => setConditions({ ...conditions, eau: v })} />
-            <Curseur
-              label="Lumière"
-              valeur={conditions.lumiere}
-              onChange={(v) => setConditions({ ...conditions, lumiere: v })}
-            />
-            <Curseur
-              label="Température"
-              valeur={conditions.temperature}
-              onChange={(v) => setConditions({ ...conditions, temperature: v })}
-            />
-            <label className="flex items-center gap-2 text-[14px] text-moss-200">
-              <input
-                type="checkbox"
-                checked={conditions.engrais}
-                onChange={(e) => setConditions({ ...conditions, engrais: e.target.checked })}
-                className="h-4 w-4 accent-lamp"
-              />
-              Engrais dans le bac
-            </label>
-          </div>
-          <p className="mt-4 text-[13px] text-moss-400">
-            Un plafonnier par bac met la lumière à 100 % en continu. En biome neige, un chauffage électrique
-            fait pareil pour la température.
-          </p>
+          <ReglageConditions />
         </Details>
 
         <Details titre="Thé de récolte">

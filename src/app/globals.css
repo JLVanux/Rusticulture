@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #0b0f0d;
+  color: #c3d2c8;
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  /* Lueur diffuse de lampe horticole, en haut de page. */
+  background-image: radial-gradient(
+    120% 60% at 50% -10%,
+    rgba(217, 79, 156, 0.14) 0%,
+    rgba(217, 79, 156, 0.04) 35%,
+    transparent 70%
+  );
+  background-attachment: fixed;
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-moss-400;
+  }
+  .titre {
+    @apply font-display font-bold uppercase tracking-[0.02em] text-moss-100;
+  }
+  .panneau {
+    @apply rounded-lg border border-soil-600 bg-soil-850/80 p-4 sm:p-5;
+  }
+  .champ {
+    @apply w-full rounded border border-soil-600 bg-soil-900 px-3 py-2 text-moss-100
+           outline-none transition focus:border-lamp focus:ring-1 focus:ring-lamp/40;
+  }
+  .bouton {
+    @apply inline-flex items-center justify-center gap-2 rounded border border-soil-500
+           bg-soil-700 px-3 py-2 font-display text-sm font-semibold uppercase tracking-wider
+           text-moss-100 transition hover:border-lamp/60 hover:bg-soil-600
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-lamp disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .bouton-primaire {
+    @apply border-lamp/70 bg-lamp/15 text-lamp-glow hover:border-lamp hover:bg-lamp/25;
+  }
+  .bouton-danger {
+    @apply border-gene-w/40 bg-transparent text-gene-w hover:border-gene-w hover:bg-gene-w/10;
+  }
+  .puce {
+    @apply inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[11px] uppercase tracking-wider;
+  }
+}
+
+/* Le focus doit rester visible partout : on joue souvent au clavier. */
+:focus-visible {
+  outline: 2px solid #d94f9c;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+input[type="range"] {
+  accent-color: #d94f9c;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f0d;
+}
+::-webkit-scrollbar-thumb {
+  background: #26332c;
+  border-radius: 6px;
+}

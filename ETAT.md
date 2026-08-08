@@ -52,26 +52,49 @@ La pièce centrale de la vision, et **toutes les données nécessaires sont dés
 - un objectif est à portée ;
 - le rendement réel décroche de l'estimé → replanter plus vite.
 
-### 2. Planificateur de wipe
+### 2. Notifications Discord par webhook
+
+**Décidé : webhook d'abord, bot plus tard.** C'est la seule réponse satisfaisante à la limite des notifications du navigateur, qui exigent un onglet ouvert. L'équipe est déjà sur Discord toute la journée.
+
+Fonctionnement retenu : le propriétaire crée un webhook dans son propre salon — Paramètres du salon → Intégrations → Créer un webhook — et colle l'URL dans les réglages de sa ferme. Rien à installer, rien à autoriser, aucune application Discord à créer. **Une colonne `webhook_discord` sur `fermes` : chaque ferme la sienne, vers son propre serveur.** Le secret ne circule que de Discord vers RustiCulture, jamais dans l'autre sens.
+
+Deux contraintes qui changent la nature du projet :
+
+- **L'URL est un vrai secret**, contrairement aux clés Supabase. Qui l'a peut écrire dans le salon. Elle ne doit **jamais** être envoyée au navigateur, pas même au propriétaire une fois enregistrée : afficher « configuré » ou « non configuré », avec un bouton pour remplacer. Politiques plus strictes que sur le reste du schéma.
+- **L'envoi doit se faire côté serveur.** C'est le premier endroit du projet qui aura besoin d'autre chose que du client et de la base.
+
+Messages visés, volontairement rares — seulement ce qui déclenche une action :
+- la récolte est prête : « Bac 3 — le tissu est prêt à être récolté » ;
+- les gènes viennent d'être recalculés, le bouturage est possible.
+
+**Le piège est le bruit.** Une ferme de quinze bacs qui annonce chaque changement de stade transforme le salon en spam et se fait retirer dans la semaine. Rien d'autre par défaut, et des réglages pour couper.
+
+Effet de bord utile : la tâche qui vérifie les timers interroge la base régulièrement, ce qui règle au passage la mise en pause de Supabase après sept jours d'inactivité.
+
+**Le bot viendra après**, et n'apporte que deux choses de plus : les commandes slash, et le fait de **taguer la bonne personne** — ce qui suppose de relier chaque compte à un compte Discord, donc d'activer enfin la connexion Discord. Elle s'ajoute sans toucher aux comptes existants.
+
+Priorité : **avant le classement, et probablement avant le planificateur de wipe**. Le classement demande une base d'utilisateurs qui n'existe pas encore ; le bot sert dès la première équipe, et chaque message porte le nom du site sous les yeux de tout un serveur.
+
+### 3. Planificateur de wipe
 Le modèle est prêt depuis le premier jour, il ne manque que l'interface : clôturer un wipe, afficher son résumé, en démarrer un nouveau, consulter les anciens. `wipes.fin` et `wipes.actif` existent déjà, avec un index unique garantissant un seul wipe actif par ferme.
 
-### 3. Poulailler dans la ferme
+### 4. Poulailler dans la ferme
 La page poulailler est un calculateur isolé. Nombre de poulaillers et de poules devraient rejoindre la configuration de la ferme et alimenter la production estimée en œufs — ressource déjà déclarable dans les récoltes.
 
-### 4. Évolution dans le temps
+### 5. Évolution dans le temps
 Les statistiques donnent des totaux, pas des courbes. Les récoltes sont horodatées : tout est là pour tracer une progression par jour de wipe.
 
-### 5. Classement entre amis
+### 6. Classement entre amis
 **Décision déjà prise : entre amis d'abord, pas de classement mondial.** Conséquence d'architecture : il faut une notion de **groupe de fermes**, rejointes par code. Le classement se calcule alors à la demande sur quelques fermes, sans tâche planifiée ni table de scores.
 
 Classer sur des **ratios** — rendement réel, production par grand bac — et jamais sur des totaux bruts, qui récompensent le temps de jeu et la taille d'équipe.
 
 À ne construire qu'une fois qu'il y a du monde. « Toi 1 840, moyenne 1 420 » calculé sur trois fermes, c'est du bruit présenté comme une statistique.
 
-### 6. Comparaison avec les autres
+### 7. Comparaison avec les autres
 Même condition que le classement. En attendant, la comparaison utile est **avec soi-même** : cette semaine contre la semaine dernière.
 
-### 7. Badges
+### 8. Badges
 En dernier, et avec parcimonie.
 
 ---
@@ -103,6 +126,7 @@ En dernier, et avec parcimonie.
 - **On stocke des faits, on dérive le reste.** Seule exception assumée : les durées d'un timer, figées à la création pour que tous les membres voient le même décompte.
 - **Le croisement suppose le grand bac**, seul contenant dont la grille 3×3 produit les probabilités du site. Les autres ne comptent que pour la production.
 - **Une estimation n'est jamais présentée comme une observation.**
+- **Discord : webhook par ferme d'abord, bot ensuite.** Un webhook ne s'installe pas, il se colle ; un bot s'installe via un lien d'invitation. Les deux se cumulent.
 
 ---
 

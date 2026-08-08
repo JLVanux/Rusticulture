@@ -1,60 +1,69 @@
-Renommage en RustiCulture, planificateur multi-générations, permaliens et corrections du modèle
+Ferme collaborative : comptes, ferme partagée, graines, timers, tableau de bord et récoltes
 
-Identité
-- « La Serre » devient RustiCulture, partout : logo, titre, paquet npm, dossier,
-  fichier de sauvegarde exporté.
-- Le préfixe de stockage local passe à `rusticulture:`, avec reprise automatique
-  des clés `rustfarm:` existantes — sans quoi les banques de graines et les
-  minuteurs déjà enregistrés auraient été effacés.
+Le site devient utilisable à plusieurs sur toute la durée d'un wipe, sans rien
+retirer à ce qui existait : sans compte, les calculateurs, le scanner et la
+génétique fonctionnent exactement comme avant, en local.
 
-Moteur de croisement
-- Planificateur multi-générations par recherche en faisceau, jusqu'à cinq cycles.
-  Il propose la meilleure route pour chaque nombre de générations et les compare
-  en cycles de pousse attendus, ce qui rend visible un arbitrage utile : un coup
-  unique à 50 % coûte le même temps moyen qu'une route en deux étapes sûres,
-  mais avec le risque en plus.
-- Correction d'un optimiseur inopérant : la probabilité cible vaut zéro tant
-  qu'une case est fausse, donc la montée gloutonne ne démarrait jamais, et un
-  donneur ajouté seul dégrade presque toujours une case déjà correcte. On grimpe
-  désormais sur une somme de logarithmes et on teste l'ajout par paires. Sur une
-  banque parfaitement soluble, le résultat passe de 0 % à 100 %.
-- Le pont intermédiaire vise maintenant le nombre de cases justes par rapport à
-  la cible, et non un score générique qui l'orientait mal.
-- Calcul de dérive : probabilité qu'un plant ressorte moins bon qu'à l'entrée.
-  Les donneuses se font réécrire elles aussi, ce qu'aucun outil ne montrait.
-- Diagnostic de banque quand la cible est hors de portée : pour chaque case,
-  combien de graines portent le gène visé. En dessous de deux, c'est bloqué.
+Base de données
+- Supabase. Modèle profil → ferme → wipe → (graines, plantations, timers,
+  récoltes, objectifs, activités).
+- Le WIPE est le conteneur des données temporelles, pas la ferme : un nouveau
+  wipe repart de zéro sans rien effacer et les anciens restent consultables.
+- Les trois rôles — propriétaire, membre, lecture seule — sont appliqués par des
+  politiques Postgres, pas par le code. Un appel direct à l'API ne peut pas les
+  contourner.
+- On stocke des faits ; totaux, rendements et efficacité se recalculent. Seules
+  les durées d'un timer sont figées à la création, pour que tous les membres
+  voient le même décompte même si le modèle change.
 
-Modèle de croissance — corrections
-- L'effet des gènes G était linéaire et surestimé (`base / (1 + 0,72·nG)`). Il
-  devient géométrique et dégressif, calé sur les courbes publiées : environ
-  −17 % du temps restant par gène G.
-- `facteurG` ayant changé de sens, les coefficients persistés sont désormais
-  versionnés et les valeurs hors bornes ignorées. Une sauvegarde antérieure
-  relue par la nouvelle formule produisait des cycles de quatre minutes.
-- Sept stades nommés d'après les sources concordantes ; Mûr et Mourant deviennent
-  des fenêtres après la récolte, pas des étapes de croissance.
-- L'interface présentait le stade Croisement comme une fenêtre de bouturage qui
-  se referme définitivement. La majorité des sources dit le contraire : le
-  bouturage reste possible jusqu'au dépérissement. Formulation corrigée partout.
-- Calibrage du rendement ajouté, symétrique de celui de la vitesse.
+Comptes
+- Pseudo et mot de passe, aucun e-mail demandé ni envoyé. L'adresse exigée par
+  Supabase est dérivée du pseudo et n'est jamais affichée.
+- Conséquence assumée et annoncée dans l'interface : un mot de passe oublié ne
+  peut pas être récupéré.
 
-Interface
-- Permaliens : l'état complet d'un plan tient dans le fragment d'URL. Les graines
-  reçues par un lien ne sont jamais écrites sans confirmation.
-- Navigation mobile par tiroir donnant accès aux dix pages. Six d'entre elles
-  étaient inaccessibles, la barre du bas n'en affichant que quatre.
-- Scanner : mode couleur à palette apprise en complément de la reconnaissance de
-  texte, segmentation OCR réglée, prise en charge tactile, et message explicite
-  là où le partage d'écran n'existe pas.
-- Bandeau d'alerte quand les conditions de culture ne sont pas au maximum : elles
-  rallongent toutes les durées du site, y compris les minuteurs.
-- Précision que les outils de génétique supposent le grand bac, seul contenant
-  dont la géométrie 3×3 produit ces probabilités.
-- Suppression de l'éditeur de bac manuel, redondant avec l'assistant.
-- Corrections d'affichage sur petits écrans : pastilles de gènes, tableaux
-  défilants, débordements horizontaux.
+Ferme partagée
+- Création, adhésion par code d'invitation, gestion des membres et des rôles.
+- Graines, timers, plantations et récoltes appartiennent à la ferme.
+- Journal d'activité en ajout seul : l'historique ne se réécrit pas.
 
-Mesures
-- Vercel Web Analytics et Speed Insights branchés dans le layout racine.
-  Activation à faire séparément dans le tableau de bord Vercel.
+Graines
+- `useGraines` expose une seule interface pour deux stockages, local ou ferme.
+  Les pages ne savent pas d'où viennent les graines. Un bandeau le dit en
+  permanence, sans quoi on ignore si son coéquipier verra ce qu'on ajoute.
+- Index unique et fonctions atomiques côté base : deux coéquipiers peuvent
+  scanner la même graine en même temps sans qu'un ajout se perde.
+
+Timers
+- Partagés, avec le nom de qui les a lancés. Aucune connexion permanente : un
+  timer n'est qu'une date de départ, chacun recalcule le reste. Relecture toutes
+  les 30 s et au retour sur l'onglet.
+- L'état « déjà notifié » reste sur l'appareil : chacun reçoit ses alertes.
+
+Tableau de bord et récoltes
+- Production estimée par ressource, à partir des contenants déclarés. Les bacs
+  triangulaires et les pots comptent ici ; le croisement reste réservé au grand
+  bac, seul contenant dont la grille 3×3 produit les probabilités du site.
+- Enregistrement des récoltes réelles, avec contrôle de plausibilité : chaque
+  saisie est confrontée à la capacité théorique de la ferme depuis la dernière
+  récolte. Le site avertit sans bloquer — refuser une récolte légitime serait
+  pire que d'en accepter une douteuse.
+- Statistiques du wipe : totaux, moyenne, meilleure récolte, et rendement réel
+  rapporté à l'estimation. Les limites sont explicitées dans l'interface, dont
+  l'absence d'historisation de la configuration.
+
+Corrections
+- Course au chargement des graines : tant que la ferme n'était pas résolue, une
+  graine ajoutée partait dans le navigateur au lieu de la ferme, sans le moindre
+  signe. L'écriture est bloquée le temps de savoir où écrire.
+- Transfert de la banque locale rejouable : la fonction d'ajout étant
+  incrémentale, un second clic doublait les quantités. Le transfert déplace
+  désormais, après confirmation.
+- `min(uuid)` n'existe pas en Postgres.
+- `search_path = public` exclut le schéma des extensions, donc `gen_random_bytes`
+  était introuvable dans les fonctions SECURITY DEFINER. Dépendance à pgcrypto
+  supprimée plutôt que search_path élargi, ce dernier étant ce qui protège ces
+  fonctions.
+- Prise en charge du nouveau nom de clé publique Supabase.
+
+Migrations à appliquer dans l'ordre : 0001 à 0004.

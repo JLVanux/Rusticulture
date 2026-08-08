@@ -21,15 +21,25 @@ import {
   type EtapeRoute,
   type Route,
 } from "@/lib/crossbreed";
-import { useBanque, type Graine } from "@/lib/hooks";
-import { idUnique } from "@/lib/storage";
+import { useGraines } from "@/lib/graines";
+import { SourceGrainesBandeau } from "@/components/SourceGraines";
 import { decoderEtat, ecrireFragment, lienComplet } from "@/lib/partage";
 
 const AUTOUR = [0, 1, 2, 3, 5, 6, 7, 8];
 
 export default function PageGenesParfaits() {
-  const [banque, setBanque] = useBanque();
   const [plante, setPlante] = useState<PlanteId>("chanvre");
+  const {
+    graines,
+    source,
+    modifiable,
+    ferme,
+    nbLocal,
+    enAttente,
+    ajouterLot,
+    viderTout,
+    transfererDepuisLocal,
+  } = useGraines(plante);
   const [cible, setCible] = useState<Genome>(["G", "G", "G", "Y", "Y", "Y"]);
   const [colle, setColle] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -37,10 +47,6 @@ export default function PageGenesParfaits() {
   const [lienCopie, setLienCopie] = useState(false);
   const [partageRecu, setPartageRecu] = useState<{ genome: Genome; quantite: number }[] | null>(null);
 
-  const graines = useMemo(
-    () => banque.filter((g) => g.plante === plante && g.quantite > 0),
-    [banque, plante]
-  );
   const nbGraines = graines.reduce((a, g) => a + g.quantite, 0);
 
   const entrees: EntreeBanque[] = useMemo(
@@ -117,39 +123,22 @@ export default function PageGenesParfaits() {
     }
   }
 
-  function importerPartage() {
+  async function importerPartage() {
     if (!partageRecu) return;
-    setBanque((prec) => {
-      const suivant = [...prec];
-      for (const { genome, quantite } of partageRecu) {
-        const code = formatGenome(genome);
-        const i = suivant.findIndex((g) => formatGenome(g.genome) === code && g.plante === plante);
-        if (i >= 0) suivant[i] = { ...suivant[i], quantite: suivant[i].quantite + quantite };
-        else suivant.push({ id: idUnique(), genome, quantite, plante } as Graine);
-      }
-      return suivant;
-    });
+    // Une graine reçue en quantité 3 est ajoutée trois fois : le hook regroupe.
+    const aAjouter = partageRecu.flatMap(({ genome, quantite }) =>
+      Array.from({ length: quantite }, () => genome)
+    );
+    await ajouterLot(aAjouter, plante, "import");
     setPartageRecu(null);
     setMessage("Graines du lien ajoutées.");
   }
 
   const apercuImport = useMemo(() => extraireDepuisTexte(colle), [colle]);
 
-  function importer() {
+  async function importer() {
     if (apercuImport.length === 0) return;
-    setBanque((prec) => {
-      const suivant = [...prec];
-      for (const genome of apercuImport) {
-        const code = formatGenome(genome);
-        const i = suivant.findIndex((g) => formatGenome(g.genome) === code && g.plante === plante);
-        if (i >= 0) suivant[i] = { ...suivant[i], quantite: suivant[i].quantite + 1 };
-        else {
-          const graine: Graine = { id: idUnique(), genome, quantite: 1, plante };
-          suivant.push(graine);
-        }
-      }
-      return suivant;
-    });
+    await ajouterLot(apercuImport, plante);
     setMessage(`${apercuImport.length} graine${apercuImport.length > 1 ? "s" : ""} ajoutée${apercuImport.length > 1 ? "s" : ""}.`);
     setColle("");
   }
@@ -158,7 +147,7 @@ export default function PageGenesParfaits() {
     const n = graines.reduce((a, g) => a + g.quantite, 0);
     const nom = PLANTES.find((p) => p.id === plante)?.nom.toLowerCase();
     if (!confirm(`Supprimer les ${n} graines de ${nom} ? Cette action est définitive.`)) return;
-    setBanque((prec) => prec.filter((g) => g.plante !== plante));
+    void viderTout(plante);
     setMessage("Graines supprimées.");
   }
 
@@ -176,6 +165,15 @@ export default function PageGenesParfaits() {
         génétique.
       </p>
 
+      <SourceGrainesBandeau
+        source={source}
+        nomFerme={ferme?.nom}
+        nbLocal={nbLocal}
+        enAttente={enAttente}
+        modifiable={modifiable}
+        onTransferer={transfererDepuisLocal}
+      />
+
       <AlerteConditions />
 
       {partageRecu && (
@@ -188,7 +186,7 @@ export default function PageGenesParfaits() {
             encore dans ta banque — le plan ci-dessous se calcule sur les tiennes.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button type="button" className="bouton bouton-primaire" onClick={importerPartage}>
+            <button type="button" className="bouton bouton-primaire" onClick={() => void importerPartage()}>
               Ajouter à mes graines
             </button>
             <button type="button" className="bouton" onClick={() => setPartageRecu(null)}>
@@ -238,7 +236,7 @@ export default function PageGenesParfaits() {
             <button
               type="button"
               className="bouton bouton-primaire mt-3"
-              onClick={importer}
+              onClick={() => void importer()}
               disabled={apercuImport.length === 0}
             >
               Ajouter {apercuImport.length > 0 && `${apercuImport.length} graine${apercuImport.length > 1 ? "s" : ""}`}
@@ -274,7 +272,7 @@ export default function PageGenesParfaits() {
                 <button
                   type="button"
                   className="bouton mt-2"
-                  onClick={importer}
+                  onClick={() => void importer()}
                   disabled={apercuImport.length === 0}
                 >
                   Ajouter {apercuImport.length > 0 && apercuImport.length}

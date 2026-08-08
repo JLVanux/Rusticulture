@@ -5,8 +5,9 @@ import { EditeurGenes } from "@/components/Genes";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
 import { GENE_LETTERS, PLANTES, type Genome, type PlanteId } from "@/data/game";
 import { formatGenome } from "@/lib/crossbreed";
-import { useBanque, type Graine } from "@/lib/hooks";
+import { useGraines } from "@/lib/graines";
 import { idUnique, useStockage } from "@/lib/storage";
+import { SourceGrainesBandeau } from "@/components/SourceGraines";
 import {
   apprendrePalette,
   lireParCouleur,
@@ -28,7 +29,8 @@ interface Trouvaille {
 const SEUIL_DOUTE = 0.08;
 
 export default function PageScanner() {
-  const [, setBanque] = useBanque();
+  const { source, modifiable, ferme, nbLocal, enAttente, ajouterLot, transfererDepuisLocal } =
+    useGraines();
   const [zone, setZone] = useStockage<Zone | null>("zone-scan", null);
   const [palette, setPalette] = useStockage<Palette>("palette-genes", {});
   const [plante, setPlante] = useState<PlanteId>("chanvre");
@@ -169,17 +171,17 @@ export default function PageScanner() {
     setErreur(null);
   }
 
-  function ajouter(t: Trouvaille) {
-    setBanque((prec) => {
-      const code = formatGenome(t.genome);
-      const existant = prec.find((g) => formatGenome(g.genome) === code && g.plante === plante);
-      if (existant) {
-        return prec.map((g) => (g.id === existant.id ? { ...g, quantite: g.quantite + 1 } : g));
-      }
-      const graine: Graine = { id: idUnique(), genome: t.genome, quantite: 1, plante };
-      return [...prec, graine];
-    });
+  async function ajouter(t: Trouvaille) {
+    await ajouterLot([t.genome], plante, "scan");
     setTrouvailles((prec) => prec.filter((x) => x.id !== t.id));
+  }
+
+  /** Tout ajouter en un seul envoi plutôt qu'un par graine. */
+  async function ajouterTout() {
+    const lot = trouvailles.map((t) => t.genome);
+    if (lot.length === 0) return;
+    await ajouterLot(lot, plante, "scan");
+    setTrouvailles([]);
   }
 
   const [partageDisponible, setPartageDisponible] = useState(true);
@@ -197,6 +199,15 @@ export default function PageScanner() {
       <EnTetePage
         titre="Scanner l'écran"
         intro="Partage la fenêtre de Rust, encadre une fois la zone des gènes, et le site les lit."
+      />
+
+      <SourceGrainesBandeau
+        source={source}
+        nomFerme={ferme?.nom}
+        nbLocal={nbLocal}
+        enAttente={enAttente}
+        modifiable={modifiable}
+        onTransferer={transfererDepuisLocal}
       />
 
       {erreur && (
@@ -381,7 +392,7 @@ export default function PageScanner() {
               <button type="button" className="bouton" onClick={() => setTrouvailles([])}>
                 Effacer
               </button>
-              <button type="button" className="bouton bouton-primaire" onClick={() => trouvailles.forEach(ajouter)}>
+              <button type="button" className="bouton bouton-primaire" onClick={() => void ajouterTout()}>
                 Tout ajouter
               </button>
             </div>
@@ -412,7 +423,7 @@ export default function PageScanner() {
                   >
                     Jeter
                   </button>
-                  <button type="button" className="bouton" onClick={() => ajouter(t)}>
+                  <button type="button" className="bouton" onClick={() => void ajouter(t)}>
                     Ajouter
                   </button>
                 </div>

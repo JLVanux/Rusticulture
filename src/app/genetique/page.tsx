@@ -5,14 +5,27 @@ import Link from "next/link";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
 import { PLANTES, type Genome, type PlanteId } from "@/data/game";
-import { extraireDepuisTexte, formatGenome, scoreGenome } from "@/lib/crossbreed";
-import { useBanque, type Graine } from "@/lib/hooks";
-import { idUnique } from "@/lib/storage";
+import { extraireDepuisTexte, scoreGenome } from "@/lib/crossbreed";
+import { useGraines } from "@/lib/graines";
+import { SourceGrainesBandeau } from "@/components/SourceGraines";
 
 const GENOME_NEUF: Genome = ["G", "G", "G", "Y", "Y", "Y"];
 
 export default function PageGenetique() {
-  const [banque, setBanque, charge] = useBanque();
+  const {
+    toutes: banque,
+    source,
+    modifiable,
+    ferme,
+    nbLocal,
+    enAttente,
+    charge,
+    erreur,
+    ajouterLot,
+    ajuster,
+    viderTout,
+    transfererDepuisLocal,
+  } = useGraines();
   const [brouillon, setBrouillon] = useState<Genome>(GENOME_NEUF);
   const [plante, setPlante] = useState<PlanteId>("chanvre");
   const [colle, setColle] = useState("");
@@ -30,32 +43,13 @@ export default function PageGenetique() {
 
   const total = banque.reduce((a, g) => a + g.quantite, 0);
 
-  /** Ajoute plusieurs séries de gènes en UNE seule mise à jour d'état. */
-  function ajouterLot(genomes: Genome[], p: PlanteId) {
-    if (genomes.length === 0) return;
-    setBanque((prec) => {
-      const suivant = [...prec];
-      for (const genome of genomes) {
-        const code = formatGenome(genome);
-        const i = suivant.findIndex((g) => formatGenome(g.genome) === code && g.plante === p);
-        if (i >= 0) {
-          suivant[i] = { ...suivant[i], quantite: suivant[i].quantite + 1 };
-        } else {
-          const graine: Graine = { id: idUnique(), genome, quantite: 1, plante: p };
-          suivant.push(graine);
-        }
-      }
-      return suivant;
-    });
-  }
-
   function importer() {
     const genomes = apercuImport;
     if (genomes.length === 0) {
       setMessage("Aucune suite de six lettres G, Y, H, W ou X trouvée dans ce texte.");
       return;
     }
-    ajouterLot(genomes, plante);
+    void ajouterLot(genomes, plante);
     setColle("");
     setMessage(`${genomes.length} graine${genomes.length > 1 ? "s" : ""} ajoutée${genomes.length > 1 ? "s" : ""}.`);
   }
@@ -67,6 +61,15 @@ export default function PageGenetique() {
         intro="Saisis tes graines une fois. Le plan de bac et les calculs de rendement piochent dedans."
       />
 
+      <SourceGrainesBandeau
+        source={source}
+        nomFerme={ferme?.nom}
+        nbLocal={nbLocal}
+        enAttente={enAttente}
+        modifiable={modifiable}
+        onTransferer={transfererDepuisLocal}
+      />
+
       {/* Saisie principale */}
       <section className="rounded-lg border border-soil-600 bg-soil-850 p-5">
         <div className="flex flex-wrap items-end gap-4">
@@ -76,8 +79,9 @@ export default function PageGenetique() {
           <button
             type="button"
             className="bouton bouton-primaire ml-auto"
+            disabled={!modifiable}
             onClick={() => {
-              ajouterLot([brouillon], plante);
+              void ajouterLot([brouillon], plante);
               setMessage(null);
             }}
           >
@@ -130,13 +134,14 @@ export default function PageGenetique() {
             <button
               type="button"
               className="bouton bouton-danger"
+              disabled={!modifiable}
               onClick={() => {
                 if (
                   confirm(
                     `Supprimer les ${total} graines de ta banque ?\n\nCette action est définitive et ne peut pas être annulée.`
                   )
                 ) {
-                  setBanque([]);
+                  void viderTout();
                   setMessage("Banque vidée.");
                 }
               }}
@@ -146,9 +151,9 @@ export default function PageGenetique() {
           </div>
         )}
 
-        {message && (
+        {(erreur || message) && (
           <div className="mb-4">
-            <Note>{message}</Note>
+            <Note ton={erreur ? "alerte" : "info"}>{erreur ?? message}</Note>
           </div>
         )}
 
@@ -183,13 +188,7 @@ export default function PageGenetique() {
                       type="button"
                       aria-label="Retirer une graine"
                       className="h-7 w-7 rounded border border-soil-500 text-moss-200 hover:border-lamp/50"
-                      onClick={() =>
-                        setBanque((prec) =>
-                          prec
-                            .map((x) => (x.id === g.id ? { ...x, quantite: x.quantite - 1 } : x))
-                            .filter((x) => x.quantite > 0)
-                        )
-                      }
+                      onClick={() => void ajuster(g.id, -1)}
                     >
                       −
                     </button>
@@ -198,11 +197,7 @@ export default function PageGenetique() {
                       type="button"
                       aria-label="Ajouter une graine"
                       className="h-7 w-7 rounded border border-soil-500 text-moss-200 hover:border-lamp/50"
-                      onClick={() =>
-                        setBanque((prec) =>
-                          prec.map((x) => (x.id === g.id ? { ...x, quantite: x.quantite + 1 } : x))
-                        )
-                      }
+                      onClick={() => void ajuster(g.id, 1)}
                     >
                       +
                     </button>

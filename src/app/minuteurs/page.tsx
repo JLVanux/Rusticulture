@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
-import { AlerteConditions } from "@/components/Conditions";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import { calculerCroissance, formatDuree } from "@/lib/model";
-import { useConditions, useConstantes, useMinuteurs, type Minuteur } from "@/lib/hooks";
-import { idUnique } from "@/lib/storage";
+import { useConditions, useConstantes } from "@/lib/hooks";
+import { useTimers, type TimerUnifie } from "@/lib/timers";
+import { useStockage } from "@/lib/storage";
 
 function compte(ms: number): string {
   if (ms <= 0) return "00:00:00";
@@ -18,7 +20,7 @@ function compte(ms: number): string {
 }
 
 export default function PageMinuteurs() {
-  const [minuteurs, setMinuteurs] = useMinuteurs();
+  const { timers, source, modifiable, ferme, charge, erreur, lancer, supprimer } = useTimers();
   const [constantes] = useConstantes();
   const [conditions] = useConditions();
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -26,6 +28,10 @@ export default function PageMinuteurs() {
   const [plante, setPlante] = useState<PlanteId>("chanvre");
   const [nom, setNom] = useState("");
   const [permission, setPermission] = useState<NotificationPermission | "indisponible">("default");
+
+  // Ce qui a déjà été notifié appartient à cet appareil, pas à la ferme : si un
+  // coéquipier a vu passer l'alerte, tu dois quand même la recevoir.
+  const [notifies, setNotifies] = useStockage<string[]>("timers-notifies", []);
 
   useEffect(() => {
     const t = setInterval(() => setMaintenant(Date.now()), 1000);
@@ -42,45 +48,45 @@ export default function PageMinuteurs() {
 
   useEffect(() => {
     if (permission !== "granted") return;
-    for (const m of minuteurs) {
-      const ecoule = (maintenant - m.debut) / 60000;
-      if (!m.alerteCroisementFaite && ecoule >= m.minutesCroisement) {
+    for (const t of timers) {
+      const ecoule = (maintenant - t.debut) / 60000;
+      const cleCroisement = `${t.id}:croisement`;
+      const cleMur = `${t.id}:mur`;
+
+      if (ecoule >= t.minutesCroisement && !notifies.includes(cleCroisement)) {
         new Notification("Gènes recalculés", {
-          body: `${m.nom} — va voir son résultat, tu peux le bouturer.`,
-          tag: `${m.id}-c`,
+          body: `${t.nom} — va voir son résultat, tu peux le bouturer.`,
+          tag: cleCroisement,
         });
-        setMinuteurs((p) => p.map((x) => (x.id === m.id ? { ...x, alerteCroisementFaite: true } : x)));
-      } else if (!m.alerteMurFaite && ecoule >= m.minutesMur) {
-        new Notification("Récolte prête", { body: `${m.nom} est mûr.`, tag: `${m.id}-m` });
-        setMinuteurs((p) => p.map((x) => (x.id === m.id ? { ...x, alerteMurFaite: true } : x)));
+        setNotifies((p) => [...p, cleCroisement]);
+      } else if (ecoule >= t.minutesMur && !notifies.includes(cleMur)) {
+        new Notification("Récolte prête", { body: `${t.nom} est mûr.`, tag: cleMur });
+        setNotifies((p) => [...p, cleMur]);
       }
     }
-  }, [maintenant, minuteurs, permission, setMinuteurs]);
+  }, [maintenant, timers, permission, notifies, setNotifies]);
 
   const apercu = useMemo(
     () => calculerCroissance(plante, genome, conditions, constantes),
     [plante, genome, conditions, constantes]
   );
 
-  function lancer() {
-    const c = calculerCroissance(plante, genome, conditions, constantes);
-    const m: Minuteur = {
-      id: idUnique(),
+  function lancerMinuteur() {
+    void lancer({
       nom: nom.trim() || `${PLANTE_PAR_ID[plante].nom} ${genome.join("")}`,
       plante,
       genome,
       debut: Date.now(),
-      minutesCroisement: c.minutesAvantCroisement,
-      minutesMur: c.minutesJusquMur,
-      minutesFin: c.minutesAvantDeclin,
-    };
-    setMinuteurs((p) => [...p, m]);
+      minutesCroisement: apercu.minutesAvantCroisement,
+      minutesMur: apercu.minutesJusquMur,
+      minutesFin: apercu.minutesAvantDeclin,
+    });
     setNom("");
   }
 
   const tries = useMemo(
-    () => [...minuteurs].sort((a, b) => a.debut + a.minutesMur * 60000 - (b.debut + b.minutesMur * 60000)),
-    [minuteurs]
+    () => [...timers].sort((a, b) => a.debut + a.minutesMur * 60000 - (b.debut + b.minutesMur * 60000)),
+    [timers]
   );
 
   return (
@@ -89,6 +95,22 @@ export default function PageMinuteurs() {
         titre="Minuteurs"
         intro="Tu plantes, tu lances, tu pars farmer. Le site te prévient quand les gènes sont recalculés, puis à la récolte."
       />
+
+      {source === "ferme" ? (
+        <p className="mb-6 rounded border-l-2 border-lamp py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
+          Ces minuteurs appartiennent à la ferme <span className="text-moss-100">{ferme?.nom}</span> : toute
+          l&apos;équipe voit les mêmes décomptes.
+          {!modifiable && <span className="text-ripe"> Tu es en lecture seule.</span>}
+        </p>
+      ) : (
+        <p className="mb-6 rounded border-l-2 border-soil-500 py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
+          Ces minuteurs sont dans <span className="text-moss-100">ce navigateur</span>.{" "}
+          <Link href="/ferme" className="text-lamp-glow underline underline-offset-2">
+            Rejoins une ferme
+          </Link>{" "}
+          pour que ton équipe les voie.
+        </p>
+      )}
 
       <AlerteConditions />
 
@@ -107,123 +129,63 @@ export default function PageMinuteurs() {
         </div>
       )}
 
-      {/* Nouveau minuteur, en haut : c'est l'action principale */}
-      <section className="space-y-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
-        <div className="flex flex-wrap items-end gap-4">
-          <Champ label="Gènes">
-            <EditeurGenes genome={genome} onChange={setGenome} taille="md" />
-          </Champ>
-          <div className="min-w-[10rem] flex-1">
-            <Champ label="Repère (facultatif)">
-              <input
-                className="champ"
-                placeholder="bac du fond"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-              />
+      {erreur && (
+        <div className="mb-6">
+          <Note ton="alerte">{erreur}</Note>
+        </div>
+      )}
+
+      {modifiable && (
+        <section className="space-y-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
+          <div className="flex flex-wrap items-end gap-4">
+            <Champ label="Gènes">
+              <EditeurGenes genome={genome} onChange={setGenome} taille="md" />
             </Champ>
+            <div className="min-w-[10rem] flex-1">
+              <Champ label="Repère (facultatif)">
+                <input
+                  className="champ"
+                  placeholder="bac du fond"
+                  value={nom}
+                  onChange={(e) => setNom(e.target.value)}
+                />
+              </Champ>
+            </div>
           </div>
-        </div>
 
-        <Champ label="Plante">
-          <Choix valeur={plante} onChange={setPlante} options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))} />
-        </Champ>
+          <Champ label="Plante">
+            <Choix valeur={plante} onChange={setPlante} options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))} />
+          </Champ>
 
-        <div className="flex flex-wrap items-center gap-4 border-t border-soil-600 pt-4">
-          <button type="button" className="bouton bouton-primaire" onClick={lancer}>
-            Lancer le minuteur
-          </button>
-          <span className="font-mono text-[13px] text-moss-400">
-            croisement à {formatDuree(apercu.minutesAvantCroisement)} · récolte à{" "}
-            {formatDuree(apercu.minutesJusquMur)}
-          </span>
-        </div>
-      </section>
+          <div className="flex flex-wrap items-center gap-4 border-t border-soil-600 pt-4">
+            <button type="button" className="bouton bouton-primaire" onClick={lancerMinuteur}>
+              Lancer le minuteur
+            </button>
+            <span className="font-mono text-[13px] text-moss-400">
+              croisement à {formatDuree(apercu.minutesAvantCroisement)} · récolte à{" "}
+              {formatDuree(apercu.minutesJusquMur)}
+            </span>
+          </div>
+        </section>
+      )}
 
       <section className="mt-8 space-y-3">
-        {tries.length === 0 ? (
+        {!charge ? (
+          <p className="text-[15px] text-moss-400">Chargement…</p>
+        ) : tries.length === 0 ? (
           <div className="rounded-lg border border-dashed border-soil-600 p-10 text-center">
             <p className="text-moss-200">Aucun minuteur en cours.</p>
           </div>
         ) : (
-          tries.map((m) => {
-            const ecoule = (maintenant - m.debut) / 60000;
-            const avantC = m.minutesCroisement - ecoule;
-            const avantM = m.minutesMur - ecoule;
-            const progression = Math.min(1, Math.max(0, ecoule / m.minutesFin));
-            const enCroisement = ecoule >= m.minutesCroisement && ecoule < m.minutesMur;
-            const mur = ecoule >= m.minutesMur && ecoule < m.minutesFin;
-            const mort = ecoule >= m.minutesFin;
-
-            return (
-              <article
-                key={m.id}
-                className={`rounded-lg border p-4 ${
-                  enCroisement
-                    ? "border-lamp bg-lamp/8"
-                    : mur
-                      ? "border-ripe/60 bg-ripe/8"
-                      : mort
-                        ? "border-soil-600 opacity-45"
-                        : "border-soil-600 bg-soil-850"
-                }`}
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <ChaineGenes genome={m.genome} taille="sm" />
-                  <span className="font-display text-lg font-semibold uppercase tracking-wide text-moss-100">
-                    {m.nom}
-                  </span>
-                  <button
-                    type="button"
-                    className="ml-auto font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
-                    onClick={() => setMinuteurs((p) => p.filter((x) => x.id !== m.id))}
-                  >
-                    Supprimer
-                  </button>
-                </div>
-
-                <div className="mt-3 flex items-baseline gap-3">
-                  <span
-                    className={`font-mono text-3xl font-bold ${
-                      enCroisement ? "text-lamp-glow" : mur ? "text-ripe" : "text-moss-100"
-                    }`}
-                  >
-                    {enCroisement
-                      ? "À INSPECTER"
-                      : mur
-                        ? "RÉCOLTE"
-                        : mort
-                          ? "MORT"
-                          : compte(avantC * 60000)}
-                  </span>
-                  {!enCroisement && !mur && !mort && (
-                    <span className="text-[13px] text-moss-400">avant le recalcul des gènes</span>
-                  )}
-                </div>
-
-                <div className="relative mt-3 h-2 w-full overflow-hidden rounded-sm bg-soil-700">
-                  <span
-                    className={`block h-full ${mort ? "bg-soil-500" : mur ? "bg-ripe" : "bg-lamp"}`}
-                    style={{ width: `${progression * 100}%` }}
-                  />
-                  <span
-                    className="absolute top-0 h-full w-px bg-moss-100/70"
-                    style={{ left: `${(m.minutesCroisement / m.minutesFin) * 100}%` }}
-                    aria-hidden
-                  />
-                  <span
-                    className="absolute top-0 h-full w-px bg-moss-100/70"
-                    style={{ left: `${(m.minutesMur / m.minutesFin) * 100}%` }}
-                    aria-hidden
-                  />
-                </div>
-
-                <p className="mt-2 font-mono text-[12px] text-moss-400">
-                  récolte {avantM > 0 ? `dans ${compte(avantM * 60000)}` : "disponible"}
-                </p>
-              </article>
-            );
-          })
+          tries.map((t) => (
+            <CarteTimer
+              key={t.id}
+              timer={t}
+              maintenant={maintenant}
+              modifiable={modifiable}
+              onSupprimer={() => void supprimer(t.id, t.nom)}
+            />
+          ))
         )}
       </section>
 
@@ -237,34 +199,112 @@ export default function PageMinuteurs() {
             <p>
               Passé ce moment, tu as le temps. La plupart des sources s&apos;accordent à dire que le bouturage
               est possible dès le stade Jeune pousse et jusqu&apos;à ce que le plant dépérisse — le stade
-              Croisement n&apos;est pas une porte qui se referme. Une bouture copie les six gènes à
-              l&apos;identique, ce qui fige le résultat pour de bon.
-            </p>
-            <p className="text-moss-400">
-              Quelques guides affirment l&apos;inverse : fenêtre étroite, ou bouturage possible seulement au
-              stade Mûr. Le site retient la version majoritaire, mais dans le doute, bouture dès que le
-              résultat t&apos;a plu plutôt que d&apos;attendre.
+              Croisement n&apos;est pas une porte qui se referme.
             </p>
           </div>
         </Details>
 
-        <Details titre="Les minuteurs et l'onglet fermé">
+        <Details titre="Les notifications et l'onglet fermé">
           <p className="text-[14px] leading-relaxed text-moss-200">
-            Ils continuent de tourner : tout est calculé depuis l&apos;heure de plantation, pas depuis un
-            décompte en mémoire. Ferme l&apos;onglet, reviens deux heures plus tard, l&apos;affichage sera
-            juste. En revanche les notifications, elles, ont besoin que l&apos;onglet reste ouvert quelque part.
+            Les décomptes sont calculés depuis l&apos;heure de plantation : ferme l&apos;onglet, reviens deux
+            heures plus tard, l&apos;affichage sera juste. Les notifications, elles, ont besoin qu&apos;un
+            onglet reste ouvert quelque part — c&apos;est une limite du navigateur, pas du site.
           </p>
+          {source === "ferme" && (
+            <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+              Chaque appareil reçoit ses propres alertes. Si ton coéquipier a vu passer la sienne, tu recevras
+              quand même la tienne.
+            </p>
+          )}
         </Details>
       </div>
-
-      {permission === "denied" && (
-        <div className="mt-6">
-          <Note ton="alerte">
-            Ton navigateur bloque les notifications pour ce site. Réautorise-les via le cadenas dans la barre
-            d&apos;adresse.
-          </Note>
-        </div>
-      )}
     </Page>
+  );
+}
+
+function CarteTimer({
+  timer,
+  maintenant,
+  modifiable,
+  onSupprimer,
+}: {
+  timer: TimerUnifie;
+  maintenant: number;
+  modifiable: boolean;
+  onSupprimer: () => void;
+}) {
+  const ecoule = (maintenant - timer.debut) / 60000;
+  const avantC = timer.minutesCroisement - ecoule;
+  const avantM = timer.minutesMur - ecoule;
+  const progression = Math.min(1, Math.max(0, ecoule / timer.minutesFin));
+  const enCroisement = ecoule >= timer.minutesCroisement && ecoule < timer.minutesMur;
+  const mur = ecoule >= timer.minutesMur && ecoule < timer.minutesFin;
+  const mort = ecoule >= timer.minutesFin;
+
+  return (
+    <article
+      className={`rounded-lg border p-4 ${
+        enCroisement
+          ? "border-lamp bg-lamp/8"
+          : mur
+            ? "border-ripe/60 bg-ripe/8"
+            : mort
+              ? "border-soil-600 opacity-45"
+              : "border-soil-600 bg-soil-850"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        {timer.genome && <ChaineGenes genome={timer.genome} taille="sm" />}
+        <span className="font-display text-lg font-semibold uppercase tracking-wide text-moss-100">
+          {timer.nom}
+        </span>
+        {timer.parQui && (
+          <span className="font-mono text-[12px] text-moss-400">lancé par {timer.parQui}</span>
+        )}
+        {modifiable && (
+          <button
+            type="button"
+            className="ml-auto font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+            onClick={onSupprimer}
+          >
+            Supprimer
+          </button>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-baseline gap-3">
+        <span
+          className={`font-mono text-3xl font-bold ${
+            enCroisement ? "text-lamp-glow" : mur ? "text-ripe" : "text-moss-100"
+          }`}
+        >
+          {enCroisement ? "À INSPECTER" : mur ? "RÉCOLTE" : mort ? "MORT" : compte(avantC * 60000)}
+        </span>
+        {!enCroisement && !mur && !mort && (
+          <span className="text-[13px] text-moss-400">avant le recalcul des gènes</span>
+        )}
+      </div>
+
+      <div className="relative mt-3 h-2 w-full overflow-hidden rounded-sm bg-soil-700">
+        <span
+          className={`block h-full ${mort ? "bg-soil-500" : mur ? "bg-ripe" : "bg-lamp"}`}
+          style={{ width: `${progression * 100}%` }}
+        />
+        <span
+          className="absolute top-0 h-full w-px bg-moss-100/70"
+          style={{ left: `${(timer.minutesCroisement / timer.minutesFin) * 100}%` }}
+          aria-hidden
+        />
+        <span
+          className="absolute top-0 h-full w-px bg-moss-100/70"
+          style={{ left: `${(timer.minutesMur / timer.minutesFin) * 100}%` }}
+          aria-hidden
+        />
+      </div>
+
+      <p className="mt-2 font-mono text-[12px] text-moss-400">
+        récolte {avantM > 0 ? `dans ${compte(avantM * 60000)}` : "disponible"}
+      </p>
+    </article>
   );
 }

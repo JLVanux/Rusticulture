@@ -10,7 +10,26 @@ vercel install supabase
 
 Ça provisionne le projet Supabase, le rattache au projet Vercel et injecte les identifiants en variables d'environnement. Choisis une **région européenne** (Paris ou Francfort) : les utilisateurs visés sont francophones, et c'est aussi le plus simple côté RGPD.
 
-## 2. Appliquer la migration
+## 2. Appliquer les migrations
+
+Dans l'ordre, une seule fois chacune :
+
+| Fichier | Rôle |
+|---|---|
+| `0001_fondations.sql` | tables, permissions, fonctions |
+| `0002_comptes_pseudo.sql` | comptes par pseudo, unicité |
+| `0003_graines.sql` | graines partagées, opérations atomiques |
+| `0004_code_invitation.sql` | correctif du code d'invitation |
+
+### Deux pièges rencontrés, à retenir
+
+**Pas d'agrégat `min` sur uuid.** Postgres n'en fournit pas. Il faut passer par `min(id::text)::uuid` — l'ordre est arbitraire mais déterministe, ce qui suffit pour désigner une ligne survivante.
+
+**`search_path = public` exclut les extensions.** Supabase installe pgcrypto dans le schéma `extensions`. Une fonction `SECURITY DEFINER` avec `set search_path = public` ne trouve donc pas `gen_random_bytes`, alors qu'une valeur par défaut de colonne y arrive très bien — d'où une erreur qui n'apparaît qu'à l'usage.
+
+Ce `set search_path` ne doit pas être élargi pour autant : sans lui, une fonction `SECURITY DEFINER` est détournable. La bonne réponse est de supprimer la dépendance, ici en passant à `gen_random_uuid()`, qui appartient au cœur de Postgres.
+
+## Détail de la première migration
 
 Dans le tableau de bord Supabase, onglet SQL Editor, colle le contenu de `migrations/0001_fondations.sql` et exécute-le. Une seule fois.
 
@@ -149,3 +168,76 @@ Cette clé est **publique par nature** : elle est visible dans le navigateur de 
 ## Comportement sans configuration
 
 Si les variables sont absentes, `supabaseConfigure` vaut `false` et les pages `/ferme` et `/connexion` affichent un message d'indisponibilité. Le reste du site est inchangé. Vérifié : les quatre pages répondent en 200 sans variables, et aucune requête réseau n'est tentée.
+
+---
+
+# Graines de la ferme
+
+## Une seule interface, deux stockages
+
+`src/lib/graines.ts` expose `useGraines()`. Les pages demandent des graines et des actions ; elles ne savent pas d'où elles viennent. La source est choisie automatiquement :
+
+- **local** — pas connecté, ou aucune ferme sélectionnée. Comportement identique à avant.
+- **ferme** — connecté avec une ferme active. Les graines sont partagées.
+
+C'est la seule abstraction de ce genre dans le projet, et c'est délibéré : les graines sont la seule donnée qui existe réellement des deux côtés. Abstraire par avance ce qui n'a qu'une implémentation coûte sans rien rapporter.
+
+Un bandeau indique en permanence où sont rangées les graines. Sans lui, on ne sait pas si son coéquipier verra ce qu'on vient d'ajouter.
+
+## Concurrence
+
+Deux coéquipiers peuvent scanner la même graine en même temps. Une lecture suivie d'une écriture côté client perdrait l'un des deux ajouts.
+
+D'où, dans `0003_graines.sql`, un index unique sur `(wipe_id, plante, genes)` et deux fonctions qui font l'opération en un seul aller : `ajouter_graine` (insertion ou incrément) et `ajuster_graine` (incrément, suppression à zéro).
+
+Ces fonctions sont volontairement en **SECURITY INVOKER**, contrairement à celles de 0001. Les politiques continuent donc de s'appliquer : un membre en lecture seule ne peut pas s'en servir pour contourner ses droits. Ne pas les passer en `security definer` sans en mesurer la conséquence.
+
+## Reprise de la banque locale
+
+Le bandeau propose de copier la banque du navigateur vers la ferme. Le local n'est **pas effacé** : un doublon se corrige, une perte non.
+
+## Journal
+
+Chaque ajout, import ou purge écrit une ligne dans `activites`. Les échecs d'écriture du journal sont ignorés : un historique manquant ne doit jamais empêcher l'action elle-même.
+
+---
+
+# Correctifs 0003 et 0004
+
+## `min(uuid)` n'existe pas
+
+Postgres n'a pas d'agrégat `min()` sur le type uuid. Le regroupement des doublons dans `0003_graines.sql` passe donc par `min(id::text)::uuid` : le tri lexicographique désigne une ligne de façon déterministe, ce qui suffit pour choisir laquelle conserver.
+
+## pgcrypto et le search_path
+
+`0001` générait le code d'invitation avec `gen_random_bytes`, qui appartient à l'extension **pgcrypto**. Sur Supabase, pgcrypto est installée dans le schéma `extensions`, absent du `search_path = public` imposé aux fonctions SECURITY DEFINER.
+
+Effet trompeur : la **valeur par défaut** de la colonne fonctionnait — une valeur par défaut n'a pas ce search_path restreint — donc la création de ferme produisait bien un code. Mais `regenerer_code_invitation` échouait avec « function gen_random_bytes(integer) does not exist ».
+
+`0004_code_invitation.sql` remplace la génération par `gen_random_uuid`, intégrée au cœur de Postgres depuis la version 13 et donc disponible quel que soit le search_path. Elle ajoute aussi une boucle de réessai sur collision : le code est unique, et une collision non gérée ferait échouer la régénération sans explication.
+
+**Leçon générale** : toute fonction `security definer set search_path = public` ne doit utiliser que des fonctions du cœur de Postgres ou du schéma `public`. Ajouter `extensions` au search_path est possible, mais élargit la surface d'attaque de la fonction.
+
+---
+
+# Timers partagés et journal
+
+## Pourquoi aucune synchronisation permanente
+
+Un timer n'est qu'une **date de départ et des durées**. Chacun charge la page et recalcule le temps restant : une ligne en base suffit, il n'y a rien à diffuser en continu.
+
+Reste à voir apparaître les timers lancés par un coéquipier. Plutôt qu'une connexion permanente, on relit toutes les 30 secondes **et au retour sur l'onglet** — c'est le moment où l'on regarde vraiment. Supabase Realtime reste ajoutable si ça devient insuffisant, mais ce serait payer une connexion ouverte pour un gain marginal.
+
+## Ce qui reste local
+
+L'état « déjà notifié » appartient à l'appareil, pas à la ferme. Si Thomas a vu passer l'alerte sur son téléphone, Alex doit quand même la recevoir sur le sien. La table `timers` ne porte donc aucun drapeau de notification ; c'est le navigateur qui retient ce qu'il a déjà annoncé.
+
+Limite inchangée : les notifications exigent qu'un onglet reste ouvert. C'est une contrainte du navigateur. Les dépasser demanderait des notifications push, donc un service worker et une clé serveur — envisageable plus tard.
+
+## Journal
+
+Chaque action notable écrit une ligne dans `activites` : ajout de graines, import, purge, lancement et suppression de timer. `decrireActivite` la rend lisible en français.
+
+Un type inconnu n'est pas traité comme une erreur : une version plus ancienne du site peut lire des activités écrites par une plus récente, et affiche alors une phrase neutre plutôt que rien.
+
+Les échecs d'écriture du journal sont ignorés : un historique manquant ne doit jamais empêcher l'action elle-même.

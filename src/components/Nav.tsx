@@ -7,7 +7,11 @@ import { useEffect, useState } from "react";
 const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
   {
     titre: "",
-    liens: [{ href: "/ferme", label: "Ma ferme" }],
+    liens: [
+      { href: "/ferme", label: "Ma ferme" },
+      { href: "/statistiques", label: "Statistiques" },
+      { href: "/equipe", label: "Équipe" },
+    ],
   },
   {
     titre: "Génétique",

@@ -1,101 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Champ, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { AlerteConditions } from "@/components/Conditions";
+import { ChaineGenes, EditeurGenes } from "@/components/Genes";
+import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { PLANTES, type Genome, type PlanteId } from "@/data/game";
+import { decrireActivite, ilYA, useActivites } from "@/lib/activites";
+import { useGraines } from "@/lib/graines";
+import { formatDuree, formatNombre } from "@/lib/model";
 import {
-  changerRole,
-  creerFerme,
-  peutEcrire,
-  regenererCode,
-  rejoindreFerme,
-  retirerMembre,
-  useDetailFerme,
-  useFermes,
-  useSession,
-  type RoleFerme,
-} from "@/lib/compte";
-import { messageErreur, supabaseConfigure } from "@/lib/supabase";
-import { useStockage } from "@/lib/storage";
+  CONTENANTS,
+  CONTENANT_PAR_ID,
+  usePlantations,
+  useProductionEstimee,
+  type Contenant,
+} from "@/lib/plantations";
+import { useTimers } from "@/lib/timers";
+import { useRecoltes } from "@/lib/recoltes";
+import { EnregistrerRecolte } from "@/components/EnregistrerRecolte";
 
-const LIBELLE_ROLE: Record<RoleFerme, string> = {
-  proprietaire: "Propriétaire",
-  membre: "Membre",
-  lecture: "Lecture seule",
-};
+export default function PageTableauDeBord() {
+  const {
+    plantations,
+    ferme,
+    wipe,
+    disponible,
+    modifiable,
+    connecte,
+    charge,
+    erreur,
+    ajouter,
+    supprimer,
+    modifierQuantite,
+  } = usePlantations();
+  const production = useProductionEstimee(plantations);
+  const { timers } = useTimers();
+  const { toutes: graines } = useGraines();
+  const { activites } = useActivites(wipe?.id ?? null, 6);
+  const { recoltes, enregistrer, modifiable: peutRecolter } = useRecoltes();
 
-export default function PageFerme() {
-  const { connecte, charge: sessionChargee } = useSession();
-  const { fermes, charge, recharger } = useFermes();
-  // La ferme courante est retenue localement : c'est un choix d'affichage, pas
-  // une donnée de la ferme.
-  const [fermeActive, setFermeActive] = useStockage<string | null>("ferme-active", null);
-  const [erreur, setErreur] = useState<string | null>(null);
-  const [occupe, setOccupe] = useState(false);
+  const [contenant, setContenant] = useState<Contenant>("grand_bac");
+  const [plante, setPlante] = useState<PlanteId>("chanvre");
+  const [genome, setGenome] = useState<Genome>(["G", "G", "G", "Y", "Y", "Y"]);
+  const [quantite, setQuantite] = useState(1);
 
-  const [nomFerme, setNomFerme] = useState("");
-  const [nomWipe, setNomWipe] = useState("");
-  const [code, setCode] = useState("");
+  const jour = wipe
+    ? Math.max(1, Math.floor((Date.now() - new Date(wipe.debut).getTime()) / 86_400_000) + 1)
+    : null;
 
-  const courante = fermes.find((f) => f.ferme.id === fermeActive) ?? fermes[0] ?? null;
-  const { membres, wipe, recharger: rechargerDetail } = useDetailFerme(courante?.ferme.id ?? null);
+  const totaux = useMemo(() => {
+    const plants = plantations.reduce(
+      (a, p) => a + (CONTENANT_PAR_ID[p.contenant]?.plants ?? 1) * p.quantite,
+      0
+    );
+    const contenants = plantations.reduce((a, p) => a + p.quantite, 0);
+    return { plants, contenants };
+  }, [plantations]);
 
-  // Si la ferme retenue n'existe plus, on retombe sur la première disponible.
-  useEffect(() => {
-    if (charge && fermeActive && !fermes.some((f) => f.ferme.id === fermeActive)) {
-      setFermeActive(fermes[0]?.ferme.id ?? null);
-    }
-  }, [charge, fermeActive, fermes, setFermeActive]);
+  const maintenant = Date.now();
+  const aInspecter = timers.filter((t) => {
+    const ecoule = (maintenant - t.debut) / 60000;
+    return ecoule >= t.minutesCroisement && ecoule < t.minutesFin;
+  });
 
-  async function agir(action: () => Promise<unknown>) {
-    setOccupe(true);
-    setErreur(null);
-    try {
-      await action();
-      await recharger();
-      await rechargerDetail();
-    } catch (e) {
-      setErreur(messageErreur(e));
-    } finally {
-      setOccupe(false);
-    }
-  }
-
-  if (!supabaseConfigure) {
+  if (!connecte || !disponible) {
     return (
       <Page>
         <EnTetePage titre="Ma ferme" />
-        <Note ton="alerte">
-          La base de données n&apos;est pas configurée sur cette installation. Le reste du site fonctionne
-          normalement.
-        </Note>
-      </Page>
-    );
-  }
-
-  if (!sessionChargee) {
-    return (
-      <Page>
-        <EnTetePage titre="Ma ferme" />
-        <p className="text-[15px] text-moss-400">Chargement…</p>
-      </Page>
-    );
-  }
-
-  if (!connecte) {
-    return (
-      <Page>
-        <EnTetePage
-          titre="Ma ferme"
-          intro="Une ferme se partage avec tes coéquipiers : timers communs, graines communes, statistiques communes."
-        />
         <div className="rounded-lg border border-soil-600 bg-soil-850 p-6 text-center">
-          <p className="text-[15px] text-moss-200">Il faut être connecté pour créer ou rejoindre une ferme.</p>
-          <Link href="/connexion" className="bouton bouton-primaire mt-4 inline-flex">
-            Créer un compte ou se connecter
+          <p className="text-[15px] text-moss-200">
+            {connecte
+              ? "Crée ou rejoins une ferme pour suivre ta production."
+              : "Connecte-toi pour suivre ta ferme et la partager avec ton équipe."}
+          </p>
+          <Link href={connecte ? "/equipe" : "/connexion"} className="bouton bouton-primaire mt-4 inline-flex">
+            {connecte ? "Créer une ferme" : "Se connecter"}
           </Link>
           <p className="mt-3 text-[13px] text-moss-400">
-            Le reste du site reste utilisable sans compte.
+            Les calculateurs restent utilisables sans compte.
           </p>
         </div>
       </Page>
@@ -103,8 +86,22 @@ export default function PageFerme() {
   }
 
   return (
-    <Page>
-      <EnTetePage titre="Ma ferme" />
+    <Page large>
+      <EnTetePage titre={ferme?.nom ?? "Ma ferme"} />
+
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[13px] text-moss-400">
+        {wipe && (
+          <span>
+            {wipe.nom}
+            {wipe.serveur && ` · ${wipe.serveur}`} · jour {jour}
+          </span>
+        )}
+        <Link href="/equipe" className="text-lamp-glow hover:underline">
+          Équipe et invitations →
+        </Link>
+      </div>
+
+      <AlerteConditions />
 
       {erreur && (
         <div className="mb-6">
@@ -112,235 +109,242 @@ export default function PageFerme() {
         </div>
       )}
 
-      {/* Sélecteur, si plusieurs fermes */}
-      {fermes.length > 1 && (
-        <div className="mb-6">
-          <Champ label="Ferme">
-            <select
-              className="champ max-w-xs"
-              value={courante?.ferme.id ?? ""}
-              onChange={(e) => setFermeActive(e.target.value)}
-            >
-              {fermes.map((f) => (
-                <option key={f.ferme.id} value={f.ferme.id}>
-                  {f.ferme.nom}
-                </option>
-              ))}
-            </select>
-          </Champ>
+      {/* Ce qui demande une action tout de suite */}
+      {aInspecter.length > 0 && (
+        <div className="mb-6 rounded-lg border border-lamp bg-lamp/10 p-4">
+          <div className="font-display text-[15px] font-semibold uppercase tracking-wide text-lamp-glow">
+            {aInspecter.length} plant{aInspecter.length > 1 ? "s" : ""} à inspecter
+          </div>
+          <p className="mt-1 text-[14px] text-moss-200">
+            {aInspecter.map((t) => t.nom).join(", ")} — les gènes sont recalculés, tu peux bouturer.
+          </p>
+          <Link href="/minuteurs" className="bouton mt-3 inline-flex">
+            Voir les minuteurs
+          </Link>
         </div>
       )}
 
-      {courante ? (
-        <>
-          <section className="rounded-lg border border-soil-600 bg-soil-850 p-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <h2 className="titre text-2xl">{courante.ferme.nom}</h2>
-              <span className="puce border-lamp/50 text-lamp-glow">{LIBELLE_ROLE[courante.role]}</span>
-            </div>
+      {/* Production estimée */}
+      <section>
+        <h2 className="titre text-2xl">Production estimée</h2>
+        <p className="mt-1 text-[14px] leading-relaxed text-moss-400">
+          Calculée à partir de ta configuration et du modèle du site.{" "}
+          <span className="text-moss-200">Ce n&apos;est pas une production constatée</span> — pour ça, il
+          faudra enregistrer tes récoltes.
+        </p>
 
-            {wipe ? (
-              <p className="mt-2 font-mono text-[13px] text-moss-400">
-                {wipe.nom}
-                {wipe.serveur && ` · ${wipe.serveur}`} · jour{" "}
-                {Math.max(
-                  1,
-                  Math.floor((Date.now() - new Date(wipe.debut).getTime()) / 86_400_000) + 1
-                )}
-              </p>
-            ) : (
-              <p className="mt-2 text-[13px] text-ripe">Aucun wipe actif.</p>
-            )}
-          </section>
+        {production.length === 0 ? (
+          <div className="mt-4 rounded-lg border border-dashed border-soil-600 p-8 text-center">
+            <p className="text-moss-200">Aucune plantation déclarée.</p>
+            <p className="mt-1 text-[13px] text-moss-400">
+              Renseigne tes bacs plus bas pour voir ta production.
+            </p>
+          </div>
+        ) : (
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {production.map((l) => (
+              <li key={l.ressource} className="rounded-lg border border-soil-600 bg-soil-850 p-4">
+                <div className="eyebrow">{l.ressource} / heure</div>
+                <div className="font-display text-3xl font-bold text-lamp-glow">
+                  {formatNombre(l.parHeure, 0)}
+                </div>
+                <div className="mt-2 border-t border-soil-700 pt-2 font-mono text-[12px] text-moss-400">
+                  {formatNombre(l.parCycle, 0)} par cycle de {formatDuree(l.minutesCycle)} · {l.plants} plants
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
 
-          {/* Membres */}
-          <section className="mt-8">
-            <h3 className="titre mb-3 text-xl">
-              Membres <span className="font-mono text-sm font-normal text-moss-400">{membres.length}</span>
-            </h3>
-            <ul className="space-y-1.5">
-              {membres.map((m) => (
-                <li
-                  key={m.profil_id}
-                  className="flex flex-wrap items-center gap-3 rounded border border-soil-600 bg-soil-850 px-3 py-2.5"
-                >
-                  <span className="text-[15px] text-moss-100">{m.profils?.pseudo ?? "Fermier"}</span>
-                  {courante.role === "proprietaire" && m.role !== "proprietaire" ? (
-                    <select
-                      className="champ ml-auto w-auto py-1 text-[13px]"
-                      value={m.role}
-                      disabled={occupe}
-                      onChange={(e) =>
-                        void agir(() =>
-                          changerRole(courante.ferme.id, m.profil_id, e.target.value as RoleFerme)
-                        )
-                      }
-                    >
-                      <option value="membre">Membre</option>
-                      <option value="lecture">Lecture seule</option>
-                    </select>
-                  ) : (
-                    <span className="ml-auto font-mono text-[12px] text-moss-400">
-                      {LIBELLE_ROLE[m.role]}
-                    </span>
-                  )}
-                  {courante.role === "proprietaire" && m.role !== "proprietaire" && (
+        {production.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2 font-mono text-[13px] text-moss-400">
+            <span>
+              {totaux.contenants} contenant{totaux.contenants > 1 ? "s" : ""}
+            </span>
+            <span>{totaux.plants} plants</span>
+            <span>
+              {graines.reduce((a, g) => a + g.quantite, 0)} graines en réserve
+            </span>
+          </div>
+        )}
+      </section>
+
+      {/* Récolte réelle */}
+      {peutRecolter && (
+        <section className="mt-10 rounded-lg border border-soil-600 bg-soil-850 p-5">
+          <h2 className="titre text-xl">Enregistrer une récolte</h2>
+          <p className="mb-4 mt-1 text-[14px] leading-relaxed text-moss-400">
+            Ce que tu as réellement ramassé. C&apos;est la seule donnée observée du site —{" "}
+            <Link href="/statistiques" className="text-lamp-glow underline underline-offset-2">
+              tes statistiques
+            </Link>{" "}
+            en découlent.
+          </p>
+          <EnregistrerRecolte
+            recoltes={recoltes}
+            production={production}
+            debutWipe={wipe ? new Date(wipe.debut).getTime() : null}
+            onEnregistrer={enregistrer}
+          />
+        </section>
+      )}
+
+      {/* Configuration */}
+      <section className="mt-10">
+        <h2 className="titre text-2xl">Mes bacs</h2>
+
+        {!charge ? (
+          <p className="mt-3 text-[15px] text-moss-400">Chargement…</p>
+        ) : (
+          <ul className="mt-4 space-y-1.5">
+            {plantations.map((p) => (
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded border border-soil-600 bg-soil-850 px-3 py-2.5"
+              >
+                <span className="font-display text-[15px] font-semibold uppercase tracking-wide text-moss-100">
+                  {CONTENANT_PAR_ID[p.contenant]?.nom}
+                </span>
+                <span className="text-[14px] text-moss-200">
+                  {PLANTES.find((x) => x.id === p.plante)?.nom}
+                </span>
+                {p.genome && <ChaineGenes genome={p.genome} taille="sm" />}
+                <span className="font-mono text-[12px] text-moss-400">
+                  {(CONTENANT_PAR_ID[p.contenant]?.plants ?? 1) * p.quantite} plants
+                </span>
+
+                {modifiable ? (
+                  <div className="ml-auto flex items-center gap-1">
                     <button
                       type="button"
-                      className="font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
-                      disabled={occupe}
-                      onClick={() => {
-                        if (confirm(`Retirer ${m.profils?.pseudo ?? "ce membre"} de la ferme ?`)) {
-                          void agir(() => retirerMembre(courante.ferme.id, m.profil_id));
-                        }
-                      }}
+                      aria-label="Retirer un contenant"
+                      className="h-7 w-7 rounded border border-soil-500 text-moss-200 hover:border-lamp/50"
+                      onClick={() => void modifierQuantite(p.id, p.quantite - 1)}
+                      disabled={p.quantite <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center font-mono text-sm text-moss-100">×{p.quantite}</span>
+                    <button
+                      type="button"
+                      aria-label="Ajouter un contenant"
+                      className="h-7 w-7 rounded border border-soil-500 text-moss-200 hover:border-lamp/50"
+                      onClick={() => void modifierQuantite(p.id, p.quantite + 1)}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="ml-2 font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+                      onClick={() => void supprimer(p.id)}
                     >
                       Retirer
                     </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
+                  </div>
+                ) : (
+                  <span className="ml-auto font-mono text-[13px] text-moss-400">×{p.quantite}</span>
+                )}
+              </li>
+            ))}
+            {plantations.length === 0 && (
+              <li className="rounded border border-dashed border-soil-600 p-6 text-center text-[14px] text-moss-400">
+                Rien de déclaré pour l&apos;instant.
+              </li>
+            )}
+          </ul>
+        )}
 
-          {/* Invitation */}
-          {courante.role === "proprietaire" && (
-            <section className="mt-8 rounded-lg border border-soil-600 bg-soil-850 p-5">
-              <h3 className="titre text-xl">Inviter un coéquipier</h3>
-              <p className="mt-1 text-[14px] text-moss-400">
-                Donne-lui ce code. Il le saisit dans « Rejoindre une ferme » après s&apos;être connecté.
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <code className="rounded border border-lamp/50 bg-lamp/10 px-4 py-2 font-mono text-xl tracking-[0.2em] text-lamp-glow">
-                  {courante.ferme.code_invitation}
-                </code>
+        {modifiable && (
+          <div className="mt-4">
+            <Details titre="Déclarer des bacs" ouvert={plantations.length === 0}>
+              <div className="space-y-4">
+                <Champ label="Contenant">
+                  <Choix
+                    valeur={contenant}
+                    onChange={setContenant}
+                    options={CONTENANTS.map((c) => ({ label: c.nom, valeur: c.id }))}
+                  />
+                </Champ>
+                <p className="text-[13px] text-moss-400">{CONTENANT_PAR_ID[contenant]?.note}</p>
+
+                <Champ label="Plante">
+                  <Choix
+                    valeur={plante}
+                    onChange={setPlante}
+                    options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))}
+                  />
+                </Champ>
+
+                <Champ label="Gènes plantés" aide="Laisse tel quel si tu ne sais pas : l'estimation sera basse.">
+                  <EditeurGenes genome={genome} onChange={setGenome} taille="md" />
+                </Champ>
+
+                <div className="w-32">
+                  <Champ label="Combien">
+                    <input
+                      type="number"
+                      min={1}
+                      className="champ"
+                      value={quantite}
+                      onChange={(e) => setQuantite(Math.max(1, Number(e.target.value)))}
+                    />
+                  </Champ>
+                </div>
+
                 <button
                   type="button"
-                  className="bouton"
-                  onClick={() => void navigator.clipboard.writeText(courante.ferme.code_invitation)}
-                >
-                  Copier
-                </button>
-                <button
-                  type="button"
-                  className="bouton bouton-danger"
-                  disabled={occupe}
+                  className="bouton bouton-primaire"
                   onClick={() => {
-                    if (confirm("Régénérer le code ? L'ancien cessera de fonctionner.")) {
-                      void agir(() => regenererCode(courante.ferme.id));
-                    }
+                    void ajouter({ contenant, plante, genome, quantite, libelle: null });
+                    setQuantite(1);
                   }}
                 >
-                  Régénérer
+                  Ajouter
                 </button>
               </div>
-              <p className="mt-3 text-[13px] text-moss-400">
-                Toute personne qui a ce code peut rejoindre la ferme. Régénère-le s&apos;il a circulé plus
-                loin que prévu.
-              </p>
-            </section>
-          )}
-        </>
-      ) : (
-        charge && (
-          <Note>Tu n&apos;as pas encore de ferme. Crée la tienne, ou rejoins celle d&apos;un coéquipier.</Note>
-        )
+            </Details>
+          </div>
+        )}
+      </section>
+
+      {/* Journal */}
+      {activites.length > 0 && (
+        <section className="mt-10">
+          <h2 className="titre text-xl">Activité récente</h2>
+          <ul className="mt-3 space-y-1">
+            {activites.map((a) => (
+              <li
+                key={a.id}
+                className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-soil-700 py-2 last:border-0"
+              >
+                <span className="text-[14px] text-moss-200">{decrireActivite(a)}</span>
+                <span className="font-mono text-[12px] text-moss-400">{ilYA(a.cree_le)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      {/* Créer / rejoindre */}
       <div className="mt-10">
-        <Details titre="Créer une ferme" ouvert={fermes.length === 0}>
-          <div className="space-y-4">
-            <Champ label="Nom de la ferme">
-              <input
-                className="champ"
-                placeholder="Team Alpha"
-                value={nomFerme}
-                onChange={(e) => setNomFerme(e.target.value)}
-              />
-            </Champ>
-            <Champ label="Nom du wipe" aide="Modifiable plus tard.">
-              <input
-                className="champ"
-                placeholder="Wipe 1"
-                value={nomWipe}
-                onChange={(e) => setNomWipe(e.target.value)}
-              />
-            </Champ>
-            <button
-              type="button"
-              className="bouton bouton-primaire"
-              disabled={occupe || nomFerme.trim().length === 0}
-              onClick={() =>
-                void agir(async () => {
-                  const id = await creerFerme(nomFerme, nomWipe);
-                  setFermeActive(id);
-                  setNomFerme("");
-                  setNomWipe("");
-                })
-              }
-            >
-              Créer
-            </button>
-          </div>
+        <Details titre="Estimé, pas constaté">
+          <p className="text-[14px] leading-relaxed text-moss-200">
+            Ces chiffres sortent du modèle du site appliqué à ce que tu as déclaré : ils supposent que tout
+            pousse en conditions idéales et que tu replantes dès la récolte. La réalité sera plus basse.
+          </p>
+          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+            Tant que tu n&apos;enregistres pas tes récoltes réelles, rien ici ne permet de savoir de combien.
+            C&apos;est la prochaine étape, et c&apos;est elle qui donnera un sens aux statistiques.
+          </p>
         </Details>
 
-        <Details titre="Rejoindre une ferme">
-          <div className="flex flex-wrap items-end gap-3">
-            <Champ label="Code d'invitation">
-              <input
-                className="champ font-mono tracking-[0.2em]"
-                placeholder="a1b2c3d4"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-              />
-            </Champ>
-            <button
-              type="button"
-              className="bouton bouton-primaire"
-              disabled={occupe || code.trim().length < 4}
-              onClick={() =>
-                void agir(async () => {
-                  const id = await rejoindreFerme(code);
-                  setFermeActive(id);
-                  setCode("");
-                })
-              }
-            >
-              Rejoindre
-            </button>
-          </div>
-        </Details>
-
-        <Details titre="Les trois rôles">
-          <ul className="space-y-2 text-[14px] leading-relaxed text-moss-200">
-            <li>
-              <span className="text-moss-100">Propriétaire</span> — gère la ferme, les membres, les rôles et
-              les wipes.
-            </li>
-            <li>
-              <span className="text-moss-100">Membre</span> — ajoute des graines, lance des timers, enregistre
-              des récoltes, modifie les plantations.
-            </li>
-            <li>
-              <span className="text-moss-100">Lecture seule</span> — consulte tout, ne modifie rien.
-            </li>
-          </ul>
-          <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
-            Ces règles sont appliquées par la base de données elle-même, pas par l&apos;interface. Masquer un
-            bouton n&apos;empêche personne d&apos;appeler l&apos;API directement — c&apos;est pour ça
-            qu&apos;elles ne vivent pas dans le code du site.
+        <Details titre="Pourquoi le croisement ne concerne que le grand bac">
+          <p className="text-[14px] leading-relaxed text-moss-200">
+            Le croisement dépend du nombre de voisines qu&apos;un plant touche. Seul le grand bac a la grille
+            3×3 qui produit les probabilités calculées par le site. Les bacs triangulaires et les pots comptent
+            ici, pour la production, mais pas dans les outils de génétique.
           </p>
         </Details>
       </div>
-
-      {courante && !peutEcrire(courante.role) && (
-        <div className="mt-6">
-          <Note>
-            Tu es en lecture seule sur cette ferme. Tu vois tout, tu ne modifies rien.
-          </Note>
-        </div>
-      )}
     </Page>
   );
 }

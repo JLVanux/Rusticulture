@@ -6,6 +6,10 @@ import { useEffect, useState } from "react";
 
 const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
   {
+    titre: "",
+    liens: [{ href: "/ferme", label: "Ma ferme" }],
+  },
+  {
     titre: "Génétique",
     liens: [
       { href: "/scanner", label: "Scanner" },
@@ -31,7 +35,10 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
   },
   {
     titre: "",
-    liens: [{ href: "/reglages", label: "Réglages" }],
+    liens: [
+      { href: "/reglages", label: "Réglages" },
+      { href: "/connexion", label: "Compte" },
+    ],
   },
 ];
 

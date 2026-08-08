@@ -2,7 +2,11 @@
 
 Site d'aide en français pour l'agriculture dans Rust : génétique, croisement, rendement, thés, tartes, poulailler, minuteurs, et un calculateur de coût de raid.
 
-Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind 3. Aucune base de données, aucun compte : tout est stocké dans le navigateur du visiteur.
+Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind 3.
+
+Deux régimes cohabitent. **Sans compte**, les calculateurs, le scanner et la génétique fonctionnent entièrement dans le navigateur, sans serveur. **Avec un compte**, une ferme se partage entre coéquipiers : graines, minuteurs, plantations, récoltes et statistiques communs, sur Supabase.
+
+**[ETAT.md](ETAT.md)** suit ce qui est fait, ce qui reste, et les décisions déjà tranchées. À lire avant de reprendre le projet.
 
 ## Lancer en local
 
@@ -29,6 +33,18 @@ Chacun demande **une activation séparée dans le tableau de bord Vercel** — o
 Aucun cookie, donc aucun bandeau de consentement. Sur le plan Hobby : 50 000 événements d'analytics et 10 000 points de Speed Insights par mois, pour un usage personnel non commercial.
 
 **À surveiller en particulier : l'INP** (Interaction to Next Paint). Le planificateur multi-générations tourne sur le fil principal et prend environ 250 ms sur une machine de bureau — bien davantage sur un téléphone d'entrée de gamme. C'est exactement le genre de blocage que cette métrique révèle, et elle dira si l'optimisation vaut l'effort.
+
+## Mettre à jour le dépôt depuis une archive
+
+```bash
+./outils/maj.sh ~/Downloads/rusticulture
+```
+
+Le script synchronise le dépôt avec l'archive et **supprime** ce qui n'y figure plus — c'est nécessaire pour que les fichiers retirés disparaissent aussi du dépôt.
+
+C'est justement ce qui rend les exclusions indispensables. Sont préservés : `.git`, `.env` et `.env.*`, `node_modules`, `.next`, `.vercel`, `.DS_Store`. Sans elles, un `rsync --delete` nu emporte le fichier d'environnement à chaque mise à jour.
+
+Le script refuse de tourner ailleurs qu'à la racine d'un dépôt, et refuse une source qui ne ressemble pas au projet.
 
 ## Déployer sur Vercel
 

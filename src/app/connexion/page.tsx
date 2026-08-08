@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
-import { useSession } from "@/lib/compte";
+import { supprimerMonCompte, useSession } from "@/lib/compte";
 import { adresseDerivee, pseudoValable } from "@/lib/pseudo";
 import { messageErreur, supabase, supabaseConfigure } from "@/lib/supabase";
 
@@ -92,6 +92,36 @@ export default function PageCompte() {
         </div>
 
         <div className="mt-10">
+          <Details titre="Supprimer mon compte">
+            <p className="text-[14px] leading-relaxed text-moss-200">
+              La suppression est immédiate et définitive : ton compte, tes appartenances et tout ce qui te
+              signe dans les fermes disparaissent. Aucune archive, aucune corbeille.
+            </p>
+            <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+              Une ferme dont tu es propriétaire n&apos;est pas détruite si d&apos;autres membres y sont : elle
+              est transmise au plus ancien d&apos;entre eux. Elle n&apos;est supprimée que si tu y es seul.
+            </p>
+            <button
+              type="button"
+              className="bouton bouton-danger mt-4"
+              disabled={occupe}
+              onClick={async () => {
+                if (!confirm("Supprimer définitivement ton compte ?\n\nCette action ne peut pas être annulée.")) return;
+                if (!confirm("Dernière confirmation : tout sera effacé.")) return;
+                setOccupe(true);
+                try {
+                  await supprimerMonCompte();
+                  window.location.href = "/";
+                } catch (e) {
+                  setErreur(traduire(messageErreur(e)));
+                  setOccupe(false);
+                }
+              }}
+            >
+              Supprimer mon compte
+            </button>
+          </Details>
+
           <Details titre="Changer de pseudo">
             <p className="text-[14px] leading-relaxed text-moss-200">
               Ce n&apos;est pas possible : le pseudo est ton identifiant de connexion. Le modifier

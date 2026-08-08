@@ -1,69 +1,36 @@
-Ferme collaborative : comptes, ferme partagée, graines, timers, tableau de bord et récoltes
+Objectifs du wipe, suppression de compte, confidentialité et outillage
 
-Le site devient utilisable à plusieurs sur toute la durée d'un wipe, sans rien
-retirer à ce qui existait : sans compte, les calculateurs, le scanner et la
-génétique fonctionnent exactement comme avant, en local.
+Objectifs
+- Quatre types : production, génétique, construction, libre.
+- La progression n'est jamais stockée : elle se recalcule à partir des récoltes,
+  des graines et des plantations. Un compteur figé finirait par mentir, par
+  exemple après la suppression d'une récolte saisie par erreur.
+- L'objectif génétique se mesure en cases justes sur la meilleure graine en
+  réserve : progression continue plutôt que binaire, ce qui reflète le travail
+  réel de croisement.
+- Seul le type « libre » a un état propre, rien dans les données ne permettant
+  de savoir s'il est atteint.
+- Migration 0005 : colonne `genes` et contrainte de cohérence.
 
-Base de données
-- Supabase. Modèle profil → ferme → wipe → (graines, plantations, timers,
-  récoltes, objectifs, activités).
-- Le WIPE est le conteneur des données temporelles, pas la ferme : un nouveau
-  wipe repart de zéro sans rien effacer et les anciens restent consultables.
-- Les trois rôles — propriétaire, membre, lecture seule — sont appliqués par des
-  politiques Postgres, pas par le code. Un appel direct à l'API ne peut pas les
-  contourner.
-- On stocke des faits ; totaux, rendements et efficacité se recalculent. Seules
-  les durées d'un timer sont figées à la création, pour que tous les membres
-  voient le même décompte même si le modèle change.
+Suppression de compte et confidentialité
+- Suppression réelle et immédiate, exigée dès lors qu'il y a des comptes.
+- L'utilisateur à supprimer n'est pas un paramètre : la fonction lit l'identité
+  de l'appelant elle-même. Impossible de s'en servir contre quelqu'un d'autre.
+- Une ferme n'est pas détruite avec son propriétaire : elle est transmise au
+  plus ancien membre restant, et n'est supprimée que s'il n'y a personne
+  d'autre. Sans ça, un départ effacerait le wipe entier d'une équipe.
+- Page de confidentialité distinguant les deux régimes du site : sans compte
+  rien ne quitte le navigateur, avec un compte seuls le pseudo, une empreinte
+  de mot de passe et les données des fermes sont conservés.
+- Migration 0006.
 
-Comptes
-- Pseudo et mot de passe, aucun e-mail demandé ni envoyé. L'adresse exigée par
-  Supabase est dérivée du pseudo et n'est jamais affichée.
-- Conséquence assumée et annoncée dans l'interface : un mot de passe oublié ne
-  peut pas être récupéré.
-
-Ferme partagée
-- Création, adhésion par code d'invitation, gestion des membres et des rôles.
-- Graines, timers, plantations et récoltes appartiennent à la ferme.
-- Journal d'activité en ajout seul : l'historique ne se réécrit pas.
-
-Graines
-- `useGraines` expose une seule interface pour deux stockages, local ou ferme.
-  Les pages ne savent pas d'où viennent les graines. Un bandeau le dit en
-  permanence, sans quoi on ignore si son coéquipier verra ce qu'on ajoute.
-- Index unique et fonctions atomiques côté base : deux coéquipiers peuvent
-  scanner la même graine en même temps sans qu'un ajout se perde.
-
-Timers
-- Partagés, avec le nom de qui les a lancés. Aucune connexion permanente : un
-  timer n'est qu'une date de départ, chacun recalcule le reste. Relecture toutes
-  les 30 s et au retour sur l'onglet.
-- L'état « déjà notifié » reste sur l'appareil : chacun reçoit ses alertes.
-
-Tableau de bord et récoltes
-- Production estimée par ressource, à partir des contenants déclarés. Les bacs
-  triangulaires et les pots comptent ici ; le croisement reste réservé au grand
-  bac, seul contenant dont la grille 3×3 produit les probabilités du site.
-- Enregistrement des récoltes réelles, avec contrôle de plausibilité : chaque
-  saisie est confrontée à la capacité théorique de la ferme depuis la dernière
-  récolte. Le site avertit sans bloquer — refuser une récolte légitime serait
-  pire que d'en accepter une douteuse.
-- Statistiques du wipe : totaux, moyenne, meilleure récolte, et rendement réel
-  rapporté à l'estimation. Les limites sont explicitées dans l'interface, dont
-  l'absence d'historisation de la configuration.
-
-Corrections
-- Course au chargement des graines : tant que la ferme n'était pas résolue, une
-  graine ajoutée partait dans le navigateur au lieu de la ferme, sans le moindre
-  signe. L'écriture est bloquée le temps de savoir où écrire.
-- Transfert de la banque locale rejouable : la fonction d'ajout étant
-  incrémentale, un second clic doublait les quantités. Le transfert déplace
-  désormais, après confirmation.
-- `min(uuid)` n'existe pas en Postgres.
-- `search_path = public` exclut le schéma des extensions, donc `gen_random_bytes`
-  était introuvable dans les fonctions SECURITY DEFINER. Dépendance à pgcrypto
-  supprimée plutôt que search_path élargi, ce dernier étant ce qui protège ces
-  fonctions.
-- Prise en charge du nouveau nom de clé publique Supabase.
-
-Migrations à appliquer dans l'ordre : 0001 à 0004.
+Outillage et sécurité
+- `.gitignore` : le motif `.env*.local` laissait passer `.env`,
+  `.env.development` et `.env.production`. Couverture complète, avec exception
+  pour les fichiers d'exemple.
+- `outils/maj.sh` : synchronisation d'une archive vers le dépôt en préservant
+  `.git`, les fichiers d'environnement, `node_modules` et `.next`. Un
+  `rsync --delete` nu emportait la configuration locale à chaque mise à jour.
+- `ETAT.md` : suivi de ce qui est fait, de ce qui reste, des décisions déjà
+  tranchées et des pièges rencontrés. À lire avant de reprendre le projet.
+- README corrigé : il annonçait encore « aucune base de données, aucun compte ».

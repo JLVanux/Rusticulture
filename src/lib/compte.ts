@@ -311,3 +311,17 @@ export async function retirerMembre(fermeId: string, profilId: string) {
   const { error } = await sb.from("membres").delete().eq("ferme_id", fermeId).eq("profil_id", profilId);
   if (error) throw error;
 }
+
+/**
+ * Supprime définitivement le compte courant.
+ *
+ * L'appelant n'est pas un paramètre : la fonction en base lit `auth.uid()`
+ * elle-même, on ne peut donc pas s'en servir pour supprimer quelqu'un d'autre.
+ */
+export async function supprimerMonCompte() {
+  const sb = supabase();
+  if (!sb) throw new Error("base de données non configurée");
+  const { error } = await sb.rpc("supprimer_mon_compte");
+  if (error) throw error;
+  await sb.auth.signOut();
+}

@@ -165,6 +165,37 @@ Supabase a renommé sa clé publique : `sb_publishable_...` remplace l'ancienne 
 
 Cette clé est **publique par nature** : elle est visible dans le navigateur de chaque visiteur, c'est normal et sans danger. Ce qui protège les données, ce sont les politiques de la base. En revanche la clé `service_role` contourne toutes les politiques — elle ne doit jamais apparaître dans une variable `NEXT_PUBLIC_`, ni dans le dépôt.
 
+## Ce qui est public et ce qui ne l'est pas
+
+`NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` sont **publiques par conception**. Le préfixe `NEXT_PUBLIC_` fait que Next les inscrit dans le JavaScript envoyé au navigateur : n'importe quel visiteur peut les lire. Les retrouver dans un dépôt public n'est donc pas une fuite.
+
+Ce qui protège les données, ce sont les politiques de la base. C'est pour ça qu'il ne faut jamais désactiver la sécurité au niveau des lignes sur une table.
+
+**Ne doivent jamais quitter ta machine, en revanche** :
+
+- la clé `service_role` — elle contourne toutes les politiques ;
+- le mot de passe de la base, donné à la création du projet ;
+- toute chaîne de connexion Postgres directe.
+
+Aucune de ces trois valeurs n'a besoin de figurer dans le projet en l'état.
+
+## Fichiers d'environnement et git
+
+Le motif `.env*.local`, courant dans les modèles Next, laisse passer `.env`, `.env.development` et `.env.production` — trois noms très employés. Le `.gitignore` du projet couvre désormais `.env` et `.env.*`, avec une exception pour les fichiers d'exemple.
+
+Pour vérifier qu'aucun fichier d'environnement n'est suivi :
+
+```bash
+git ls-files | grep -i env
+```
+
+La seule ligne attendue est `.env.local.exemple`. Si un `.env` apparaît, le retirer du suivi sans effacer le fichier :
+
+```bash
+git rm --cached .env
+git commit -m "Retire .env du suivi"
+```
+
 ## Comportement sans configuration
 
 Si les variables sont absentes, `supabaseConfigure` vaut `false` et les pages `/ferme` et `/connexion` affichent un message d'indisponibilité. Le reste du site est inchangé. Vérifié : les quatre pages répondent en 200 sans variables, et aucune requête réseau n'est tentée.

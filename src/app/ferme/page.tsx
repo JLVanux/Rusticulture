@@ -19,6 +19,7 @@ import {
 import { useTimers } from "@/lib/timers";
 import { useRecoltes } from "@/lib/recoltes";
 import { EnregistrerRecolte } from "@/components/EnregistrerRecolte";
+import { SectionObjectifs } from "@/components/Objectifs";
 
 export default function PageTableauDeBord() {
   const {
@@ -306,6 +307,8 @@ export default function PageTableauDeBord() {
           </div>
         )}
       </section>
+
+      <SectionObjectifs recoltes={recoltes} graines={graines} plantations={plantations} />
 
       {/* Journal */}
       {activites.length > 0 && (

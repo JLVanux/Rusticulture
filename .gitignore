@@ -1,7 +1,13 @@
 node_modules
 .next
 out
-.env*.local
+# Variables d'environnement, sous tous leurs noms.
+# Le motif « .env*.local » seul laissait passer .env, .env.development et
+# .env.production — trois noms très courants.
+.env
+.env.*
+!.env.*.exemple
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+COMMIT.txt

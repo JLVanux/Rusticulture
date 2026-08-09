@@ -7,8 +7,10 @@ import { PLANTE_PAR_ID } from "@/data/game";
 // Deux façons d'appeler cette route, et c'est volontaire.
 //
 // 1. **La tâche planifiée**, avec le secret : elle balaie toutes les fermes.
-//    GitHub Actions ne garantit pas la ponctualité — un passage prévu toutes les
-//    dix minutes peut glisser, voire sauter en période de charge.
+//    Elle est déclenchée par `pg_cron` depuis la base elle-même, toutes les
+//    minutes. GitHub Actions remplissait ce rôle auparavant, mais ses runners
+//    gratuits accusent dix à trente minutes de retard — constaté en production,
+//    et rédhibitoire pour une alerte de récolte.
 //
 // 2. **Un membre connecté**, avec son jeton de session : elle ne traite que ses
 //    propres fermes. C'est ce qui rend les notifications quasi immédiates dès

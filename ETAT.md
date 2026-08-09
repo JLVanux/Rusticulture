@@ -68,7 +68,7 @@ Dernière mise à jour : après la suppression de compte et la page de confident
 - L'URL vit dans la table `integrations`, **sécurité activée et aucune politique** : personne ne la lit depuis le navigateur, pas même le propriétaire. Seule la clé de service, côté serveur, y accède. Une table séparée plutôt qu'une colonne sur `fermes` — masquer une colonne oblige à redonner le droit de lecture colonne par colonne, et chaque colonne ajoutée plus tard deviendrait invisible sans qu'on s'en aperçoive.
 - Filtre sur la forme de l'URL : refuse tout ce qui n'est pas un domaine Discord, pour qu'un copier-coller malheureux n'envoie pas les notifications d'une équipe vers un serveur inconnu.
 - **Première route serveur du projet** : `/api/notifications`. Authentification avant toute autre chose, y compris avant la vérification de la configuration — un appelant non autorisé ne doit rien apprendre.
-- **Les tâches planifiées de Vercel sont inutilisables ici** : le plan Hobby les limite à une exécution par jour. On passe par GitHub Actions, toutes les dix minutes. Effet de bord utile : ça maintient Supabase éveillé.
+- **Les tâches planifiées de Vercel sont inutilisables ici** : le plan Hobby les limite à une exécution par jour. C'est `pg_cron`, dans la base, qui déclenche l'envoi toutes les minutes — voir plus bas.
 - Anti-doublon par clé primaire composite dans `notifications_envoyees`, pas par une fenêtre de temps : deux exécutions concurrentes ne peuvent pas envoyer deux fois.
 - Un webhook supprimé côté Discord renvoie 404 : l'intégration est désactivée plutôt que réessayée indéfiniment.
 - Deux messages seulement, les deux qui demandent une action. Le bruit est ce qui fait retirer un bot d'un serveur.
@@ -133,7 +133,7 @@ Même condition que le classement. En attendant, la comparaison utile est **avec
 - Heure du point en **UTC** : une ferme peut réunir plusieurs fuseaux.
 
 #### Fiabilité de l'envoi
-GitHub Actions **ne garantit pas la ponctualité** : un passage peut glisser de plusieurs minutes ou sauter en période de charge. La tâche n'est donc plus le mécanisme principal mais le filet.
+`pg_cron` déclenche l'envoi toutes les minutes depuis la base elle-même : le délai entre un seuil franchi et le message est inférieur à la minute.
 
 Le site déclenche lui-même une vérification quand un membre ouvre sa ferme (`src/lib/reveil.ts`), au plus une fois toutes les quatre minutes, avec **le jeton de session du membre** — la route ne traite alors que ses propres fermes. Aucun secret ne descend dans le navigateur.
 
@@ -160,7 +160,7 @@ Personne ne lance le minuteur au moment exact où il plante. Le champ « Planté
 - **Tout est éteint par défaut sauf les alertes de culture.** Un webhook qui commente chaque geste dès son installation se fait retirer dans la semaine — et on perd alors aussi celles qui comptent.
 - **Alerte de dépérissement ajoutée** : la fenêtre de récolte se ferme et les fruits sont perdus. La plus rentable des trois, et elle manquait.
 - `regler_notification` valide le nom de colonne contre une **liste blanche** avant de l'interpoler : sans ça, un nom venu du client s'exécuterait tel quel.
-- Cadence passée de dix à **trois minutes**. GitHub Actions n'a pas la limite quotidienne de Vercel.
+
 - `regler_notification` prend **quatre paramètres** (`f`, `champ`, `valeur_bool`, `valeur_int`) : l'interface règle aussi l'heure du point quotidien, qui est un entier. Une première version à trois paramètres provoquait « Could not find the function in the schema cache » — PostgREST résout par signature exacte, pas par nom.
 - **Les notifications sont un réglage de la ferme, pas de l'équipe.** Déplacées de `/equipe` vers `/reglages`, où elles ont leur place logique. `/equipe` ne garde que les membres, les rôles et le code d'invitation.
 - Reste à faire : l'envoi **immédiat** pour les événements déclenchés par une action. Aujourd'hui plantations et récoltes passent par le journal d'activité, donc par la tâche périodique, avec jusqu'à trois minutes de décalage. L'immédiat demande une seconde route serveur qui vérifie l'appartenance à la ferme avec le jeton de l'appelant — le client ne doit jamais envoyer de texte, seulement un type et des données.
@@ -169,6 +169,14 @@ Personne ne lance le minuteur au moment exact où il plante. Le champ « Planté
 - Composant `VoirAussi` en pied de treize pages. Le site s'était construit page par page, chacune répondant à sa question sans jamais renvoyer aux autres — or les questions s'enchaînent : on calcule un rendement puis on veut savoir combien de baies pour un thé. Sans passerelles, chaque page est une impasse et l'utilisateur retourne au menu.
 - **Un lien était devenu faux** : l'aide envoyait vers `/equipe` pour configurer Discord, déplacé depuis vers `/reglages`. Déplacer une fonctionnalité impose de relire ce qui pointait dessus.
 - Le bloc Notifications Discord s'ouvre directement : c'est la raison d'être de la page pour qui arrive depuis l'aide.
+
+### Planificateur — pg_cron plutôt que GitHub Actions
+- Les tâches planifiées de GitHub accusent **dix à trente minutes de retard** sur les runners gratuits. Constaté en production : un croisement franchi à 14:32 notifié à 14:50. C'est la nature du service, pas un réglage — et sur une alerte de récolte, ça vide la fonctionnalité de son intérêt.
+- `pg_cron` s'exécute dans la base, **à la minute près**, sur le plan gratuit. Une pièce mobile en moins.
+- Effet de bord : la base est interrogée chaque minute, donc **elle ne se met plus en pause** après sept jours d'inactivité.
+- Le secret vit dans `reglages_serveur`, table sans aucune politique : inaccessible depuis un navigateur quel que soit le rôle. Il n'a pas sa place dans un fichier versionné.
+- Marche à suivre complète dans `supabase/PLANIFICATEUR.md`. **Deux extensions à activer à la main** avant la migration : `pg_cron` et `pg_net`.
+- GitHub Actions et son workflow ont été entièrement retirés du projet.
 
 ### Audit — corrections trouvées
 - **La dérive génétique était calculée mais jamais affichée.** L'accueil la présentait pourtant comme l'argument que personne d'autre n'offre : le site promettait une fonctionnalité qu'il n'avait pas. Désormais branchée dans l'assistant, sous le plan, avec le raisonnement par **position** et non par génome — la même graine dans un coin ou sur un bord n'a pas les mêmes voisines, donc pas le même risque.

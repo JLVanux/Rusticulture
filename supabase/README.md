@@ -61,7 +61,9 @@ Discord reste ajoutable plus tard : les fournisseurs se cumulent et les comptes 
 
 ## 4. Éviter la mise en pause
 
-Un projet Supabase gratuit est mis en pause après **sept jours sans la moindre requête**, et il faut alors le réveiller à la main. Tant que le trafic est faible, prévoir une tâche planifiée GitHub Actions qui interroge la base tous les trois jours. Ou passer au plan Pro à 25 $/mois, qui supprime le problème.
+Un projet Supabase gratuit est mis en pause après **sept jours sans la moindre requête**, et il faut alors le réveiller à la main.
+
+**Ce problème est réglé depuis la mise en place de `pg_cron`** : la tâche des notifications interroge la base chaque minute, donc elle ne s'endort jamais. Voir `PLANIFICATEUR.md`.
 
 ---
 

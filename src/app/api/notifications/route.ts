@@ -1,5 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { PLANTE_PAR_ID } from "@/data/game";
+import {
+  carteCroisement,
+  carteDeperit,
+  carteMur,
+  corpsWebhook,
+  COULEURS,
+  type Carte,
+} from "@/lib/cartes-discord";
 
 // -----------------------------------------------------------------------------
 // Envoi des notifications Discord
@@ -43,7 +51,7 @@ interface Preferences {
 interface Envoi {
   fermeId: string;
   cle: string;
-  contenu: string;
+  carte: Carte;
 }
 
 export async function GET(requete: Request) {
@@ -133,7 +141,7 @@ export async function GET(requete: Request) {
       const reponse = await fetch(webhook, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: e.contenu, username: "RustiCulture" }),
+        body: JSON.stringify(corpsWebhook(e.carte)),
       });
 
       if (!reponse.ok) {
@@ -206,7 +214,7 @@ async function rassembler(
         envois.push({
           fermeId: p.ferme_id,
           cle: `timer:${t.id}:${type}`,
-          contenu: messageTimer(t, type),
+          carte: carteTimer(t, type),
         });
       }
     }
@@ -232,7 +240,11 @@ async function rassembler(
     for (const a of (data ?? []) as unknown as LigneActivite[]) {
       const message = messageActivite(a);
       if (message) {
-        envois.push({ fermeId: p.ferme_id, cle: `activite:${a.id}`, contenu: message });
+        envois.push({
+          fermeId: p.ferme_id,
+          cle: `activite:${a.id}`,
+          carte: carteDepuisTexte(message),
+        });
       }
     }
   }
@@ -244,7 +256,11 @@ async function rassembler(
       const jour = new Date(maintenant).toISOString().slice(0, 10);
       const message = await pointQuotidien(sb, w);
       if (message) {
-        envois.push({ fermeId: p.ferme_id, cle: `point:${jour}`, contenu: message });
+        envois.push({
+        fermeId: p.ferme_id,
+        cle: `point:${jour}`,
+        carte: carteDepuisTexte(message),
+      });
       }
     }
   }
@@ -279,31 +295,41 @@ interface LigneActivite {
   profils: { pseudo: string } | null;
 }
 
-function messageTimer(t: LigneTimer, type: "croisement" | "mur" | "deperit"): string {
+/**
+ * La carte d'un seuil franchi.
+ *
+ * Le nom du bac ouvre le titre — « Bac 3 » dit où aller, « Chanvre GGGYYY » ne
+ * dit que ce qu'on savait déjà. Quand aucun nom n'a été saisi, le site reconnaît
+ * son propre libellé automatique et ne le répète pas.
+ */
+function carteTimer(t: LigneTimer, type: "croisement" | "mur" | "deperit"): Carte {
   const infos = PLANTE_PAR_ID[t.plante];
-  const plante = (infos?.nom ?? "plant").toLowerCase();
-  const possessif = infos?.genre === "f" ? "ta" : "ton";
-  const accord = infos?.genre === "f" ? "prête" : "prêt";
-
   const nomAuto = `${infos?.nom ?? ""} ${t.genes ?? ""}`.trim();
-  const bac = t.nom.trim() === nomAuto ? null : t.nom.trim();
-  const signature = `\n-# ${t.genes ?? ""}${t.profils?.pseudo ? ` · planté par ${t.profils.pseudo}` : ""}`;
+  const plant = {
+    nomBac: t.nom.trim() === nomAuto ? null : t.nom.trim(),
+    plante: t.plante,
+    genes: t.genes,
+    auteur: t.profils?.pseudo ?? null,
+  };
+  if (type === "croisement") return carteCroisement(plant);
+  if (type === "mur") return carteMur(plant);
+  return carteDeperit(plant);
+}
 
-  if (type === "deperit") {
-    return (
-      `⚠️ **${bac ? `${bac} — ` : ""}${bac ? possessif : possessif === "ta" ? "Ta" : "Ton"} ${plante} est en train de mourir.**\n` +
-      `La fenêtre de récolte se ferme. Passé ce point il ne reste que de la fibre.` +
-      signature
-    );
-  }
-
-  return type === "croisement"
-    ? `🧬 **${bac ? `${bac} — v` : "V"}a voir ${possessif} ${plante}, le croisement est fait.**\n` +
-        `Inspecte le plant en jeu pour découvrir ses nouveaux gènes. S'ils te plaisent, bouture-le : la bouture les copie à l'identique.` +
-        signature
-    : `🌾 **${bac ? `${bac} — ` : ""}${bac ? possessif : possessif === "ta" ? "Ta" : "Ton"} ${plante} est ${accord} à récolter.**\n` +
-        `C'est le rendement maximum. Passe le ramasser : ensuite le plant dépérit et tu perds les fruits.` +
-        signature;
+/**
+ * Découpe un message déjà rédigé en carte.
+ *
+ * Les messages du journal et du point quotidien sont composés ailleurs, en
+ * texte. Plutôt que de les réécrire, on prend leur première ligne comme titre
+ * et le reste comme corps — les astérisques du gras y deviennent inutiles.
+ */
+function carteDepuisTexte(texte: string): Carte {
+  const [premiere, ...reste] = texte.split("\n");
+  return {
+    title: premiere.replace(/\*\*/g, "").trim(),
+    description: reste.join("\n").trim() || undefined,
+    color: COULEURS.info,
+  };
 }
 
 function messageActivite(a: LigneActivite): string | null {

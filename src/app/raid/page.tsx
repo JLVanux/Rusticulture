@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Choix, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { CIBLES, EXPLOSIFS, SOUFRE_PAR_NOEUD } from "@/data/raid";
 import { TARTES, THES } from "@/data/teas";
 import { formatNombre } from "@/lib/model";
@@ -231,6 +232,12 @@ export default function PageRaid() {
           en jeu.
         </Note>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/rendement", label: "Rendement", detail: "Convertir le soufre nécessaire en temps de minage." },
+        ]}
+      />
+
     </Page>
   );
 }

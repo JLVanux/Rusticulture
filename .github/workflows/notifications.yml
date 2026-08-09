@@ -9,15 +9,20 @@
 #   URL_NOTIFICATIONS  https://rusticulture.vercel.app/api/notifications
 #   CRON_SECRET        la même valeur que la variable du même nom sur Vercel
 #
-# GitHub n'assure pas la ponctualité : un passage prévu toutes les dix minutes
-# peut glisser de plusieurs minutes en période de charge. Sans conséquence ici,
-# la route rattrape les seuils franchis depuis trois heures.
+# GitHub n'assure PAS la ponctualité : un passage prévu peut glisser de
+# plusieurs minutes, voire sauter en période de charge. C'est pourquoi le site
+# déclenche lui-même une vérification quand un membre l'ouvre (voir
+# `src/lib/reveil.ts`) — cette tâche n'est que le filet, pas le mécanisme
+# principal.
+#
+# La route rattrape de toute façon les seuils franchis depuis trois heures, et
+# le journal d'envois empêche tout doublon.
 
 name: Notifications Discord
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/3 * * * *"
   workflow_dispatch: # permet de déclencher à la main pour tester
 
 jobs:

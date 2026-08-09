@@ -70,16 +70,6 @@ export function Reponse({
   );
 }
 
-/** En-tête de section : étiquette et filet, comme sur un plan technique. */
-export function Section({ titre, children }: { titre: string; children?: ReactNode }) {
-  return (
-    <div className="filet mb-3">
-      <h2 className="titre text-lg">{titre}</h2>
-      {children}
-    </div>
-  );
-}
-
 /** Tout ce qui n'est pas la réponse principale se replie ici. */
 export function Details({
   titre,

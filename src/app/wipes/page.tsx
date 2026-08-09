@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChaineGenes } from "@/components/Genes";
 import { Champ, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { formatNombre } from "@/lib/model";
 import { useResumeWipe, useWipes, type WipeComplet } from "@/lib/wipes";
 
@@ -223,6 +224,13 @@ export default function PageWipes() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/statistiques", label: "Statistiques", detail: "Le détail du wipe en cours." },
+          { href: "/ferme", label: "Ma ferme", detail: "La configuration et les objectifs." },
+        ]}
+      />
+
     </Page>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { PLANTES, type Genome, type PlanteId } from "@/data/game";
 import { extraireDepuisTexte, scoreGenome } from "@/lib/crossbreed";
 import { useGraines } from "@/lib/graines";
@@ -271,6 +272,13 @@ export default function PageGenetique() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/bac", label: "Gènes parfaits", detail: "Calculer la disposition du bac avec ces graines." },
+          { href: "/scanner", label: "Scanner", detail: "Remplir la banque sans rien saisir." },
+        ]}
+      />
+
     </Page>
   );
 }

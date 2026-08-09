@@ -1,36 +1,63 @@
-Objectifs du wipe, suppression de compte, confidentialité et outillage
+Notifications configurables, parcours du wipe, refonte visuelle et liens entre les pages
 
-Objectifs
-- Quatre types : production, génétique, construction, libre.
-- La progression n'est jamais stockée : elle se recalcule à partir des récoltes,
-  des graines et des plantations. Un compteur figé finirait par mentir, par
-  exemple après la suppression d'une récolte saisie par erreur.
-- L'objectif génétique se mesure en cases justes sur la meilleure graine en
-  réserve : progression continue plutôt que binaire, ce qui reflète le travail
-  réel de croisement.
-- Seul le type « libre » a un état propre, rien dans les données ne permettant
-  de savoir s'il est atteint.
-- Migration 0005 : colonne `genes` et contrainte de cohérence.
+Charte graphique
+- Une charte écrite, `CHARTE.md`, tirée de l'inventaire du jeu : des cases
+  carrées, des bordures d'un pixel, des surfaces plates, un orange qui ne sert
+  qu'à signaler. Elle liste surtout les INTERDITS avec leur raison — verre
+  dépoli, halos, taches floues en fond, texte en dégradé, coins très arrondis,
+  capitales condensées partout. Ces éléments reviennent dans toute interface
+  produite sans intention et survivent à n'importe quel changement de palette.
+- Archivo remplace Barlow Condensed, titres en casse normale. JetBrains Mono
+  pour tous les chiffres : c'est un outil de lecture de chiffres, et la chasse
+  fixe empêche une valeur qui change chaque seconde de faire danser sa ligne.
+- Mobile d'abord : navigation sous le pouce avec marge iPhone, cibles de 44 px,
+  champs de 16 px sinon iOS zoome, échelle typographique fluide, rangées
+  défilantes plutôt que retours à la ligne.
 
-Suppression de compte et confidentialité
-- Suppression réelle et immédiate, exigée dès lors qu'il y a des comptes.
-- L'utilisateur à supprimer n'est pas un paramètre : la fonction lit l'identité
-  de l'appelant elle-même. Impossible de s'en servir contre quelqu'un d'autre.
-- Une ferme n'est pas détruite avec son propriétaire : elle est transmise au
-  plus ancien membre restant, et n'est supprimée que s'il n'y a personne
-  d'autre. Sans ça, un départ effacerait le wipe entier d'une équipe.
-- Page de confidentialité distinguant les deux régimes du site : sans compte
-  rien ne quitte le navigateur, avec un compte seuls le pseudo, une empreinte
-  de mot de passe et les données des fermes sont conservés.
-- Migration 0006.
+Page d'accueil
+- Le moteur se joue en démonstration : une graine entièrement sauvage devient
+  GGGYYY sous les yeux du visiteur, case par case, avec les poids affichés. Les
+  chiffres sortent du moteur à la construction de la page — la démonstration ne
+  peut pas devenir fausse sans que l'outil le devienne aussi.
+- L'animation tourne en boucle et s'arrête hors écran.
+- Structure suivant la formation de la conviction : ce que c'est, la douleur,
+  la preuve, Discord, les apports, le compte, les outils.
 
-Outillage et sécurité
-- `.gitignore` : le motif `.env*.local` laissait passer `.env`,
-  `.env.development` et `.env.production`. Couverture complète, avec exception
-  pour les fichiers d'exemple.
-- `outils/maj.sh` : synchronisation d'une archive vers le dépôt en préservant
-  `.git`, les fichiers d'environnement, `node_modules` et `.next`. Un
-  `rsync --delete` nu emportait la configuration locale à chaque mise à jour.
-- `ETAT.md` : suivi de ce qui est fait, de ce qui reste, des décisions déjà
-  tranchées et des pièges rencontrés. À lire avant de reprendre le projet.
-- README corrigé : il annonçait encore « aucune base de données, aucun compte ».
+Notifications Discord
+- Les colonnes `notif_*` étaient lues par la tâche périodique sans avoir jamais
+  été créées : la route échouait à chaque exécution.
+- Neuf notifications activables une par une, réglées par ferme — le webhook
+  écrit dans un salon commun, c'est le propriétaire qui décide.
+- Tout éteint par défaut sauf les alertes de culture. Un webhook qui commente
+  chaque geste dès son installation se fait retirer dans la semaine, et on perd
+  alors aussi celles qui comptent.
+- Alerte de dépérissement ajoutée : la fenêtre de récolte se ferme et les
+  fruits sont perdus. La plus rentable des trois, et elle manquait.
+- `regler_notification` valide le nom de colonne contre une liste blanche avant
+  de l'interpoler, et prend quatre paramètres — PostgREST résout par signature
+  exacte, pas par nom.
+- Cadence de la tâche portée de dix à trois minutes.
+
+Parcours du wipe
+- Répond au vrai problème de rétention : une fois les god clones obtenus, la
+  moitié du site n'a plus d'utilité. Quatre phases qui emmènent le joueur vers
+  la production, les thés et l'élevage.
+- La plupart des étapes se cochent seules à partir des données déjà là. Aucune
+  saisie supplémentaire : le coût d'une fonctionnalité décide de son usage.
+- Le parcours ne recule jamais. Sans ça, « ramasser douze graines » se
+  dévalidait dès qu'on les plantait.
+
+Corrections
+- La dérive génétique était calculée mais jamais affichée, alors que l'accueil
+  la présentait comme l'argument principal. Branchée dans l'assistant, avec un
+  raisonnement par position : la même graine dans un coin ou sur un bord n'a
+  pas les mêmes voisines.
+- Minuteur rétroactif : personne ne lance le décompte au moment exact où il
+  plante.
+- Les notifications étaient dans Équipe par sédimentation ; elles passent dans
+  Réglages. L'aide pointait encore vers l'ancienne page.
+- Treize pages reliées entre elles : chacune était une impasse.
+- Imports morts, composant inutilisé, `public/icons` exclu du script de mise à
+  jour qui l'effaçait à chaque passage.
+
+Migrations à appliquer : 0010 et 0011.

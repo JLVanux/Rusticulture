@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { EditeurGenes } from "@/components/Genes";
 import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { GENE_LETTERS, PLANTES, type Genome, type PlanteId } from "@/data/game";
 import { formatGenome } from "@/lib/crossbreed";
 import { useGraines } from "@/lib/graines";
@@ -495,6 +496,13 @@ export default function PageScanner() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/genetique", label: "Mes graines", detail: "Voir et trier ce que le scanner a enregistré." },
+          { href: "/bac", label: "Gènes parfaits", detail: "Utiliser ces graines pour calculer un croisement." },
+        ]}
+      />
+
     </Page>
   );
 }

@@ -102,7 +102,7 @@ export function useRecoltes() {
       await journaliser(wipe.id, "recolte_enregistree", { ressource, nombre: quantite });
       await recharger();
     },
-    [wipe, modifiable, recharger]
+    [wipe, ferme, modifiable, recharger]
   );
 
   const supprimer = useCallback(

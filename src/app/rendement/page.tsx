@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Page, Reponse } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { AlerteConditions, ReglageConditions } from "@/components/Conditions";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import { THES } from "@/data/teas";
@@ -205,6 +206,14 @@ export default function PageRendement() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/thes", label: "Thés", detail: "Combien de baies pour les thés que tu vises." },
+          { href: "/minuteurs", label: "Minuteurs", detail: "Suivre les cycles au lieu de les calculer de tête." },
+          { href: "/reglages", label: "Réglages", detail: "Caler le modèle sur un cycle mesuré en jeu." },
+        ]}
+      />
+
     </Page>
   );
 }

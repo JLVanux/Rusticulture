@@ -19,10 +19,12 @@ import {
   type Contenant,
 } from "@/lib/plantations";
 import { useTimers } from "@/lib/timers";
+import { useReveilNotifications } from "@/lib/reveil";
 import { useRecoltes } from "@/lib/recoltes";
 import { EnregistrerRecolte } from "@/components/EnregistrerRecolte";
 import { SectionObjectifs } from "@/components/Objectifs";
 import { SectionElevage } from "@/components/Elevage";
+import { SectionParcours } from "@/components/Parcours";
 import { useElevage, useProductionAvecOeufs } from "@/lib/elevage";
 import { Recommandations } from "@/components/Recommandations";
 import { useObjectifs } from "@/lib/objectifs";
@@ -51,6 +53,9 @@ export default function PageTableauDeBord() {
   const { activites } = useActivites(wipe?.id ?? null, 6);
   const { recoltes, enregistrer, modifiable: peutRecolter } = useRecoltes();
   const { objectifs } = useObjectifs();
+
+  // Un membre qui ouvre sa ferme déclenche l'envoi des notifications en attente.
+  useReveilNotifications();
   const [conditions] = useConditions();
   const [constantes] = useConstantes();
 
@@ -330,6 +335,17 @@ export default function PageTableauDeBord() {
           </div>
         )}
       </section>
+
+      <SectionParcours
+        contexte={{
+          graines,
+          plantations,
+          recoltes,
+          timers,
+          elevage,
+          jour: jour ?? 1,
+        }}
+      />
 
       <SectionElevage />
 

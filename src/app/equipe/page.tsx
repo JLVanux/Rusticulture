@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Champ, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { CodeMasque } from "@/components/CodeMasque";
 import {
   changerRole,
@@ -18,7 +19,6 @@ import {
 } from "@/lib/compte";
 import { messageErreur, supabaseConfigure } from "@/lib/supabase";
 import { useStockage } from "@/lib/storage";
-import { ReglageDiscord } from "@/components/ReglageDiscord";
 
 const LIBELLE_ROLE: Record<RoleFerme, string> = {
   proprietaire: "Propriétaire",
@@ -315,9 +315,6 @@ export default function PageFerme() {
           </div>
         </Details>
 
-        {courante && (
-          <ReglageDiscord fermeId={courante.ferme.id} estProprietaire={courante.role === "proprietaire"} />
-        )}
 
         <Details titre="Les trois rôles">
           <ul className="space-y-2 text-[14px] leading-relaxed text-feuille-200">
@@ -348,6 +345,13 @@ export default function PageFerme() {
           </Note>
         </div>
       )}
+      <VoirAussi
+        liens={[
+          { href: "/reglages", label: "Réglages", detail: "Les notifications Discord de la ferme." },
+          { href: "/ferme", label: "Ma ferme", detail: "Le tableau de bord partagé." },
+        ]}
+      />
+
     </Page>
   );
 }

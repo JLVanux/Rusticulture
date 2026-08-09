@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
+import { ReglageDiscord } from "@/components/ReglageDiscord";
+import { useFermeActive } from "@/lib/graines";
 import { IconePlante } from "@/components/IconePlante";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import {
@@ -49,6 +52,10 @@ const CURSEURS = [
 ];
 
 export default function PageReglages() {
+  // Les notifications sont un réglage de la ferme : leur place est ici, pas
+  // dans la gestion des membres où elles avaient atterri par accident.
+  const { ferme, role } = useFermeActive();
+
   const [constantes, setConstantes] = useConstantes();
   const [conditions] = useConditions();
   const [banque, setBanque] = useBanque();
@@ -273,6 +280,10 @@ export default function PageReglages() {
           </button>
         </Details>
 
+        {ferme && (
+          <ReglageDiscord fermeId={ferme.id} estProprietaire={role === "proprietaire"} />
+        )}
+
         <Details titre="Tes données">
           <p className="text-[14px] leading-relaxed text-feuille-200">
             {banque.length} gènes{banque.length > 1 ? "s" : ""} en banque, {minuteurs.length} minuteur
@@ -333,6 +344,13 @@ export default function PageReglages() {
           </ul>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/aide", label: "Aide", detail: "Le pas-à-pas pour brancher Discord." },
+          { href: "/rendement", label: "Rendement", detail: "Vérifier l'effet du calibrage sur les durées." },
+        ]}
+      />
+
     </Page>
   );
 }

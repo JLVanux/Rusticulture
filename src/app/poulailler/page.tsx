@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { TARTES } from "@/data/teas";
 import { formatDuree, formatNombre } from "@/lib/model";
 
@@ -160,6 +161,13 @@ export default function PagePoulailler() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/tartes", label: "Tartes", detail: "Ce que tu peux faire des œufs produits." },
+          { href: "/ferme", label: "Ma ferme", detail: "Déclarer tes poulaillers pour qu'ils comptent dans la production." },
+        ]}
+      />
+
     </Page>
   );
 }

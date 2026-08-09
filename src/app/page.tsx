@@ -1,24 +1,76 @@
 import Link from "next/link";
+import { DemoBac } from "@/components/DemoBac";
 import { LegendeGenes } from "@/components/Genes";
-import { ChaineCulture } from "@/components/IconePlante";
-import { PLANTES } from "@/data/game";
+import { MessagesDiscord } from "@/components/MessagesDiscord";
+import { Reveal } from "@/components/Reveal";
 import { Details, Page } from "@/components/Ui";
+import { calculerDemo } from "@/lib/demo";
 
-const OUTILS: { titre: string; texte: string; liens: { href: string; label: string }[] }[] = [
+const PROBLEMES = [
+  {
+    titre: "Des heures de croisement pour rien",
+    texte:
+      "Tu remplis un bac au jugé, tu attends deux heures, il ne sort rien. Il fallait deux donneuses vertes identiques dans la même case.",
+    reponse: "La disposition exacte des neuf emplacements, et tes chances réelles.",
+  },
+  {
+    titre: "Ta meilleure graine détruite par ses voisines",
+    texte:
+      "Les plants se réécrivent mutuellement. Un GGGYYY parfait entouré de graines sauvages est détruit à coup sûr.",
+    reponse: "Le calcul de dérive : ce qu'un plant risque de perdre, avant que tu ne plantes.",
+  },
+  {
+    titre: "Des récoltes qui pourrissent",
+    texte:
+      "Un cycle dure plus d'une heure, puis le plant dépérit. Rien dans le jeu ne te rappelle d'y revenir.",
+    reponse: "Un message Discord au moment précis où il faut y retourner.",
+  },
+  {
+    titre: "Une équipe qui travaille en double",
+    texte:
+      "À quatre sur un wipe, chacun plante dans son coin. Personne ne sait ce que l'équipe possède.",
+    reponse: "Une ferme commune : mêmes graines, mêmes minuteurs, mêmes chiffres.",
+  },
+];
+
+const APPORTS = [
+  {
+    titre: "Une génétique parfaite plus vite",
+    texte:
+      "Quand la cible n'est pas atteignable d'un coup, le site cherche la route en plusieurs générations et compare les chemins par le nombre de cycles attendus. La réponse n'est jamais « impossible », c'est « voilà par où passer ».",
+  },
+  {
+    titre: "Savoir si ta ferme est bonne",
+    texte:
+      "Le site estime ce que ta configuration devrait produire. Tu enregistres ce que tu récoltes vraiment. L'écart dit où tu perds du temps — presque toujours en replantant trop tard.",
+  },
+  {
+    titre: "Une réponse quand tu ouvres le site",
+    texte:
+      "Pas un tableau à déchiffrer : l'action la plus rentable du moment, avec le fait qui la déclenche. « Tu as quatre graines meilleures que celles du bac 3 : les replanter te ferait gagner 22 %. »",
+  },
+  {
+    titre: "Les calculs pénibles, faits",
+    texte:
+      "Combien de baies pour douze thés purs. Combien de soufre pour percer une porte blindée. Des règles de trois que personne n'a envie de poser en jouant.",
+  },
+];
+
+const OUTILS = [
   {
     titre: "Génétique",
     texte:
-      "Le cœur du site. Tu saisis tes graines, tu dis ce que tu veux obtenir, et l'assistant te donne la disposition exacte du bac — avec la justification case par case et tes chances réelles. Quand la cible est hors de portée, il calcule la route en plusieurs générations plutôt que de dire « impossible ».",
+      "Tes graines, ta cible, la disposition du bac avec la justification case par case. Et un scanner qui lit les gènes directement à l'écran.",
     liens: [
       { href: "/bac", label: "Gènes parfaits" },
-      { href: "/scanner", label: "Scanner l'écran" },
+      { href: "/scanner", label: "Scanner" },
       { href: "/genetique", label: "Mes graines" },
     ],
   },
   {
     titre: "Production",
     texte:
-      "Combien de tissu par heure avec ces gènes-là. Combien de baies pour les thés que tu vises, et en combien de cycles. Ce que la tarte à l'ours ajoute vraiment à ton thé de minerai. Et la cadence de ton poulailler.",
+      "Tissu par heure selon les gènes. Baies nécessaires pour les thés visés. Ce que la tarte à l'ours ajoute vraiment. La cadence du poulailler.",
     liens: [
       { href: "/rendement", label: "Rendement" },
       { href: "/thes", label: "Thés" },
@@ -29,7 +81,7 @@ const OUTILS: { titre: string; texte: string; liens: { href: string; label: stri
   {
     titre: "Sur le terrain",
     texte:
-      "Des minuteurs qui te disent quand revenir, et un calculateur de raid qui convertit tes cibles en soufre — donc en heures de minage.",
+      "Des minuteurs partagés qui disent quand revenir, et un calculateur de raid qui convertit tes cibles en soufre, donc en heures de minage.",
     liens: [
       { href: "/minuteurs", label: "Minuteurs" },
       { href: "/raid", label: "Coût de raid" },
@@ -37,178 +89,250 @@ const OUTILS: { titre: string; texte: string; liens: { href: string; label: stri
   },
 ];
 
-const FERME = [
-  {
-    titre: "Tout est partagé",
-    texte:
-      "Graines, minuteurs, bacs, récoltes : ce que fait un membre, toute l'équipe le voit. Trois rôles simples, appliqués par la base de données elle-même.",
-  },
-  {
-    titre: "Alertes Discord",
-    texte:
-      "Un message dans votre salon quand un plant est prêt à bouturer ou à récolter. Jeu en plein écran, téléphone rangé : le message arrive quand même.",
-  },
-  {
-    titre: "Estimé contre réel",
-    texte:
-      "Le site estime ce que ta ferme devrait produire, tu enregistres ce qu'elle produit vraiment, et l'écart te dit où tu perds du temps.",
-  },
-  {
-    titre: "Un wipe à la fois",
-    texte:
-      "Objectifs, statistiques et progression sur toute la durée du wipe. À la fin, un résumé — puis tout repart à zéro sans rien effacer.",
-  },
-];
-
 export default function Accueil() {
+  // Calculée par le moteur du site : ce que la démonstration affiche est ce que
+  // l'outil produirait.
+  const demo = calculerDemo();
+
   return (
     <Page large>
-      {/* Ce que fait le site, en une phrase */}
-      <section className="pt-2">
-        <div className="eyebrow">Agriculture · Rust · en français</div>
-        <h1 className="titre mt-2 text-5xl leading-[0.95] sm:text-6xl">
-          Les calculs de ta ferme,
-          <br />
-          <span className="text-lampe-chaud">faits pour toi.</span>
-        </h1>
-        <p className="mt-5 text-[17px] leading-relaxed text-feuille-200">
-          Croisement génétique, rendement, thés, minuteurs, coût de raid. Et un espace partagé pour gérer une
-          ferme à plusieurs pendant tout un wipe.
-        </p>
+      {/* ── L'accroche et la preuve, ensemble ─────────────────────────── */}
+      <section className="pt-1">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-center lg:gap-10">
+          <div>
+            <div className="eyebrow">Agriculture · Rust · en français</div>
+            <h1 className="titre mt-3 leading-[0.92]" style={{ fontSize: "var(--t-geant)" }}>
+              Arrête de croiser
+              <br />
+              <span className="text-braise">au hasard.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-craie">
+              RustiCulture calcule la disposition exacte de ton bac, suit ta production, et prévient ton
+              équipe sur Discord quand il faut retourner aux plants.
+            </p>
 
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Link href="/bac" className="bouton bouton-primaire">
-            Obtenir les gènes parfaits
-          </Link>
-          <Link href="/ferme" className="bouton">
-            Créer ma ferme
-          </Link>
-        </div>
-
-        <p className="mt-4 text-[13px] text-feuille-400">
-          Les calculateurs fonctionnent sans compte, entièrement dans ton navigateur.
-        </p>
-      </section>
-
-      {/* La règle qui gouverne tout */}
-      <section className="mt-14 lg:mt-16 rounded-lg border border-lampe/40 bg-lampe/8 p-6">
-        <div className="eyebrow">La règle qui décide de tout</div>
-        <h2 className="titre mt-1 text-3xl leading-tight">Deux verts battent un rouge.</h2>
-        <p className="mt-3 text-[16px] leading-relaxed text-feuille-200">
-          Un G, un Y ou un H pèse <span className="font-mono text-feuille-100">0,6</span>. Un W ou un X pèse{" "}
-          <span className="font-mono text-feuille-100">1,0</span>. Pour déloger un rouge il faut donc{" "}
-          <span className="text-feuille-100">deux donneuses vertes identiques dans la même case</span> — 1,2
-          contre 1,0. Une seule ne suffira jamais.
-        </p>
-        <p className="mt-2 text-[14px] leading-relaxed text-feuille-400">
-          C&apos;est là que la plupart des sessions de croisement échouent. Tout le reste du site n&apos;est
-          que l&apos;application de cette règle.
-        </p>
-      </section>
-
-      {/* Les trois états d'une culture */}
-      <section className="mt-14">
-        <div className="filet mb-3">
-          <h2 className="titre text-2xl">Graine, buisson, récolte</h2>
-        </div>
-        <p className="max-w-2xl text-[15px] leading-relaxed text-cendre">
-          Trois objets différents, trois noms différents. C&apos;est ce qui perd le plus de monde au début —
-          d&apos;autant que les noms ne se déduisent pas : la baie bleue donne des myrtilles, le chanvre donne
-          du tissu.
-        </p>
-        <div className="mt-5 grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-          {PLANTES.filter((p) => p.categorie !== "nourriture").map((p) => (
-            <ChaineCulture key={p.id} plante={p.id} taille={36} />
-          ))}
-        </div>
-      </section>
-
-      {/* Les outils */}
-      <section className="mt-14">
-        <h2 className="titre text-2xl">Les outils</h2>
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          {OUTILS.map((o) => (
-            <article key={o.titre} className="panneau flex flex-col">
-              <h3 className="font-display text-xl font-semibold uppercase tracking-wide text-feuille-100">
-                {o.titre}
-              </h3>
-              <p className="mt-2 flex-1 text-[15px] leading-relaxed text-feuille-200">{o.texte}</p>
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {o.liens.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className="rounded border border-white/10 px-2.5 py-1.5 font-display text-[13px] font-semibold uppercase tracking-wide text-feuille-200 transition hover:border-lampe/60 hover:text-lampe-chaud"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* La ferme partagée */}
-      <section className="mt-14">
-        <h2 className="titre text-2xl">Jouer en équipe</h2>
-        <p className="mt-2 text-[15px] leading-relaxed text-feuille-200">
-          Avec un compte, une ferme se partage entre coéquipiers. C&apos;est la partie qui transforme le site
-          en outil qu&apos;on ouvre tous les jours plutôt qu&apos;en calculateur qu&apos;on consulte une fois.
-        </p>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {FERME.map((f) => (
-            <div key={f.titre} className="verre rampe p-4">
-              <h3 className="font-display text-base font-semibold uppercase tracking-wide text-feuille-100">
-                {f.titre}
-              </h3>
-              <p className="mt-1.5 text-[14px] leading-snug text-feuille-400">{f.texte}</p>
+            <div className="mt-7 flex flex-wrap gap-2">
+              <Link href="/bac" className="bouton bouton-primaire">
+                Essayer avec mes graines
+              </Link>
+              <Link href="/connexion" className="bouton">
+                Créer ma ferme
+              </Link>
             </div>
-          ))}
-        </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link href="/connexion" className="bouton bouton-primaire">
-            Créer un compte
-          </Link>
-          <Link href="/aide" className="bouton">
-            Brancher Discord
-          </Link>
+            <p className="mt-4 text-[13px] text-poussiere">
+              Gratuit, sans publicité. Les calculateurs marchent sans compte.
+            </p>
+          </div>
+
+          <DemoBac demo={demo} />
         </div>
-        <p className="mt-3 text-[13px] text-feuille-400">
-          Un pseudo et un mot de passe. Aucune adresse e-mail demandée, aucun message envoyé.
-        </p>
       </section>
 
-      {/* Le reste, replié */}
-      <div className="mt-14">
+      {/* ── La douleur ────────────────────────────────────────────────
+          Quatre lignes pleine largeur plutôt qu'une grille de cartes : le
+          problème à gauche, la réponse à droite, séparés par un filet. On lit
+          en diagonale et on comprend, ce qu'une grille dense empêche. */}
+      <section className="mt-28">
+        <Reveal>
+          <div className="filet mb-2">
+            <h2 className="titre text-2xl">Ce que ça règle</h2>
+          </div>
+        </Reveal>
+
+        <ul>
+          {PROBLEMES.map((p, i) => (
+            <Reveal key={p.titre} delai={i * 70}>
+              <li className="grid gap-3 border-b border-trait py-7 lg:grid-cols-[3rem_1fr_1fr] lg:items-start lg:gap-8">
+                <span className="chiffre text-3xl leading-none text-trait-vif">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3 className="titre text-xl leading-tight">{p.titre}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-cendre">{p.texte}</p>
+                </div>
+                <p className="border-l-2 border-l-rouille pl-4 text-[15px] leading-relaxed text-craie lg:mt-1">
+                  {p.reponse}
+                </p>
+              </li>
+            </Reveal>
+          ))}
+        </ul>
+      </section>
+
+      {/* ── Discord ───────────────────────────────────────────────────── */}
+      <section className="mt-28">
+        <Reveal>
+          <div className="verre border-l-2 border-l-rouille p-5 sm:p-6">
+            <div className="grid gap-7 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+              <div>
+                <div className="eyebrow">Sur ton propre serveur</div>
+                <h2 className="titre mt-2 text-3xl leading-tight">
+                  Ton équipe prévenue, site fermé.
+                </h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-cendre">
+                  Tu crées un webhook dans le salon de ton choix, tu colles l&apos;adresse, c&apos;est
+                  fini. Aucun bot à installer, aucune permission à accorder, aucun accès à ton serveur.
+                  Chaque ferme a le sien.
+                </p>
+                <p className="mt-3 text-[15px] leading-relaxed text-cendre">
+                  Jeu en plein écran, téléphone rangé : le message arrive quand même.
+                </p>
+                <Link href="/aide" className="bouton mt-5 inline-flex">
+                  Comment le brancher
+                </Link>
+              </div>
+
+              <MessagesDiscord />
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── Ce que ça apporte ─────────────────────────────────────────── */}
+      <section className="mt-28">
+        <Reveal>
+          <div className="filet mb-4">
+            <h2 className="titre text-2xl">Ce que ça apporte</h2>
+          </div>
+        </Reveal>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {APPORTS.map((a, i) => (
+            <Reveal key={a.titre} delai={i * 70}>
+              <article className="panneau h-full p-6">
+                <h3 className="titre text-xl leading-tight">{a.titre}</h3>
+                <p className="mt-3 text-[15px] leading-relaxed text-cendre">{a.texte}</p>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Le compte ─────────────────────────────────────────────────── */}
+      <section className="mt-28">
+        <Reveal>
+          <div className="verre p-5 sm:p-6">
+            <div className="grid gap-7 lg:grid-cols-[1.2fr_1fr] lg:items-center">
+              <div>
+                <div className="eyebrow">Jouer à plusieurs</div>
+                <h2 className="titre mt-2 text-3xl leading-tight">
+                  Une ferme, toute l&apos;équipe dedans.
+                </h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-cendre">
+                  Le propriétaire crée la ferme et donne un code. Chacun rejoint, et tout devient commun :
+                  graines, minuteurs, bacs, récoltes, objectifs, statistiques du wipe.
+                </p>
+                <p className="mt-3 text-[15px] leading-relaxed text-cendre">
+                  Un pseudo, un mot de passe. Aucune adresse e-mail demandée, aucun message envoyé.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link href="/connexion" className="bouton bouton-primaire">
+                    Créer un compte
+                  </Link>
+                  <Link href="/connexion" className="bouton">
+                    J&apos;en ai déjà un
+                  </Link>
+                </div>
+              </div>
+
+              <ul className="grid gap-px overflow-hidden rounded-sm border border-trait bg-trait sm:grid-cols-2 lg:grid-cols-1">
+                {[
+                  [
+                    "Trois rôles",
+                    "Propriétaire, membre, lecture seule — appliqués par la base, pas par l'interface.",
+                  ],
+                  [
+                    "Estimé contre réel",
+                    "Ce que ta ferme devrait produire, ce qu'elle produit vraiment, et l'écart.",
+                  ],
+                  [
+                    "Un wipe à la fois",
+                    "Objectifs et statistiques sur toute la durée, puis un résumé et on repart à zéro.",
+                  ],
+                ].map(([t, d]) => (
+                  <li key={t} className="bg-case p-3.5">
+                    <div className="font-display text-[14px] font-bold text-craie">{t}</div>
+                    <div className="mt-1 text-[13px] leading-snug text-cendre">{d}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ── Les outils ────────────────────────────────────────────────── */}
+      <section className="mt-28">
+        <Reveal>
+          <div className="filet mb-4">
+            <h2 className="titre text-2xl">Les outils</h2>
+          </div>
+        </Reveal>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {OUTILS.map((o, i) => (
+            <Reveal key={o.titre} delai={i * 60}>
+              <article className="panneau flex h-full flex-col p-6">
+                <h3 className="titre text-xl leading-tight">{o.titre}</h3>
+                <p className="mt-3 flex-1 text-[15px] leading-relaxed text-cendre">{o.texte}</p>
+                <div className="mt-5 flex flex-wrap gap-1.5">
+                  {o.liens.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="rounded-sm border border-trait px-2.5 py-1.5 font-display text-[13px] font-semibold text-cendre transition hover:border-trait-vif hover:text-craie"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              </article>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Le reste ──────────────────────────────────────────────────── */}
+      <div className="mt-16">
+        <Details titre="La règle qui décide de tout">
+          <p className="text-[14px] leading-relaxed text-cendre">
+            Un G, un Y ou un H pèse <span className="chiffre text-craie">0,6</span>. Un W ou un X pèse{" "}
+            <span className="chiffre text-craie">1,0</span>. Un gène n&apos;est remplacé que si le poids
+            cumulé de ses donneuses dépasse <span className="text-craie">strictement</span> celui du gène en
+            place. Il faut donc deux donneuses vertes identiques pour déloger un rouge — 1,2 contre 1,0 — et
+            une seule ne suffira jamais.
+          </p>
+          <p className="mt-3 text-[14px] leading-relaxed text-cendre">
+            C&apos;est là que la plupart des sessions de croisement échouent. Tout le reste du site
+            n&apos;est que l&apos;application de cette règle.
+          </p>
+        </Details>
+
         <Details titre="Les cinq gènes">
           <LegendeGenes />
         </Details>
 
         <Details titre="D'où viennent les chiffres">
-          <p className="text-[14px] leading-relaxed text-feuille-200">
-            Les règles de croisement viennent des mécaniques du jeu et sont solides : probabilités calculées
+          <p className="text-[14px] leading-relaxed text-cendre">
+            Les règles de croisement viennent des mécaniques du jeu : les probabilités sont calculées
             exactement, case par case, pas simulées.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
+          <p className="mt-3 text-[14px] leading-relaxed text-cendre">
             Les durées de pousse et les rendements sont un modèle approché — Facepunch ne publie pas ses
-            formules, et les sources communautaires se contredisent du simple au double. Chronomètre un cycle
-            en jeu et corrige les coefficients dans{" "}
-            <Link href="/reglages" className="text-lampe-chaud underline underline-offset-2">
+            formules et les sources se contredisent du simple au double. Chronomètre un cycle en jeu et
+            corrige les coefficients dans{" "}
+            <Link href="/reglages" className="text-braise underline underline-offset-2">
               Réglages
             </Link>
             : tout le site se recale dessus.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
-            Une estimation n&apos;est jamais présentée comme une observation. Quand le site n&apos;est pas sûr,
-            il le dit.
+          <p className="mt-3 text-[14px] leading-relaxed text-cendre">
+            Une estimation n&apos;est jamais présentée comme une observation. Quand le site n&apos;est pas
+            sûr, il le dit.
           </p>
         </Details>
 
         <Details titre="Ce que le site ne fait pas">
-          <p className="text-[14px] leading-relaxed text-feuille-200">
+          <p className="text-[14px] leading-relaxed text-cendre">
             Il ne lit pas ta partie et ne se connecte à aucun serveur Rust. Tout ce qu&apos;il sait, c&apos;est
             ce que tu lui dis — ou ce que le scanner lit à l&apos;écran, sur ta machine. Les récoltes que tu
             enregistres ne sont pas vérifiables : le site les confronte à ce que ta ferme peut produire et
@@ -217,7 +341,7 @@ export default function Accueil() {
         </Details>
       </div>
 
-      <p className="mt-14 border-t border-white/[0.07] pt-6 text-[13px] leading-relaxed text-feuille-400">
+      <p className="mt-16 border-t border-trait pt-6 text-[13px] leading-relaxed text-poussiere">
         RustiCulture n&apos;est pas affilié à Facepunch Studios. Rust est une marque de Facepunch Studios Ltd.
       </p>
     </Page>

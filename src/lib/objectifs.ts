@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PLANTE_PAR_ID, type Genome } from "@/data/game";
 import { formatGenome, parseGenome } from "@/lib/crossbreed";
 import { peutEcrire } from "@/lib/compte";

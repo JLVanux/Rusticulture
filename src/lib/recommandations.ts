@@ -1,7 +1,7 @@
 "use client";
 
 import { PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
-import { formatGenome, scoreGenome } from "@/lib/crossbreed";
+import { formatGenome } from "@/lib/crossbreed";
 import type { GraineUnifiee } from "@/lib/graines";
 import { calculerCroissance, calculerRendement, formatDuree, formatNombre, type Conditions, type Constantes } from "@/lib/model";
 import { calculerProgression, type Objectif } from "@/lib/objectifs";

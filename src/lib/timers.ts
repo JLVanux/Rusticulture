@@ -173,7 +173,7 @@ export function useTimers() {
       await journaliser(wipe.id, "timer_lance", { nom: t.nom, plante: t.plante });
       await recharger();
     },
-    [source, modifiable, setLocaux, wipe, recharger]
+    [source, modifiable, setLocaux, wipe, ferme, recharger]
   );
 
   const supprimer = useCallback(

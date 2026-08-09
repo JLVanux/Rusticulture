@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { Details, EnTetePage, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { formatNombre } from "@/lib/model";
 import { usePlantations, useProductionEstimee } from "@/lib/plantations";
 import { useRecoltes, useStatistiques } from "@/lib/recoltes";
@@ -201,6 +202,13 @@ export default function PageStatistiques() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/ferme", label: "Ma ferme", detail: "Enregistrer une récolte et voir la production estimée." },
+          { href: "/wipes", label: "Wipes", detail: "Le résumé des campagnes passées." },
+        ]}
+      />
+
     </Page>
   );
 }

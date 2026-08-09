@@ -206,9 +206,11 @@ export function useGraines(plante?: PlanteId) {
         plante: p,
         origine,
       });
+
+
       await recharger();
     },
-    [source, modifiable, setBanqueLocale, wipe, recharger]
+    [source, modifiable, setBanqueLocale, wipe, ferme, recharger]
   );
 
   const ajuster = useCallback(
@@ -251,7 +253,7 @@ export function useGraines(plante?: PlanteId) {
       else await journaliser(wipe.id, "graines_videes", { plante: p ?? "toutes" });
       await recharger();
     },
-    [source, modifiable, setBanqueLocale, wipe, recharger]
+    [source, modifiable, setBanqueLocale, wipe, ferme, recharger]
   );
 
   /** Copie la banque du navigateur vers la ferme. Le local n'est pas effacé :

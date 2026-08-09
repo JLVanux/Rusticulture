@@ -54,8 +54,8 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
   {
     titre: "",
     liens: [
-      { href: "/reglages", label: "Réglages" },
       { href: "/connexion", label: "Mon compte" },
+      { href: "/reglages", label: "Réglages" },
       { href: "/aide", label: "Aide" },
       { href: "/confidentialite", label: "Confidentialité" },
     ],

@@ -125,6 +125,59 @@ Même condition que le classement. En attendant, la comparaison utile est **avec
 
 ## Dette et angles morts
 
+### Notifications Discord — réglages et fiabilité
+- **Cinq types au choix, par ferme** : croisement, récolte prête, plantation, récolte enregistrée, point quotidien. Les deux premiers actifs par défaut — ce sont les seuls qui demandent une action.
+- Les événements du site (plantation, récolte saisie) sont lus depuis `activites` par la tâche serveur, jamais envoyés depuis le navigateur : **le webhook est un secret, il ne doit pas y descendre.**
+- `regler_notification` applique une **liste blanche de colonnes**. Sans elle, le paramètre `champ` permettrait d'écrire dans n'importe quelle colonne d'`integrations`, `webhook_discord` compris.
+- **Le point quotidien** se tait s'il n'y a rien à raconter. Un message quotidien vide est un rappel, et un rappel finit par être coupé — emportant avec lui les notifications utiles.
+- Heure du point en **UTC** : une ferme peut réunir plusieurs fuseaux.
+
+#### Fiabilité de l'envoi
+GitHub Actions **ne garantit pas la ponctualité** : un passage peut glisser de plusieurs minutes ou sauter en période de charge. La tâche n'est donc plus le mécanisme principal mais le filet.
+
+Le site déclenche lui-même une vérification quand un membre ouvre sa ferme (`src/lib/reveil.ts`), au plus une fois toutes les quatre minutes, avec **le jeton de session du membre** — la route ne traite alors que ses propres fermes. Aucun secret ne descend dans le navigateur.
+
+La route ne révèle plus l'état de sa configuration à un appelant non authentifié : seule la tâche planifiée, déjà identifiée, obtient le vrai diagnostic. Ce défaut avait été corrigé une première fois puis réintroduit lors de la réécriture — à vérifier après chaque modification de cette route.
+
+`0011_notifications.sql` généralise le journal d'envois : la clé passe de `(timer, type)` à `(ferme, clé libre)`, ce qui permet de suivre aussi les notifications d'activité et le point quotidien.
+
+### Parcours du wipe
+Répond au vrai problème de rétention : **une fois les god clones obtenus, la moitié du site n'a plus d'utilité.** Le parcours emmène le joueur au-delà — production, thés, élevage — au lieu de le laisser sans but.
+
+- Quatre phases : s'installer, fixer la génétique, produire, optimiser.
+- **La plupart des étapes se cochent seules** à partir des données déjà présentes. Aucune saisie supplémentaire : le coût d'une fonctionnalité pour le joueur décide de son usage.
+- Une case à cocher n'existe que pour ce qui se passe en jeu et que le site ne peut pas constater.
+- **Le parcours ne recule jamais.** Une étape constatée est enregistrée définitivement : sans ça, « ramasser douze graines » se dévalidait dès qu'on les plantait, et « trois boutures » dès qu'on les utilisait. Voir une étape acquise redevenir à faire est décourageant, et c'est faux.
+- Les seuils sont atteignables. « Trente graines de chaque » décourage plus que ça n'aide.
+- `0010_parcours.sql` : seules les étapes non constatables occupent une ligne.
+
+### Minuteur rétroactif
+Personne ne lance le minuteur au moment exact où il plante. Le champ « Planté il y a » décale le départ, avec des raccourcis et un avertissement si le plant serait déjà mûr.
+
+### Notifications Discord configurables
+- **Les colonnes `notif_*` étaient lues par la tâche périodique sans avoir jamais été créées** : la route échouait à chaque exécution. `0011_notifications.sql` les crée.
+- Réglages **par ferme**, pas par joueur : le webhook écrit dans un salon commun, c'est le propriétaire qui décide de ce que son serveur reçoit.
+- **Tout est éteint par défaut sauf les alertes de culture.** Un webhook qui commente chaque geste dès son installation se fait retirer dans la semaine — et on perd alors aussi celles qui comptent.
+- **Alerte de dépérissement ajoutée** : la fenêtre de récolte se ferme et les fruits sont perdus. La plus rentable des trois, et elle manquait.
+- `regler_notification` valide le nom de colonne contre une **liste blanche** avant de l'interpoler : sans ça, un nom venu du client s'exécuterait tel quel.
+- Cadence passée de dix à **trois minutes**. GitHub Actions n'a pas la limite quotidienne de Vercel.
+- `regler_notification` prend **quatre paramètres** (`f`, `champ`, `valeur_bool`, `valeur_int`) : l'interface règle aussi l'heure du point quotidien, qui est un entier. Une première version à trois paramètres provoquait « Could not find the function in the schema cache » — PostgREST résout par signature exacte, pas par nom.
+- **Les notifications sont un réglage de la ferme, pas de l'équipe.** Déplacées de `/equipe` vers `/reglages`, où elles ont leur place logique. `/equipe` ne garde que les membres, les rôles et le code d'invitation.
+- Reste à faire : l'envoi **immédiat** pour les événements déclenchés par une action. Aujourd'hui plantations et récoltes passent par le journal d'activité, donc par la tâche périodique, avec jusqu'à trois minutes de décalage. L'immédiat demande une seconde route serveur qui vérifie l'appartenance à la ferme avec le jeton de l'appelant — le client ne doit jamais envoyer de texte, seulement un type et des données.
+
+### Liens entre les pages
+- Composant `VoirAussi` en pied de treize pages. Le site s'était construit page par page, chacune répondant à sa question sans jamais renvoyer aux autres — or les questions s'enchaînent : on calcule un rendement puis on veut savoir combien de baies pour un thé. Sans passerelles, chaque page est une impasse et l'utilisateur retourne au menu.
+- **Un lien était devenu faux** : l'aide envoyait vers `/equipe` pour configurer Discord, déplacé depuis vers `/reglages`. Déplacer une fonctionnalité impose de relire ce qui pointait dessus.
+- Le bloc Notifications Discord s'ouvre directement : c'est la raison d'être de la page pour qui arrive depuis l'aide.
+
+### Audit — corrections trouvées
+- **La dérive génétique était calculée mais jamais affichée.** L'accueil la présentait pourtant comme l'argument que personne d'autre n'offre : le site promettait une fonctionnalité qu'il n'avait pas. Désormais branchée dans l'assistant, sous le plan, avec le raisonnement par **position** et non par génome — la même graine dans un coin ou sur un bord n'a pas les mêmes voisines, donc pas le même risque.
+- `analyserBac` était importé dans `/bac` sans jamais être appelé.
+- Quatre imports morts retirés (`Note`, `Choix`, `scoreGenome`, `useMemo`).
+- Le composant `Section` de `Ui.tsx` n'a jamais servi : supprimé.
+- `ChaineCulture` est conservé bien qu'inutilisé : il est destiné aux fiches de culture à la manière de RustHelp, et le reconstruire coûterait plus que de le garder.
+- Les 18 pages répondent, le build passe, aucune dépendance inutile.
+
 ### À faire absolument
 - **Aucun test sur le moteur de croisement.** Trois bugs réels y ont été trouvés — optimiseur renvoyant 0 % sur des banques solubles, coefficient de croissance donnant des cycles de quatre minutes, pont intermédiaire mal orienté. À chaque fois par hasard ou par signalement. Une trentaine de cas figés rendraient ces régressions impossibles.
 

@@ -5,10 +5,11 @@ import Link from "next/link";
 import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { ExplicationCases } from "@/components/Explication";
+import { DeriveDuPlan } from "@/components/Derive";
 import { Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { GENOMES_CIBLES, PLANTES, type Genome, type PlanteId } from "@/data/game";
 import {
-  analyserBac,
   expliquerPlant,
   extraireDepuisTexte,
   formatGenome,
@@ -515,6 +516,15 @@ export default function PageGenesParfaits() {
           </div>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/scanner", label: "Scanner", detail: "Lire les gènes directement à l'écran plutôt que les saisir." },
+          { href: "/genetique", label: "Mes graines", detail: "La banque dans laquelle l'assistant pioche." },
+          { href: "/rendement", label: "Rendement", detail: "Ce que la génétique obtenue va vraiment rapporter." },
+          { href: "/minuteurs", label: "Minuteurs", detail: "Lancer le décompte au moment où tu plantes le bac." },
+        ]}
+      />
+
     </Page>
   );
 }
@@ -667,6 +677,12 @@ function BlocEtape({
           </div>
         </details>
       )}
+
+      {/* Ce que le plan coûte aux donneuses : le moteur le calculait déjà,
+          rien ne l'affichait. */}
+      <div className="mt-4">
+        <DeriveDuPlan grille={grille} />
+      </div>
     </section>
   );
 }

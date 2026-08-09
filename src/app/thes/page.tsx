@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { EditeurGenes } from "@/components/Genes";
-import { Champ, Choix, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { Champ, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { AlerteConditions } from "@/components/Conditions";
 import { BAIES, type BaieId, type Genome } from "@/data/game";
 import { PALIERS, THES, type Palier } from "@/data/teas";
@@ -292,6 +293,14 @@ export default function PageThes() {
           </p>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/tartes", label: "Tartes", detail: "La tarte à l'ours multiplie l'effet du thé de récolte." },
+          { href: "/genetique", label: "Mes graines", detail: "Quelles baies tu possèdes déjà." },
+          { href: "/rendement", label: "Rendement", detail: "Combien de baies par cycle avec tes gènes." },
+        ]}
+      />
+
     </Page>
   );
 }

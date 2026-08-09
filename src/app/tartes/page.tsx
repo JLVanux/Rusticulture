@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Choix, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { PALIERS, TARTES, THES, type Palier } from "@/data/teas";
 import { SOUFRE_PAR_NOEUD } from "@/data/raid";
 import { formatNombre } from "@/lib/model";
@@ -167,6 +168,13 @@ export default function PageTartes() {
           </ul>
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/poulailler", label: "Poulailler", detail: "Les œufs limitent toutes les tartes." },
+          { href: "/thes", label: "Thés", detail: "Le thé que la tarte à l'ours vient amplifier." },
+        ]}
+      />
+
     </Page>
   );
 }

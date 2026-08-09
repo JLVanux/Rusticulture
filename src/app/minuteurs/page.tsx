@@ -6,6 +6,7 @@ import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { VoirAussi } from "@/components/VoirAussi";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import { calculerCroissance, formatDuree } from "@/lib/model";
 import { useConditions, useConstantes } from "@/lib/hooks";
@@ -28,6 +29,9 @@ export default function PageMinuteurs() {
   const [genome, setGenome] = useState<Genome>(["G", "G", "G", "Y", "Y", "Y"]);
   const [plante, setPlante] = useState<PlanteId>("chanvre");
   const [nom, setNom] = useState("");
+  // Planté il y a combien de temps. Personne ne lance le minuteur au moment
+  // exact où il plante : on y pense en revenant, un quart d'heure plus tard.
+  const [ilYaMinutes, setIlYaMinutes] = useState(0);
   const [permission, setPermission] = useState<NotificationPermission | "indisponible">("default");
 
   // Ce qui a déjà été notifié appartient à cet appareil, pas à la ferme : si un
@@ -77,12 +81,13 @@ export default function PageMinuteurs() {
       nom: nom.trim() || `${PLANTE_PAR_ID[plante].nom} ${genome.join("")}`,
       plante,
       genome,
-      debut: Date.now(),
+      debut: Date.now() - ilYaMinutes * 60_000,
       minutesCroisement: apercu.minutesAvantCroisement,
       minutesMur: apercu.minutesJusquMur,
       minutesFin: apercu.minutesAvantDeclin,
     });
     setNom("");
+    setIlYaMinutes(0);
   }
 
   const tries = useMemo(
@@ -169,7 +174,51 @@ export default function PageMinuteurs() {
             }))} />
           </Champ>
 
-          <div className="flex flex-wrap items-center gap-4 border-t border-white/10 pt-4">
+          <Champ
+            label="Planté il y a"
+            aide="Le décompte part de la plantation, pas du clic. Rattrape ici si tu y penses en retard."
+          >
+            <div className="rangee">
+              {[0, 5, 15, 30, 60, 90].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setIlYaMinutes(m)}
+                  className={`min-h-[2.5rem] rounded-sm border px-3.5 font-display text-[13px] font-semibold transition ${
+                    ilYaMinutes === m
+                      ? "border-rouille bg-rouille/15 text-braise"
+                      : "border-trait text-cendre hover:border-trait-vif hover:text-craie"
+                  }`}
+                >
+                  {m === 0 ? "à l'instant" : m < 60 ? `${m} min` : `${m / 60} h`}
+                </button>
+              ))}
+              <input
+                type="number"
+                min={0}
+                max={600}
+                aria-label="Minutes écoulées depuis la plantation"
+                className="champ w-24"
+                value={ilYaMinutes}
+                onChange={(e) => setIlYaMinutes(Math.max(0, Math.min(600, Number(e.target.value))))}
+              />
+            </div>
+          </Champ>
+
+          {ilYaMinutes >= apercu.minutesJusquMur ? (
+            <Note ton="alerte">
+              Avec ce décalage le plant serait déjà mûr — il l&apos;est à{" "}
+              {formatDuree(apercu.minutesJusquMur)}. Va le récolter plutôt que de lancer un minuteur.
+            </Note>
+          ) : ilYaMinutes > 0 ? (
+            <p className="font-mono text-[12px] text-cendre">
+              {ilYaMinutes >= apercu.minutesAvantCroisement
+                ? "Les gènes sont déjà recalculés : va inspecter le plant."
+                : `Croisement dans ${formatDuree(apercu.minutesAvantCroisement - ilYaMinutes)}.`}
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap items-center gap-4 border-t border-trait pt-4">
             <button type="button" className="bouton bouton-primaire" onClick={lancerMinuteur}>
               Lancer le minuteur
             </button>
@@ -230,6 +279,14 @@ export default function PageMinuteurs() {
           )}
         </Details>
       </div>
+      <VoirAussi
+        liens={[
+          { href: "/reglages", label: "Notifications Discord", detail: "Être prévenu sans garder le site ouvert." },
+          { href: "/bac", label: "Gènes parfaits", detail: "Préparer le prochain croisement pendant que ça pousse." },
+          { href: "/ferme", label: "Ma ferme", detail: "Voir où en est l'ensemble de la ferme." },
+        ]}
+      />
+
     </Page>
   );
 }

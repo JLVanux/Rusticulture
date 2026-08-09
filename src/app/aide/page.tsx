@@ -41,8 +41,8 @@ export default function PageAide() {
           <Etape numero={2} titre="Colle l'URL dans RustiCulture">
             <p>
               Va sur{" "}
-              <Link href="/equipe" className="text-lampe-chaud underline underline-offset-2">
-                Équipe
+              <Link href="/reglages" className="text-braise underline underline-offset-2">
+                Réglages
               </Link>{" "}
               → section <span className="text-feuille-100">Notifications Discord</span>, colle l&apos;URL et
               enregistre. La pastille passe au vert.

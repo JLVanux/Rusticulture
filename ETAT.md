@@ -35,6 +35,48 @@ Dernière mise à jour : après la suppression de compte et la page de confident
 - Statistiques du wipe : totaux, moyenne, meilleure récolte, **rendement réel** rapporté à l'estimation.
 - Vocabulaire « estimé » contre « enregistré » tenu partout.
 
+### Recommandations — « Que dois-je faire maintenant ? »
+- Moteur à règles sur les données réelles : chaque proposition affiche **le fait qui la déclenche**. Sans lui, le site jouerait les oracles et on ne pourrait ni le contredire ni le corriger.
+- Priorité : **ce qui se referme passe devant ce qui attend**. Une fenêtre de bouturage manquée ne se rattrape pas ; une graine à remplacer attendra demain.
+- Une action principale mise en avant, les autres repliées.
+- Règles : bouturage, récolte prête, plant qui dépérit, configuration manquante, **remplacement de graine avec gain chiffré** par le même moteur que la page Rendement, objectif à portée, conditions dégradées, décrochage du réel sur l'estimé.
+- Seuils : un remplacement sous 5 % de gain est ignoré, une graine en un seul exemplaire n'est jamais proposée à la plantation, le décrochage attend 6 h de wipe et 3 récoltes.
+
+### Planificateur de wipe
+- Clôture, démarrage, réouverture, archives consultables.
+- Clôture et démarrage passent par des fonctions en base : les deux opérations doivent être **atomiques**, sinon un échec au milieu laisse la ferme sans wipe actif, ou en violation de l'index unique.
+- Fonctions en **SECURITY INVOKER**, donc soumises aux politiques : seul le propriétaire gère les wipes. Ne pas les passer en `security definer`.
+- Rouvrir refuse s'il existe déjà un wipe actif, plutôt que d'en clôturer un dans le dos de l'utilisateur.
+- **Le résumé n'est jamais figé** : recalculé à chaque affichage depuis les faits du wipe. Rouvrir et ajouter une récolte oubliée le met à jour tout seul.
+- Limite : le résumé ne compte que les objectifs libres cochés. La progression des objectifs de production et de génétique se recalcule dans le contexte courant, impossible à rejouer sur un wipe clos.
+
+### Élevage dans la ferme
+- Poulaillers, poules et bonheur déclarés au niveau du wipe, une seule ligne par wipe.
+- Les œufs entrent dans la production estimée du tableau de bord, aux côtés des plantes.
+- **Toute nouvelle table du wipe doit refaire ses quatre politiques explicitement.** La boucle de 0001 ne couvre que les tables existantes à l'époque ; oublier la sécurité au niveau des lignes rendrait la table lisible par tout le monde.
+- **Aucune recommandation sur la saturation des poulaillers.** Elle survient au bout d'une dizaine de minutes par construction, la règle se déclencherait donc à chaque visite. Un conseil qui s'affiche toujours cesse d'être lu et décrédibilise les autres. L'information reste sur le tableau de bord, où elle est utile sans être une alerte.
+
+### Évolution dans le temps
+- Production par jour de wipe, barres du jour et courbe de cumul, sur la page Statistiques.
+- **Dessiné à la main en SVG**, pas de bibliothèque de graphiques : ce sont des barres et une courbe, une dépendance de cent kilo-octets se paierait au chargement de chaque page.
+- Les jours sont comptés en **jours de wipe**, pas en dates : « jour 4 » parle plus qu'un 12 août, et un jour sans récolte reste visible à zéro au lieu de disparaître.
+- Comparaison **sept derniers jours contre les sept précédents** : la seule honnête tant qu'il n'y a pas d'autres fermes. Exige au moins huit jours de wipe, sinon la référence est vide.
+- Tableau des chiffres sous le graphique : une image de données sans équivalent textuel n'est pas consultable au lecteur d'écran.
+
+### Notifications Discord
+- Un **webhook par ferme**, créé par le propriétaire dans son propre salon. Rien à installer, aucune application Discord.
+- L'URL vit dans la table `integrations`, **sécurité activée et aucune politique** : personne ne la lit depuis le navigateur, pas même le propriétaire. Seule la clé de service, côté serveur, y accède. Une table séparée plutôt qu'une colonne sur `fermes` — masquer une colonne oblige à redonner le droit de lecture colonne par colonne, et chaque colonne ajoutée plus tard deviendrait invisible sans qu'on s'en aperçoive.
+- Filtre sur la forme de l'URL : refuse tout ce qui n'est pas un domaine Discord, pour qu'un copier-coller malheureux n'envoie pas les notifications d'une équipe vers un serveur inconnu.
+- **Première route serveur du projet** : `/api/notifications`. Authentification avant toute autre chose, y compris avant la vérification de la configuration — un appelant non autorisé ne doit rien apprendre.
+- **Les tâches planifiées de Vercel sont inutilisables ici** : le plan Hobby les limite à une exécution par jour. On passe par GitHub Actions, toutes les dix minutes. Effet de bord utile : ça maintient Supabase éveillé.
+- Anti-doublon par clé primaire composite dans `notifications_envoyees`, pas par une fenêtre de temps : deux exécutions concurrentes ne peuvent pas envoyer deux fois.
+- Un webhook supprimé côté Discord renvoie 404 : l'intégration est désactivée plutôt que réessayée indéfiniment.
+- Deux messages seulement, les deux qui demandent une action. Le bruit est ce qui fait retirer un bot d'un serveur.
+
+### Badges
+- Tous personnels et dérivés des faits : aucun ne dépend des autres joueurs. « Top 10 » viendra avec le classement.
+- Volontairement peu nombreux et lents. Un badge par geste ne récompense rien.
+
 ### Navigation
 - Tiroir mobile donnant accès aux dix-huit pages. Colonne fixe au-dessus de 1024 px.
 
@@ -44,58 +86,15 @@ Dernière mise à jour : après la suppression de compte et la page de confident
 
 Dans l'ordre recommandé.
 
-### 1. Recommandations — « Que dois-je faire maintenant ? »
-La pièce centrale de la vision, et **toutes les données nécessaires sont désormais en place**. À base de règles, jamais de devinettes. Pistes déjà identifiées :
-- un plant est en stade Croisement → aller le bouturer ;
-- une graine en réserve est meilleure que celle plantée dans un bac → la remplacer, avec le gain estimé chiffré ;
-- assez de baies pour un thé avant la prochaine récolte ;
-- un objectif est à portée ;
-- le rendement réel décroche de l'estimé → replanter plus vite.
-
-### 2. Notifications Discord par webhook
-
-**Décidé : webhook d'abord, bot plus tard.** C'est la seule réponse satisfaisante à la limite des notifications du navigateur, qui exigent un onglet ouvert. L'équipe est déjà sur Discord toute la journée.
-
-Fonctionnement retenu : le propriétaire crée un webhook dans son propre salon — Paramètres du salon → Intégrations → Créer un webhook — et colle l'URL dans les réglages de sa ferme. Rien à installer, rien à autoriser, aucune application Discord à créer. **Une colonne `webhook_discord` sur `fermes` : chaque ferme la sienne, vers son propre serveur.** Le secret ne circule que de Discord vers RustiCulture, jamais dans l'autre sens.
-
-Deux contraintes qui changent la nature du projet :
-
-- **L'URL est un vrai secret**, contrairement aux clés Supabase. Qui l'a peut écrire dans le salon. Elle ne doit **jamais** être envoyée au navigateur, pas même au propriétaire une fois enregistrée : afficher « configuré » ou « non configuré », avec un bouton pour remplacer. Politiques plus strictes que sur le reste du schéma.
-- **L'envoi doit se faire côté serveur.** C'est le premier endroit du projet qui aura besoin d'autre chose que du client et de la base.
-
-Messages visés, volontairement rares — seulement ce qui déclenche une action :
-- la récolte est prête : « Bac 3 — le tissu est prêt à être récolté » ;
-- les gènes viennent d'être recalculés, le bouturage est possible.
-
-**Le piège est le bruit.** Une ferme de quinze bacs qui annonce chaque changement de stade transforme le salon en spam et se fait retirer dans la semaine. Rien d'autre par défaut, et des réglages pour couper.
-
-Effet de bord utile : la tâche qui vérifie les timers interroge la base régulièrement, ce qui règle au passage la mise en pause de Supabase après sept jours d'inactivité.
-
-**Le bot viendra après**, et n'apporte que deux choses de plus : les commandes slash, et le fait de **taguer la bonne personne** — ce qui suppose de relier chaque compte à un compte Discord, donc d'activer enfin la connexion Discord. Elle s'ajoute sans toucher aux comptes existants.
-
-Priorité : **avant le classement, et probablement avant le planificateur de wipe**. Le classement demande une base d'utilisateurs qui n'existe pas encore ; le bot sert dès la première équipe, et chaque message porte le nom du site sous les yeux de tout un serveur.
-
-### 3. Planificateur de wipe
-Le modèle est prêt depuis le premier jour, il ne manque que l'interface : clôturer un wipe, afficher son résumé, en démarrer un nouveau, consulter les anciens. `wipes.fin` et `wipes.actif` existent déjà, avec un index unique garantissant un seul wipe actif par ferme.
-
-### 4. Poulailler dans la ferme
-La page poulailler est un calculateur isolé. Nombre de poulaillers et de poules devraient rejoindre la configuration de la ferme et alimenter la production estimée en œufs — ressource déjà déclarable dans les récoltes.
-
-### 5. Évolution dans le temps
-Les statistiques donnent des totaux, pas des courbes. Les récoltes sont horodatées : tout est là pour tracer une progression par jour de wipe.
-
-### 6. Classement entre amis
+### 1. Classement entre amis
 **Décision déjà prise : entre amis d'abord, pas de classement mondial.** Conséquence d'architecture : il faut une notion de **groupe de fermes**, rejointes par code. Le classement se calcule alors à la demande sur quelques fermes, sans tâche planifiée ni table de scores.
 
 Classer sur des **ratios** — rendement réel, production par grand bac — et jamais sur des totaux bruts, qui récompensent le temps de jeu et la taille d'équipe.
 
 À ne construire qu'une fois qu'il y a du monde. « Toi 1 840, moyenne 1 420 » calculé sur trois fermes, c'est du bruit présenté comme une statistique.
 
-### 7. Comparaison avec les autres
+### 2. Comparaison avec les autres
 Même condition que le classement. En attendant, la comparaison utile est **avec soi-même** : cette semaine contre la semaine dernière.
-
-### 8. Badges
-En dernier, et avec parcimonie.
 
 ---
 
@@ -154,5 +153,8 @@ En dernier, et avec parcimonie.
 | `0004_code_invitation.sql` | correctif du code d'invitation |
 | `0005_objectifs.sql` | cible génétique des objectifs |
 | `0006_suppression_compte.sql` | suppression de compte, transmission de ferme |
+| `0007_wipes.sql` | clôture, démarrage et réouverture de wipe |
+| `0008_elevage.sql` | élevage de la ferme |
+| `0009_discord.sql` | webhook Discord et journal des envois |
 
 Réglage manuel dans Supabase : Authentication → Sign In / Providers → Email. Activer le fournisseur et les inscriptions, **désactiver « Confirm email »**.

@@ -20,6 +20,12 @@ import { useTimers } from "@/lib/timers";
 import { useRecoltes } from "@/lib/recoltes";
 import { EnregistrerRecolte } from "@/components/EnregistrerRecolte";
 import { SectionObjectifs } from "@/components/Objectifs";
+import { SectionElevage } from "@/components/Elevage";
+import { useElevage, useProductionAvecOeufs } from "@/lib/elevage";
+import { Recommandations } from "@/components/Recommandations";
+import { useObjectifs } from "@/lib/objectifs";
+import { calculerRecommandations } from "@/lib/recommandations";
+import { useConditions, useConstantes } from "@/lib/hooks";
 
 export default function PageTableauDeBord() {
   const {
@@ -35,11 +41,33 @@ export default function PageTableauDeBord() {
     supprimer,
     modifierQuantite,
   } = usePlantations();
-  const production = useProductionEstimee(plantations);
+  const productionPlantes = useProductionEstimee(plantations);
+  const { elevage } = useElevage();
+  const production = useProductionAvecOeufs(productionPlantes, elevage);
   const { timers } = useTimers();
   const { toutes: graines } = useGraines();
   const { activites } = useActivites(wipe?.id ?? null, 6);
   const { recoltes, enregistrer, modifiable: peutRecolter } = useRecoltes();
+  const { objectifs } = useObjectifs();
+  const [conditions] = useConditions();
+  const [constantes] = useConstantes();
+
+  const recommandations = useMemo(
+    () =>
+      calculerRecommandations({
+        plantations,
+        graines,
+        timers,
+        recoltes,
+        objectifs,
+        production,
+        conditions,
+        constantes,
+        debutWipe: wipe ? new Date(wipe.debut).getTime() : null,
+        elevage,
+      }),
+    [plantations, graines, timers, recoltes, objectifs, production, conditions, constantes, wipe, elevage]
+  );
 
   const [contenant, setContenant] = useState<Contenant>("grand_bac");
   const [plante, setPlante] = useState<PlanteId>("chanvre");
@@ -58,12 +86,6 @@ export default function PageTableauDeBord() {
     const contenants = plantations.reduce((a, p) => a + p.quantite, 0);
     return { plants, contenants };
   }, [plantations]);
-
-  const maintenant = Date.now();
-  const aInspecter = timers.filter((t) => {
-    const ecoule = (maintenant - t.debut) / 60000;
-    return ecoule >= t.minutesCroisement && ecoule < t.minutesFin;
-  });
 
   if (!connecte || !disponible) {
     return (
@@ -97,8 +119,11 @@ export default function PageTableauDeBord() {
             {wipe.serveur && ` · ${wipe.serveur}`} · jour {jour}
           </span>
         )}
+        <Link href="/wipes" className="text-lamp-glow hover:underline">
+          Wipes →
+        </Link>
         <Link href="/equipe" className="text-lamp-glow hover:underline">
-          Équipe et invitations →
+          Équipe →
         </Link>
       </div>
 
@@ -110,20 +135,9 @@ export default function PageTableauDeBord() {
         </div>
       )}
 
-      {/* Ce qui demande une action tout de suite */}
-      {aInspecter.length > 0 && (
-        <div className="mb-6 rounded-lg border border-lamp bg-lamp/10 p-4">
-          <div className="font-display text-[15px] font-semibold uppercase tracking-wide text-lamp-glow">
-            {aInspecter.length} plant{aInspecter.length > 1 ? "s" : ""} à inspecter
-          </div>
-          <p className="mt-1 text-[14px] text-moss-200">
-            {aInspecter.map((t) => t.nom).join(", ")} — les gènes sont recalculés, tu peux bouturer.
-          </p>
-          <Link href="/minuteurs" className="bouton mt-3 inline-flex">
-            Voir les minuteurs
-          </Link>
-        </div>
-      )}
+      <div className="mb-8">
+        <Recommandations recommandations={recommandations} />
+      </div>
 
       {/* Production estimée */}
       <section>
@@ -307,6 +321,8 @@ export default function PageTableauDeBord() {
           </div>
         )}
       </section>
+
+      <SectionElevage />
 
       <SectionObjectifs recoltes={recoltes} graines={graines} plantations={plantations} />
 

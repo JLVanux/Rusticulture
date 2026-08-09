@@ -10,6 +10,7 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
     liens: [
       { href: "/ferme", label: "Ma ferme" },
       { href: "/statistiques", label: "Statistiques" },
+      { href: "/wipes", label: "Wipes" },
       { href: "/equipe", label: "Équipe" },
     ],
   },

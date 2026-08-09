@@ -6,10 +6,16 @@ import { formatNombre } from "@/lib/model";
 import { usePlantations, useProductionEstimee } from "@/lib/plantations";
 import { useRecoltes, useStatistiques } from "@/lib/recoltes";
 import { ilYA } from "@/lib/activites";
+import { EvolutionRecoltes } from "@/components/Evolution";
+import { SectionBadges } from "@/components/Badges";
+import { useGraines } from "@/lib/graines";
+import { useWipes } from "@/lib/wipes";
 
 export default function PageStatistiques() {
   const { recoltes, wipe, disponible, connecte, modifiable, charge, supprimer } = useRecoltes();
   const { plantations } = usePlantations();
+  const { toutes: graines } = useGraines();
+  const { wipes } = useWipes();
   const production = useProductionEstimee(plantations);
   const stats = useStatistiques(recoltes, wipe ? new Date(wipe.debut).getTime() : null);
 
@@ -114,6 +120,19 @@ export default function PageStatistiques() {
           ))}
         </section>
       )}
+
+      <EvolutionRecoltes
+        recoltes={recoltes}
+        debutWipe={wipe ? new Date(wipe.debut).getTime() : null}
+        ressources={stats.parRessource.map((s) => s.ressource)}
+      />
+
+      <SectionBadges
+        recoltes={recoltes}
+        graines={graines}
+        plantations={plantations}
+        nombreWipes={wipes.length}
+      />
 
       {recoltes.length > 0 && (
         <section className="mt-10">

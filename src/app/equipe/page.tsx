@@ -18,6 +18,7 @@ import {
 } from "@/lib/compte";
 import { messageErreur, supabaseConfigure } from "@/lib/supabase";
 import { useStockage } from "@/lib/storage";
+import { ReglageDiscord } from "@/components/ReglageDiscord";
 
 const LIBELLE_ROLE: Record<RoleFerme, string> = {
   proprietaire: "Propriétaire",
@@ -313,6 +314,10 @@ export default function PageFerme() {
             </button>
           </div>
         </Details>
+
+        {courante && (
+          <ReglageDiscord fermeId={courante.ferme.id} estProprietaire={courante.role === "proprietaire"} />
+        )}
 
         <Details titre="Les trois rôles">
           <ul className="space-y-2 text-[14px] leading-relaxed text-moss-200">

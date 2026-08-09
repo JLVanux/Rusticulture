@@ -3,6 +3,11 @@ import { PLANTE_PAR_ID } from "@/data/game";
 import {
   carteCroisement,
   carteDeperit,
+  cartePlantation,
+  carteRecolte,
+  cartePointQuotidien,
+  carteMembreArrive,
+  carteMembreParti,
   carteMur,
   corpsWebhook,
   COULEURS,
@@ -42,6 +47,8 @@ interface Preferences {
   notif_croisement: boolean;
   notif_recolte: boolean;
   notif_plantation: boolean;
+  notif_membre: boolean;
+  notif_membre_parti: boolean;
   notif_recolte_saisie: boolean;
   notif_point_quotidien: boolean;
   notif_deperit: boolean;
@@ -94,7 +101,7 @@ export async function GET(requete: Request) {
   let requetePrefs = sb
     .from("integrations")
     .select(
-      "ferme_id, webhook_discord, notif_croisement, notif_recolte, notif_deperit, notif_plantation, notif_recolte_saisie, notif_point_quotidien, heure_point"
+      "ferme_id, webhook_discord, notif_croisement, notif_recolte, notif_deperit, notif_plantation, notif_recolte_saisie, notif_membre, notif_membre_parti, notif_point_quotidien, heure_point"
     )
     .eq("actif", true)
     .not("webhook_discord", "is", null);
@@ -205,6 +212,10 @@ async function rassembler(
         // Le dépérissement : la fenêtre se ferme et les fruits sont perdus.
         // C'est l'alerte la plus rentable, et elle manquait.
         ["deperit", Number(t.minutes_fin), p.notif_deperit],
+        // La plantation elle-même : un seuil à zéro minute. On la tire du
+        // minuteur et non du journal, parce que seule cette ligne connaît les
+        // durées — et c'est justement ce qu'on veut annoncer.
+        ["plantation", 0, p.notif_plantation],
       ] as const;
 
       for (const [type, minutes, active] of seuils) {
@@ -225,10 +236,11 @@ async function rassembler(
   // Ces événements se produisent dans le site, pas dans le temps. On les lit
   // depuis `activites` plutôt que de les envoyer depuis le navigateur : le
   // webhook est un secret, il ne doit jamais y descendre.
-  if (p.notif_plantation || p.notif_recolte_saisie) {
+  if (p.notif_recolte_saisie || p.notif_membre || p.notif_membre_parti) {
     const types: string[] = [];
-    if (p.notif_plantation) types.push("timer_lance");
     if (p.notif_recolte_saisie) types.push("recolte_enregistree");
+    if (p.notif_membre) types.push("membre_rejoint");
+    if (p.notif_membre_parti) types.push("membre_parti", "membre_retire");
 
     const { data } = await sb
       .from("activites")
@@ -238,13 +250,9 @@ async function rassembler(
       .gte("cree_le", depuis);
 
     for (const a of (data ?? []) as unknown as LigneActivite[]) {
-      const message = messageActivite(a);
-      if (message) {
-        envois.push({
-          fermeId: p.ferme_id,
-          cle: `activite:${a.id}`,
-          carte: carteDepuisTexte(message),
-        });
+      const carte = carteActivite(a, w.nom);
+      if (carte) {
+        envois.push({ fermeId: p.ferme_id, cle: `activite:${a.id}`, carte });
       }
     }
   }
@@ -254,13 +262,13 @@ async function rassembler(
     const heure = new Date(maintenant).getUTCHours();
     if (heure === p.heure_point) {
       const jour = new Date(maintenant).toISOString().slice(0, 10);
-      const message = await pointQuotidien(sb, w);
-      if (message) {
+      const bilan = await pointQuotidien(sb, w);
+      if (bilan) {
         envois.push({
-        fermeId: p.ferme_id,
-        cle: `point:${jour}`,
-        carte: carteDepuisTexte(message),
-      });
+          fermeId: p.ferme_id,
+          cle: `point:${jour}`,
+          carte: cartePointQuotidien(bilan),
+        });
       }
     }
   }
@@ -302,51 +310,44 @@ interface LigneActivite {
  * dit que ce qu'on savait déjà. Quand aucun nom n'a été saisi, le site reconnaît
  * son propre libellé automatique et ne le répète pas.
  */
-function carteTimer(t: LigneTimer, type: "croisement" | "mur" | "deperit"): Carte {
+function carteTimer(
+  t: LigneTimer,
+  type: "croisement" | "mur" | "deperit" | "plantation"
+): Carte {
   const infos = PLANTE_PAR_ID[t.plante];
   const nomAuto = `${infos?.nom ?? ""} ${t.genes ?? ""}`.trim();
+  // Ce qu'il reste à courir, compté depuis maintenant.
+  const ecoule = (Date.now() - new Date(t.debut).getTime()) / 60_000;
   const plant = {
     nomBac: t.nom.trim() === nomAuto ? null : t.nom.trim(),
     plante: t.plante,
     genes: t.genes,
     auteur: t.profils?.pseudo ?? null,
+    avantCroisement: Number(t.minutes_croisement) - ecoule,
+    avantRecolte: Number(t.minutes_mur) - ecoule,
+    avantFin: Number(t.minutes_fin) - ecoule,
   };
+  if (type === "plantation") return cartePlantation(plant);
   if (type === "croisement") return carteCroisement(plant);
   if (type === "mur") return carteMur(plant);
   return carteDeperit(plant);
 }
 
 /**
- * Découpe un message déjà rédigé en carte.
+ * La carte d'une action enregistrée dans le journal.
  *
- * Les messages du journal et du point quotidien sont composés ailleurs, en
- * texte. Plutôt que de les réécrire, on prend leur première ligne comme titre
- * et le reste comme corps — les astérisques du gras y deviennent inutiles.
+ * Même traitement que les cartes de minuteur : titre, couleur, champs. Une
+ * notification qui ressemble à une autre se lit sans effort ; deux mises en
+ * forme différentes dans le même salon donnent l'impression de deux outils.
  */
-function carteDepuisTexte(texte: string): Carte {
-  const [premiere, ...reste] = texte.split("\n");
-  return {
-    title: premiere.replace(/\*\*/g, "").trim(),
-    description: reste.join("\n").trim() || undefined,
-    color: COULEURS.info,
-  };
-}
-
-function messageActivite(a: LigneActivite): string | null {
-  const qui = a.profils?.pseudo ?? "Quelqu'un";
+function carteActivite(a: LigneActivite, nomFerme: string): Carte | null {
+  const qui = a.profils?.pseudo ?? null;
   const d = a.donnees ?? {};
 
-  if (a.type === "timer_lance") {
-    const nom = typeof d.nom === "string" ? d.nom : "un plant";
-    const plante =
-      typeof d.plante === "string" ? PLANTE_PAR_ID[d.plante]?.nom.toLowerCase() : null;
-    return `🌱 ${qui} vient de planter **${nom}**${plante ? ` — ${plante}` : ""}.`;
-  }
-
   if (a.type === "recolte_enregistree") {
-    const n = typeof d.nombre === "number" ? d.nombre : null;
+    const n = typeof d.nombre === "number" ? d.nombre : 0;
     const r = typeof d.ressource === "string" ? d.ressource : "ressources";
-    return `📦 ${qui} a récolté **${n?.toLocaleString("fr-FR") ?? "?"} ${r}**.`;
+    return carteRecolte(qui, r, n);
   }
 
   return null;
@@ -362,7 +363,7 @@ function messageActivite(a: LigneActivite): string | null {
 async function pointQuotidien(
   sb: SupabaseClient,
   w: { id: string; nom: string; debut: string }
-): Promise<string | null> {
+): Promise<{ jour: number; nom: string; totaux: { ressource: string; total: number }[]; graines: number; enCours: number } | null> {
   const [recoltes, timers, graines] = await Promise.all([
     sb.from("recoltes").select("ressource, quantite").eq("wipe_id", w.id),
     sb.from("timers").select("id").eq("wipe_id", w.id).eq("archive", false),
@@ -378,9 +379,8 @@ async function pointQuotidien(
   }
   const totaux = [...parRessource.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([r, q]) => `${q.toLocaleString("fr-FR")} ${r}`)
-    .join(" · ");
+    .slice(0, 4)
+    .map(([ressource, total]) => ({ ressource, total }));
 
   const jour =
     Math.floor((Date.now() - new Date(w.debut).getTime()) / 86_400_000) + 1;
@@ -390,9 +390,5 @@ async function pointQuotidien(
   );
   const enCours = (timers.data ?? []).length;
 
-  return (
-    `📊 **Jour ${jour} — ${w.nom}**\n` +
-    `${totaux}\n` +
-    `-# ${nbGraines} graines en réserve · ${enCours} minuteur${enCours > 1 ? "s" : ""} en cours`
-  );
+  return { jour, nom: w.nom, totaux, graines: nbGraines, enCours };
 }

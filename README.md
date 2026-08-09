@@ -6,6 +6,8 @@ Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind 3.
 
 Deux régimes cohabitent. **Sans compte**, les calculateurs, le scanner et la génétique fonctionnent entièrement dans le navigateur, sans serveur. **Avec un compte**, une ferme se partage entre coéquipiers : graines, minuteurs, plantations, récoltes et statistiques communs, sur Supabase.
 
+**[ICONES.md](ICONES.md)** explique le nommage des images de cultures, qui ne sont pas fournies avec le projet.
+
 **[ETAT.md](ETAT.md)** suit ce qui est fait, ce qui reste, et les décisions déjà tranchées. À lire avant de reprendre le projet.
 
 ## Lancer en local

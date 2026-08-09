@@ -36,7 +36,7 @@ alter table notifications_envoyees
   drop constraint if exists notifications_envoyees_type_check;
 alter table notifications_envoyees
   add constraint notifications_envoyees_type_check
-  check (type in ('croisement', 'mur', 'deperit'));
+  check (type in ('croisement', 'mur', 'deperit', 'plantation'));
 
 -- Journal des envois qui ne sont pas liés à un minuteur : plantations,
 -- récoltes, points quotidiens. La clé primaire empêche le doublon même si deux
@@ -93,7 +93,7 @@ begin
   if champ in (
     'notif_croisement', 'notif_recolte', 'notif_deperit', 'notif_plantation',
     'notif_recolte_saisie', 'notif_graine_parfaite', 'notif_objectif',
-    'notif_membre', 'notif_wipe_fin', 'notif_point_quotidien'
+    'notif_membre', 'notif_membre_parti', 'notif_wipe_fin', 'notif_point_quotidien'
   ) then
     if valeur_bool is null then
       raise exception 'valeur booleenne attendue';

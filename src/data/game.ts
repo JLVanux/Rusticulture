@@ -54,23 +54,14 @@ export interface Plante {
   /** Genre grammatical, pour écrire « ton chanvre » mais « ta citrouille ». */
   genre: "m" | "f";
   /**
-   * Les trois états d'une culture, avec leur nom exact en jeu et le nom de
-   * fichier de leur icône.
+   * Nom du fichier dans `public/icons`, sans extension.
    *
-   * Une plante n'est pas une chose mais une chaîne : on plante une GRAINE, on
-   * fait pousser un BUISSON, on récolte un PRODUIT. Confondre les trois est la
-   * source d'erreur la plus courante quand on débute — d'autant que les noms ne
-   * se déduisent pas : la baie bleue donne des « Myrtilles », le chanvre donne
-   * du « Tissu ».
-   *
-   * Les icônes vivent dans `public/icons/Graine`, `public/icons/Buisson` et
-   * `public/icons/Baie`, nommées d'après `fichier`.
+   * Les images sont à plat et en `.jpg` : elles représentent le PRODUIT
+   * récolté, pas la graine ni le buisson. Les noms sont en minuscules sans
+   * accent — Vercel distingue les majuscules là où macOS les confond, et un
+   * accent ne s'encode pas pareil sur les deux systèmes.
    */
-  etats: {
-    graine: { nom: string; fichier: string };
-    buisson: { nom: string; fichier: string };
-    produit: { nom: string; fichier: string };
-  };
+  icone: string;
   categorie: "fibre" | "baie" | "nourriture";
   /** Récolte : nom de la ressource sortie. */
   ressource: string;
@@ -84,16 +75,16 @@ export interface Plante {
 }
 
 export const PLANTES: Plante[] = [
-  { id: "chanvre", nom: "Chanvre", genre: "m", etats: { graine: { nom: "Graine de chanvre", fichier: "seed-hemp" }, buisson: { nom: "Chanvre", fichier: "hemp-collectable" }, produit: { nom: "Tissu", fichier: "cloth" } }, categorie: "fibre", ressource: "tissu", minutesBase: 180, rendementBase: 10, boutures: 3, couleur: "#7fae6a" },
-  { id: "baie_rouge", nom: "Baie rouge", genre: "f", etats: { graine: { nom: "Graine de baie rouge", fichier: "seed-red-berry" }, buisson: { nom: "Buisson de baie rouge", fichier: "red-berry-collectable" }, produit: { nom: "Baie rouge", fichier: "red-berry" } }, categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#d9534f" },
-  { id: "baie_jaune", nom: "Baie jaune", genre: "f", etats: { graine: { nom: "Graine de baie jaune", fichier: "seed-yellow-berry" }, buisson: { nom: "Buisson de baie jaune", fichier: "yellow-berry-collectable" }, produit: { nom: "Baie jaune", fichier: "yellow-berry" } }, categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#e6b83c" },
-  { id: "baie_bleue", nom: "Baie bleue", genre: "f", etats: { graine: { nom: "Graine de baie bleue", fichier: "seed-blue-berry" }, buisson: { nom: "Buisson de baie bleue", fichier: "blue-berry-collectable" }, produit: { nom: "Myrtille", fichier: "blue-berry" } }, categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#4f83d9" },
-  { id: "baie_verte", nom: "Baie verte", genre: "f", etats: { graine: { nom: "Graine de baie verte", fichier: "seed-green-berry" }, buisson: { nom: "Buisson de baie verte", fichier: "green-berry-collectable" }, produit: { nom: "Baie verte", fichier: "green-berry" } }, categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#5aa860" },
-  { id: "baie_blanche", nom: "Baie blanche", genre: "f", etats: { graine: { nom: "Graine de baie blanche", fichier: "seed-white-berry" }, buisson: { nom: "Buisson de baie blanche", fichier: "white-berry-collectable" }, produit: { nom: "Baie blanche", fichier: "white-berry" } }, categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#d8dee2" },
-  { id: "citrouille", nom: "Citrouille", genre: "f", etats: { graine: { nom: "Graine de citrouille", fichier: "seed-pumpkin" }, buisson: { nom: "Plant de citrouille", fichier: "pumpkin-collectable" }, produit: { nom: "Citrouille", fichier: "pumpkin" } }, categorie: "nourriture", ressource: "citrouilles", minutesBase: 220, rendementBase: 3, boutures: 2, couleur: "#e08a2e" },
-  { id: "mais", nom: "Maïs", genre: "m", etats: { graine: { nom: "Graine de maïs", fichier: "seed-corn" }, buisson: { nom: "Plant de maïs", fichier: "corn-collectable" }, produit: { nom: "Maïs", fichier: "corn" } }, categorie: "nourriture", ressource: "maïs", minutesBase: 220, rendementBase: 3, boutures: 2, couleur: "#e8c65a" },
-  { id: "pomme_de_terre", nom: "Pomme de terre", genre: "f", etats: { graine: { nom: "Graine de pomme de terre", fichier: "seed-potato" }, buisson: { nom: "Plant de pomme de terre", fichier: "potato-collectable" }, produit: { nom: "Pomme de terre", fichier: "potato" } }, categorie: "nourriture", ressource: "pommes de terre", minutesBase: 180, rendementBase: 3, boutures: 2, couleur: "#b99764" },
-  { id: "ble", nom: "Blé", genre: "m", etats: { graine: { nom: "Graine de blé", fichier: "seed-wheat" }, buisson: { nom: "Plant de blé", fichier: "wheat-collectable" }, produit: { nom: "Blé", fichier: "wheat" } }, categorie: "nourriture", ressource: "blé", minutesBase: 180, rendementBase: 4, boutures: 2, couleur: "#d9bd77" },
+  { id: "chanvre", nom: "Chanvre", genre: "m", icone: "chanvre", categorie: "fibre", ressource: "tissu", minutesBase: 180, rendementBase: 10, boutures: 3, couleur: "#7fae6a" },
+  { id: "baie_rouge", nom: "Baie rouge", genre: "f", icone: "baie-rouge", categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#d9534f" },
+  { id: "baie_jaune", nom: "Baie jaune", genre: "f", icone: "baie-jaune", categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#e6b83c" },
+  { id: "baie_bleue", nom: "Baie bleue", genre: "f", icone: "baie-bleu", categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#4f83d9" },
+  { id: "baie_verte", nom: "Baie verte", genre: "f", icone: "baie-verte", categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#5aa860" },
+  { id: "baie_blanche", nom: "Baie blanche", genre: "f", icone: "baie-blanche", categorie: "baie", ressource: "baies", minutesBase: 180, rendementBase: 4, boutures: 3, couleur: "#d8dee2" },
+  { id: "citrouille", nom: "Citrouille", genre: "f", icone: "citrouille", categorie: "nourriture", ressource: "citrouilles", minutesBase: 220, rendementBase: 3, boutures: 2, couleur: "#e08a2e" },
+  { id: "mais", nom: "Maïs", genre: "m", icone: "mais", categorie: "nourriture", ressource: "maïs", minutesBase: 220, rendementBase: 3, boutures: 2, couleur: "#e8c65a" },
+  { id: "pomme_de_terre", nom: "Pomme de terre", genre: "f", icone: "patate", categorie: "nourriture", ressource: "pommes de terre", minutesBase: 180, rendementBase: 3, boutures: 2, couleur: "#b99764" },
+  { id: "ble", nom: "Blé", genre: "m", icone: "ble", categorie: "nourriture", ressource: "blé", minutesBase: 180, rendementBase: 4, boutures: 2, couleur: "#d9bd77" },
 ];
 
 export const PLANTE_PAR_ID: Record<string, Plante> = Object.fromEntries(

@@ -79,6 +79,19 @@ interface InfosPlant {
   plante: string;
   genes: string | null;
   auteur: string | null;
+  /** Minutes restantes avant les prochaines échéances, si connues. */
+  avantCroisement?: number;
+  avantRecolte?: number;
+  avantFin?: number;
+}
+
+/** « 1 h 43 », « 26 min ». */
+export function duree(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes));
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  const reste = m % 60;
+  return reste === 0 ? `${h} h` : `${h} h ${String(reste).padStart(2, "0")}`;
 }
 
 function accords(planteId: string) {
@@ -92,11 +105,29 @@ function accords(planteId: string) {
   };
 }
 
+/**
+ * Les champs d'une carte, dans l'ordre où on les lit.
+ *
+ * D'abord CE QUI EST PLANTÉ et OÙ — c'est ce qu'on cherche quand le message
+ * arrive. Puis QUAND agir, l'information qui décide si on repose le téléphone
+ * ou si on retourne à la base. L'auteur ne vient qu'après : savoir qui a planté
+ * est utile, mais ça n'engage aucune action.
+ */
 function champsPlant(p: InfosPlant): Champ[] {
-  const champs: Champ[] = [];
   const a = accords(p.plante);
-  champs.push({ name: "Plante", value: PLANTE_PAR_ID[p.plante]?.nom ?? a.nom, inline: true });
-  if (p.auteur) champs.push({ name: "Planté par", value: p.auteur, inline: true });
+  const champs: Champ[] = [
+    { name: "Plante", value: PLANTE_PAR_ID[p.plante]?.nom ?? a.nom, inline: true },
+  ];
+
+  if (p.avantCroisement !== undefined && p.avantCroisement > 0) {
+    champs.push({ name: "Croisement dans", value: duree(p.avantCroisement), inline: true });
+  }
+  if (p.avantRecolte !== undefined && p.avantRecolte > 0) {
+    champs.push({ name: "Récolte dans", value: duree(p.avantRecolte), inline: true });
+  }
+  if (p.avantFin !== undefined && p.avantFin > 0) {
+    champs.push({ name: "Dépérit dans", value: duree(p.avantFin), inline: true });
+  }
   return champs;
 }
 
@@ -104,39 +135,49 @@ export function carteCroisement(p: InfosPlant): Carte {
   const a = accords(p.plante);
   const genes = genesColories(p.genes);
   return {
-    title: `🧬 ${p.nomBac ? `${p.nomBac} — le croisement est fait` : `Le croisement est fait sur ${a.poss} ${a.nom}`}`,
+    title: `🧬 ${p.nomBac ?? `${a.maj} ${a.nom}`} — va bouturer`,
     description:
       `Va inspecter le plant en jeu : ses gènes viennent d'être recalculés.\n` +
       `S'ils te plaisent, **bouture-le** — la bouture les copie à l'identique et tu les gardes pour de bon.` +
       (genes ? `\n${genes}` : ""),
     color: COULEURS.croisement,
     fields: champsPlant(p),
-    footer: { text: "Le bouturage reste possible jusqu'au dépérissement" },
+    footer: {
+      text: p.auteur
+        ? `Planté par ${p.auteur} · le bouturage reste possible jusqu'au dépérissement`
+        : "Le bouturage reste possible jusqu'au dépérissement",
+    },
   };
 }
 
 export function carteMur(p: InfosPlant): Carte {
   const a = accords(p.plante);
-  const genes = genesColories(p.genes);
   return {
-    title: `🌾 ${p.nomBac ? `${p.nomBac} — récolte prête` : `${a.maj} ${a.nom} est ${a.accord} à récolter`}`,
+    title: `🌾 ${p.nomBac ?? `${a.maj} ${a.nom}`} — récolte prête`,
     description:
       `Rendement maximum atteint. Passe le ramasser : ensuite le plant dépérit et les fruits sont perdus.` +
-      (genes ? `\n${genes}` : ""),
+      (genesColories(p.genes) ?? ""),
     color: COULEURS.mur,
     fields: champsPlant(p),
+    footer: {
+      text: p.auteur ? `Planté par ${p.auteur}` : "Récolte au rendement maximum",
+    },
   };
 }
 
 export function carteDeperit(p: InfosPlant): Carte {
   const a = accords(p.plante);
   return {
-    title: `⚠️ ${p.nomBac ? `${p.nomBac} — le plant meurt` : `${a.maj} ${a.nom} est en train de mourir`}`,
+    title: `⚠️ ${p.nomBac ?? `${a.maj} ${a.nom}`} — le plant meurt`,
     description:
-      `La fenêtre de récolte se ferme. Passé ce point il ne reste que de la fibre — ` +
-      `et le bac reste occupé tant que tu ne l'as pas vidé.`,
+      `La fenêtre de récolte se ferme. Passé ce point il ne reste que de la fibre, ` +
+      `et le bac reste occupé tant que tu ne l'as pas vidé.` +
+      (genesColories(p.genes) ?? ""),
     color: COULEURS.deperit,
     fields: champsPlant(p),
+    footer: {
+      text: p.auteur ? `Planté par ${p.auteur}` : "Récolte encore possible, mais dégradée",
+    },
   };
 }
 
@@ -144,20 +185,24 @@ export function cartePlantation(p: InfosPlant): Carte {
   const a = accords(p.plante);
   const genes = genesColories(p.genes);
   return {
-    title: `🌱 ${p.auteur ?? "Quelqu'un"} vient de planter`,
-    description:
-      (p.nomBac ? `**${p.nomBac}** — ` : "") +
-      `${PLANTE_PAR_ID[p.plante]?.nom ?? a.nom}. Inutile de replanter par-dessus.` +
-      (genes ? `\n${genes}` : ""),
+    title: `🌱 ${p.nomBac ?? `${a.maj} ${a.nom}`} — planté`,
+    description: `Inutile de replanter par-dessus.` + (genes ?? ""),
     color: COULEURS.info,
+    fields: champsPlant(p),
+    footer: { text: p.auteur ? `Planté par ${p.auteur}` : "Nouvelle plantation" },
   };
 }
 
 export function carteRecolte(auteur: string | null, ressource: string, quantite: number): Carte {
   return {
-    title: `📦 ${quantite.toLocaleString("fr-FR")} ${ressource}`,
-    description: `${auteur ?? "Quelqu'un"} vient d'enregistrer cette récolte.`,
+    title: `📦 Récolte enregistrée`,
+    description: "Elle entre dans les statistiques du wipe.",
     color: COULEURS.info,
+    fields: [
+      { name: "Ressource", value: ressource, inline: true },
+      { name: "Quantité", value: quantite.toLocaleString("fr-FR"), inline: true },
+    ],
+    footer: { text: auteur ? `Enregistrée par ${auteur}` : "Récolte enregistrée" },
   };
 }
 
@@ -176,20 +221,54 @@ export function carteGraineParfaite(genes: string, planteId: string, auteur: str
   };
 }
 
-export function cartePointQuotidien(
-  jour: number,
-  totaux: { ressource: string; total: number }[],
-  prochaine: string | null
-): Carte {
+export function carteMembreArrive(pseudo: string, nomFerme: string): Carte {
   return {
-    title: `📊 Jour ${jour} du wipe`,
+    title: `👋 ${pseudo} rejoint la ferme`,
     description:
-      totaux.length > 0
-        ? totaux
-            .map((t) => `**${t.total.toLocaleString("fr-FR")}** ${t.ressource}`)
-            .join(" · ")
+      `Il voit désormais les mêmes graines, les mêmes minuteurs et les mêmes chiffres que vous.`,
+    color: COULEURS.fete,
+    fields: [{ name: "Ferme", value: nomFerme, inline: true }],
+    footer: { text: "Le rôle se règle depuis la page Équipe" },
+  };
+}
+
+export function carteMembreParti(pseudo: string, nomFerme: string, exclu: boolean): Carte {
+  return {
+    title: exclu ? `🚪 ${pseudo} a été retiré de la ferme` : `🚪 ${pseudo} a quitté la ferme`,
+    description:
+      `Ce qu'il a ajouté reste : les graines, les bacs et les récoltes appartiennent à la ferme, ` +
+      `pas à la personne.`,
+    color: COULEURS.info,
+    fields: [{ name: "Ferme", value: nomFerme, inline: true }],
+  };
+}
+
+export function cartePointQuotidien(b: {
+  jour: number;
+  nom: string;
+  totaux: { ressource: string; total: number }[];
+  graines: number;
+  enCours: number;
+}): Carte {
+  return {
+    title: `📊 Jour ${b.jour} — ${b.nom}`,
+    description:
+      b.totaux.length > 0
+        ? "Récolté depuis le début du wipe :"
         : "Aucune récolte enregistrée pour l'instant.",
     color: COULEURS.info,
-    fields: prochaine ? [{ name: "Prochaine étape", value: prochaine }] : undefined,
+    fields: [
+      ...b.totaux.map((t) => ({
+        name: t.ressource,
+        value: t.total.toLocaleString("fr-FR"),
+        inline: true,
+      })),
+      { name: "Graines en réserve", value: String(b.graines), inline: true },
+      {
+        name: "Minuteurs en cours",
+        value: String(b.enCours),
+        inline: true,
+      },
+    ],
   };
 }

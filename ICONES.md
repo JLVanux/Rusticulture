@@ -1,5 +1,11 @@
 # Icônes
 
+> **Le dossier `public` n'est jamais livré dans l'archive, ni touché par le
+> script de mise à jour.** Il t'appartient entièrement : les images du jeu, le
+> favicon, tout ce que tu y mets. Les inclure revenait à les écraser à chaque
+> copie — c'est arrivé, d'où cette règle.
+
+
 Les images du jeu, à plat, en `.jpg`. Elles ne sont pas fournies avec le
 projet : ce sont des ressources de Facepunch Studios.
 

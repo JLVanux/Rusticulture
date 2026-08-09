@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { IconeObjet } from "@/components/IconePlante";
 import { VoirAussi } from "@/components/VoirAussi";
 import { TARTES } from "@/data/teas";
 import { formatDuree, formatNombre } from "@/lib/model";

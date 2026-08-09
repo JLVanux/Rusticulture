@@ -1,7 +1,7 @@
 "use client";
 
 import { PLANTES, type PlanteId } from "@/data/game";
-import { IconePlante } from "@/components/IconePlante";
+import { IconeObjet, IconePlante } from "@/components/IconePlante";
 
 /**
  * Icône d'une ressource récoltée, désignée par son nom plutôt que par une
@@ -25,7 +25,12 @@ export function IconeRessource({
   taille?: number;
   className?: string;
 }) {
+  // Les œufs ne viennent d'aucune plante : ils ont leur propre fichier.
+  if (ressource === "œufs" || ressource === "oeufs") {
+    return <IconeObjet fichier="oeuf" nom="Œuf" taille={taille} className={className} />;
+  }
+
   const plante = PAR_RESSOURCE.get(ressource);
   if (!plante) return null;
-  return <IconePlante plante={plante} etat="produit" taille={taille} className={className} />;
+  return <IconePlante plante={plante} taille={taille} className={className} />;
 }

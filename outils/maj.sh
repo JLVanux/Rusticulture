@@ -8,9 +8,9 @@
 # `--delete` est nécessaire pour que les fichiers supprimés dans l'archive
 # disparaissent aussi du dépôt. C'est aussi ce qui rend les exclusions
 # indispensables : sans elles, il emporterait .env.local, node_modules — et
-# `public/icons`, dont le contenu n'est jamais livré avec l'archive puisque ce
-# sont des ressources du jeu. Retirer cette exclusion effacerait les icônes à
-# chaque mise à jour, sans le moindre message.
+# `public`, qui n'est jamais livré avec l'archive : il contient les icônes du
+# jeu, qui appartiennent à l'utilisateur. Retirer cette exclusion les effacerait
+# à chaque mise à jour, sans le moindre message — c'est arrivé.
 
 set -euo pipefail
 
@@ -44,7 +44,7 @@ rsync -a --delete \
   --exclude '.next' \
   --exclude '.vercel' \
   --exclude '.DS_Store' \
-  --exclude 'public/icons' \
+  --exclude 'public' \
   "${SOURCE%/}/" .
 
 echo "Fichiers à jour. Ensuite :"

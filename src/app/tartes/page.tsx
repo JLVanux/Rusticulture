@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Choix, Details, EnTetePage, Note, Page, Reponse } from "@/components/Ui";
+import { IconeObjet } from "@/components/IconePlante";
 import { VoirAussi } from "@/components/VoirAussi";
 import { PALIERS, TARTES, THES, type Palier } from "@/data/teas";
 import { SOUFRE_PAR_NOEUD } from "@/data/raid";
@@ -101,7 +102,8 @@ export default function PageTartes() {
                     t.id === "ours" ? "text-lampe-chaud" : "text-feuille-100"
                   }`}
                 >
-                  {t.nom}
+                  {t.icone && <IconeObjet fichier={t.icone} nom={t.nom} taille={22} />}
+              {t.nom}
                 </h3>
                 <span className="font-mono text-[12px] text-feuille-400">
                   {t.buff} · {t.dureeMin} min
@@ -119,7 +121,8 @@ export default function PageTartes() {
             {TARTES.map((t) => (
               <li key={t.id} className="border-b border-white/[0.07] pb-3 last:border-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-[15px] text-feuille-100">{t.nom}</span>
+                  <span className="text-[15px] text-feuille-100">{t.icone && <IconeObjet fichier={t.icone} nom={t.nom} taille={22} />}
+              {t.nom}</span>
                   <span className="font-mono text-[12px] text-feuille-400">{t.buff}</span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">

@@ -286,6 +286,18 @@ export async function rejoindreFerme(code: string): Promise<string> {
   const sb = supabase();
   if (!sb) throw new Error("base de données non configurée");
   const { data, error } = await sb.rpc("rejoindre_ferme", { code: code.trim() });
+  // Le journal alimente la notification Discord. Un échec ici ne doit pas
+  // empêcher l'adhésion elle-même : on ignore volontairement le résultat.
+  if (!error && data) {
+    const { data: moi } = await sb.auth.getUser();
+    if (moi.user) {
+      void sb.rpc("journaliser_mouvement", {
+        f: data as string,
+        p_profil: moi.user.id,
+        p_type: "membre_rejoint",
+      });
+    }
+  }
   if (error) throw error;
   return data as string;
 }
@@ -308,6 +320,12 @@ export async function changerRole(fermeId: string, profilId: string, role: RoleF
 export async function retirerMembre(fermeId: string, profilId: string) {
   const sb = supabase();
   if (!sb) throw new Error("base de données non configurée");
+  // Journaliser d'abord : une fois la ligne supprimée, la personne n'est plus
+  // membre et l'écriture serait refusée.
+  const { data: moi } = await sb.auth.getUser();
+  const type = moi.user?.id === profilId ? "membre_parti" : "membre_retire";
+  void sb.rpc("journaliser_mouvement", { f: fermeId, p_profil: profilId, p_type: type });
+
   const { error } = await sb.from("membres").delete().eq("ferme_id", fermeId).eq("profil_id", profilId);
   if (error) throw error;
 }

@@ -137,6 +137,9 @@ export const THE_PAR_ID: Record<string, The> = Object.fromEntries(
 // -----------------------------------------------------------------------------
 
 export interface Tarte {
+  /** Fichier dans `public/icons`, sans extension. Absent quand l'image
+   *  n'existe pas — toutes les tartes n'en ont pas. */
+  icone?: string;
   id: string;
   nom: string;
   buff: string;
@@ -171,6 +174,7 @@ export const TARTES: Tarte[] = [
   },
   {
     id: "poulet",
+    icone: "pie-chicken",
     nom: "Tarte au poulet",
     buff: "Meilleurs gènes à la récolte",
     detail:
@@ -186,6 +190,7 @@ export const TARTES: Tarte[] = [
   },
   {
     id: "citrouille",
+    icone: "pie-pumpkin",
     nom: "Tarte à la citrouille",
     buff: "+10 % PV max",
     detail: "La moins chère des tartes utiles. Ne se cumule pas avec le thé de vie max : seul le plus fort s'applique.",
@@ -198,6 +203,7 @@ export const TARTES: Tarte[] = [
   },
   {
     id: "porc",
+    icone: "pie-pork",
     nom: "Tarte au porc",
     buff: "+200 % vitesse de soin",
     detail: "Triple la vitesse de tous les soins progressifs. Avec un gros kit de soin, tu remontes de presque rien à plein en quelques secondes.",
@@ -240,6 +246,7 @@ export const TARTES: Tarte[] = [
   },
   {
     id: "poisson",
+    icone: "pie-fish",
     nom: "Tarte au poisson",
     buff: "+25 % confort",
     detail: "Le confort déclenche la régénération passive quand faim et soif sont hautes. Utile pour se soigner à la base sans consommer de meds.",

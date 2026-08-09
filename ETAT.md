@@ -94,7 +94,18 @@ La charte part donc d'une source précise : **l'inventaire de Rust**. Des cases 
 
 Mobile d'abord, inchangé : barre sous le pouce avec marge iPhone, cibles de 44 px, champs de 16 px, échelle fluide, rangées défilantes.
 
-### Les trois états d'une culture
+### Icônes — pièges de nommage
+Les fichiers réels sont **à plat, en `.jpg`**, et représentent le produit récolté. La structure Graine/Buisson/Baie que j'avais prévue ne correspondait à rien : les trois états n'existent pas en images.
+
+**Deux pièges qui ne se voient qu'en production :**
+- **La casse.** macOS confond `Citrouille.jpg` et `citrouille.jpg`, Vercel non. Une icône qui s'affiche en local peut être introuvable en ligne.
+- **Les accents.** macOS enregistre `blé.jpg` en forme décomposée, Linux l'attend composée : ce sont deux noms différents pour le système.
+
+D'où la règle : **minuscules, sans accent, sans espace**, documentée dans `public/icons/LISEZ-MOI.md`.
+
+Les tartes et l'œuf ont aussi leurs icônes, branchées sur `/tartes` et sur les lignes de production.
+
+### Les trois états — abandonné
 - **`public/icons` est exclu du script de mise à jour.** Ces fichiers ne sont jamais livrés avec l'archive : sans l'exclusion, `rsync --delete` les effaçait à chaque mise à jour, silencieusement.
 - Une culture n'est pas une chose mais une chaîne : **graine → buisson → produit**, chacun avec son nom exact et son icône. C'est la confusion la plus fréquente chez un débutant, d'autant que les noms ne se déduisent pas — la baie bleue donne des « Myrtilles », le chanvre donne du « Tissu ».
 - `Plante.etats` porte les trois noms et les trois noms de fichiers.

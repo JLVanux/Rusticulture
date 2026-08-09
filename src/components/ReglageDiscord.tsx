@@ -20,6 +20,8 @@ interface Prefs {
   notif_croisement: boolean;
   notif_recolte: boolean;
   notif_deperit: boolean;
+  notif_membre: boolean;
+  notif_membre_parti: boolean;
   notif_plantation: boolean;
   notif_recolte_saisie: boolean;
   notif_point_quotidien: boolean;
@@ -52,6 +54,16 @@ const REGLAGES: { cle: keyof Prefs; titre: string; detail: string }[] = [
     cle: "notif_recolte_saisie",
     titre: "Récolte enregistrée",
     detail: "Quand un membre saisit ce qu'il a ramassé.",
+  },
+  {
+    cle: "notif_membre",
+    titre: "Arrivée d'un coéquipier",
+    detail: "Quelqu'un rejoint la ferme avec le code d'invitation.",
+  },
+  {
+    cle: "notif_membre_parti",
+    titre: "Départ d'un coéquipier",
+    detail: "Quelqu'un quitte la ferme, ou en est retiré par le propriétaire.",
   },
   {
     cle: "notif_point_quotidien",

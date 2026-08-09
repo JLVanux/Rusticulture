@@ -1,7 +1,29 @@
-import { GENES, PLANTE_PAR_ID, type GeneLetter } from "@/data/game";
+import { GENES, PLANTE_PAR_ID, type GeneLetter, type Genome } from "@/data/game";
+import { parseGenome } from "@/lib/crossbreed";
+import {
+  CONDITIONS_PARFAITES,
+  CONSTANTES_DEFAUT,
+  calculerCroissance,
+  calculerRendement,
+} from "@/lib/model";
 
 /**
  * Les messages envoyés dans Discord.
+ *
+ * Écrits pour une situation précise : quelqu'un est en pleine partie, la
+ * notification tombe, il a deux secondes pour trancher une seule question —
+ * **est-ce que j'arrête ce que je fais pour rentrer à la base ?**
+ *
+ * D'où l'ordre de tout ce qui suit :
+ *
+ * 1. **Qu'est-ce qui se passe**, dans le titre, avec la couleur qui dit
+ *    l'urgence avant même la lecture.
+ * 2. **Combien ça rapporte** — la seule information qui décide vraiment du
+ *    déplacement, et celle qui manquait complètement.
+ * 3. **Où**, pour ne pas chercher en arrivant.
+ * 4. **Combien de temps il reste**, pour savoir si on peut finir ce qu'on fait.
+ *
+ * Tout le reste est du bruit et a été retiré.
  *
  * Deux niveaux au-delà du texte brut, tous deux gratuits :
  *
@@ -90,6 +112,36 @@ interface InfosPlant {
   avantFin?: number;
 }
 
+/**
+ * Ce qu'un bac plein va rapporter, en ordre de grandeur.
+ *
+ * C'est l'information qui manquait, et de loin la plus décisive : personne ne
+ * traverse la carte sans savoir si ça vaut le trajet. On suppose un grand bac
+ * de neuf plants en conditions idéales — la valeur réelle sera plus basse, d'où
+ * le « environ » et la mention explicite de l'hypothèse.
+ */
+function recolteEstimee(planteId: string, genes: string | null): string | null {
+  const plante = PLANTE_PAR_ID[planteId];
+  const genome: Genome | null = genes ? parseGenome(genes) : null;
+  if (!plante || !genome) return null;
+
+  const croissance = calculerCroissance(
+    plante.id,
+    genome,
+    CONDITIONS_PARFAITES,
+    CONSTANTES_DEFAUT
+  );
+  const rendement = calculerRendement(plante.id, genome, CONDITIONS_PARFAITES, CONSTANTES_DEFAUT, {
+    plantsParBac: 9,
+    bonusTheRecolte: 0,
+    minutesCycle: croissance.minutesJusquMur,
+  });
+
+  const total = Math.round(rendement.parBac);
+  if (!Number.isFinite(total) || total <= 0) return null;
+  return `≈ ${total.toLocaleString("fr-FR")} ${plante.ressource}`;
+}
+
 /** « 1 h 43 », « 26 min ». */
 export function duree(minutes: number): string {
   const m = Math.max(0, Math.round(minutes));
@@ -110,122 +162,93 @@ function accords(planteId: string) {
   };
 }
 
-/**
- * Les champs d'une carte, dans l'ordre où on les lit.
- *
- * D'abord CE QUI EST PLANTÉ et OÙ — c'est ce qu'on cherche quand le message
- * arrive. Puis QUAND agir, l'information qui décide si on repose le téléphone
- * ou si on retourne à la base. L'auteur ne vient qu'après : savoir qui a planté
- * est utile, mais ça n'engage aucune action.
- */
-function champsPlant(p: InfosPlant): Champ[] {
-  const a = accords(p.plante);
-  const champs: Champ[] = [
-    { name: "Plante", value: PLANTE_PAR_ID[p.plante]?.nom ?? a.nom, inline: true },
-  ];
-
-  if (p.avantCroisement !== undefined && p.avantCroisement > 0) {
-    champs.push({ name: "Croisement dans", value: duree(p.avantCroisement), inline: true });
-  }
-  if (p.avantRecolte !== undefined && p.avantRecolte > 0) {
-    champs.push({ name: "Récolte dans", value: duree(p.avantRecolte), inline: true });
-  }
-  if (p.avantFin !== undefined && p.avantFin > 0) {
-    champs.push({ name: "Dépérit dans", value: duree(p.avantFin), inline: true });
-  }
-  return champs;
-}
 
 export function carteCroisement(p: InfosPlant): Carte {
   const a = accords(p.plante);
-  const genes = genesColories(p.genes);
   return {
-    title: `🧬 ${p.nomBac ?? `${a.maj} ${a.nom}`} — va bouturer`,
+    title: `🧬 ${p.nomBac ?? `${a.maj} ${a.nom}`} — les gènes sont tombés`,
+    // Le site ne connaît PAS le résultat du croisement : il faut aller le lire
+    // en jeu. Le dire clairement évite de laisser croire à une information
+    // qu'on n'a pas.
     description:
-      `Va inspecter le plant en jeu : ses gènes viennent d'être recalculés.\n` +
-      `S'ils te plaisent, **bouture-le** — la bouture les copie à l'identique et tu les gardes pour de bon.` +
-      (genes ? `\n${genes}` : ""),
+      `Inspecte le plant pour découvrir ce qu'il est devenu. ` +
+      `S'il te plaît, **bouture-le** — la bouture fige ses gènes.` +
+      (genesColories(p.genes) ?? ""),
     color: COULEURS.croisement,
-    fields: champsPlant(p),
+    fields: [
+      { name: "Gènes plantés", value: p.genes ?? "—", inline: true },
+      ...(p.nomBac ? [{ name: "Où", value: p.nomBac, inline: true }] : []),
+      ...(p.avantFin !== undefined && p.avantFin > 0
+        ? [{ name: "Tu as jusqu'à", value: duree(p.avantFin), inline: true }]
+        : []),
+    ],
     footer: {
-      text: p.auteur
-        ? `Planté par ${p.auteur} · le bouturage reste possible jusqu'au dépérissement`
-        : "Le bouturage reste possible jusqu'au dépérissement",
+      text: p.auteur ? `Planté par ${p.auteur}` : "Le bouturage reste possible jusqu'au dépérissement",
     },
   };
 }
 
 export function carteMur(p: InfosPlant): Carte {
   const a = accords(p.plante);
+  const recolte = recolteEstimee(p.plante, p.genes);
   return {
-    title: `🌾 ${p.nomBac ?? `${a.maj} ${a.nom}`} — récolte prête`,
-    description:
-      `Rendement maximum atteint. Passe le ramasser : ensuite le plant dépérit et les fruits sont perdus.` +
-      (genesColories(p.genes) ?? ""),
+    title: `🌾 ${p.nomBac ?? `${a.maj} ${a.nom}`} — à récolter`,
+    description: recolte
+      ? `Un grand bac plein rapporterait **${recolte}** en conditions idéales.`
+      : `Rendement maximum atteint.`,
     color: COULEURS.mur,
-    fields: champsPlant(p),
-    footer: {
-      text: p.auteur ? `Planté par ${p.auteur}` : "Récolte au rendement maximum",
-    },
+    fields: [
+      ...(recolte ? [{ name: "Récolte estimée", value: recolte, inline: true }] : []),
+      ...(p.nomBac ? [{ name: "Où", value: p.nomBac, inline: true }] : []),
+      ...(p.avantFin !== undefined && p.avantFin > 0
+        ? [{ name: "Avant que ça se perde", value: duree(p.avantFin), inline: true }]
+        : []),
+    ],
+    footer: { text: p.auteur ? `Planté par ${p.auteur}` : "Estimation, pas une mesure" },
   };
 }
 
 export function carteDeperit(p: InfosPlant): Carte {
   const a = accords(p.plante);
+  const recolte = recolteEstimee(p.plante, p.genes);
   return {
-    title: `⚠️ ${p.nomBac ?? `${a.maj} ${a.nom}`} — le plant meurt`,
-    description:
-      `La fenêtre de récolte se ferme. Passé ce point il ne reste que de la fibre, ` +
-      `et le bac reste occupé tant que tu ne l'as pas vidé.` +
-      (genesColories(p.genes) ?? ""),
+    title: `⚠️ ${p.nomBac ?? `${a.maj} ${a.nom}`} — dernière chance`,
+    description: recolte
+      ? `Le plant dépérit : tu perds **${recolte}** si personne n'y va. ` +
+        `Passé ce point il ne reste que de la fibre.`
+      : `Le plant dépérit. Passé ce point il ne reste que de la fibre.`,
     color: COULEURS.deperit,
-    fields: champsPlant(p),
-    footer: {
-      text: p.auteur ? `Planté par ${p.auteur}` : "Récolte encore possible, mais dégradée",
-    },
+    fields: [
+      ...(recolte ? [{ name: "En jeu", value: recolte, inline: true }] : []),
+      ...(p.nomBac ? [{ name: "Où", value: p.nomBac, inline: true }] : []),
+    ],
+    footer: { text: "Le bac reste occupé tant qu'il n'est pas vidé" },
   };
 }
 
-/**
- * Une plantation.
- *
- * Ici le titre porte CE QUI EST PLANTÉ, pas l'emplacement — l'inverse des
- * autres cartes. Quand une alerte demande d'aller quelque part, savoir où est
- * la première chose utile ; quand elle annonce une plantation, aucune action
- * n'est attendue et c'est le contenu qui intéresse. Un GGGYYY qui part en terre
- * n'a pas le même poids qu'une graine sauvage.
- */
 export function cartePlantation(p: InfosPlant): Carte {
   const a = accords(p.plante);
   const nomPlante = PLANTE_PAR_ID[p.plante]?.nom ?? a.nom;
   return {
+    // Ici le contenu passe devant le lieu : aucune action n'est attendue, c'est
+    // ce qui vient d'être mis en terre qui intéresse l'équipe.
     title: `🌱 ${nomPlante}${p.genes ? ` ${p.genes}` : ""} — planté`,
-    // Pas de phrase de remplissage : le message dit déjà tout par sa seule
-    // existence. On ne parle que quand on a quelque chose à ajouter — et une
-    // graine sans gène rouge mérite qu'on rappelle les boutures, parce qu'un
-    // croisement raté sans copie en caisse fait repartir de zéro.
     description:
       (sansRouge(p.genes)
-        ? "Pense à en garder une bouture en caisse avant qu'elle ne se recroise."
+        ? "Aucun gène rouge : garde une bouture en caisse avant qu'elle ne se recroise."
         : "") + (genesColories(p.genes) ?? ""),
     color: COULEURS.info,
-    fields: champsPlantation(p),
+    fields: [
+      ...(p.nomBac ? [{ name: "Où", value: p.nomBac, inline: true }] : []),
+      ...(p.avantCroisement !== undefined && p.avantCroisement > 0
+        ? [{ name: "Gènes recalculés dans", value: duree(p.avantCroisement), inline: true }]
+        : []),
+      ...(p.avantRecolte !== undefined && p.avantRecolte > 0
+        ? [{ name: "Récolte dans", value: duree(p.avantRecolte), inline: true }]
+        : []),
+    ],
     footer: { text: p.auteur ? `Planté par ${p.auteur}` : "Nouvelle plantation" },
   };
-}
-
-/** Les champs d'une plantation : l'emplacement passe devant, la plante étant
- *  déjà dans le titre. */
-function champsPlantation(p: InfosPlant): Champ[] {
-  const champs: Champ[] = [];
-  if (p.nomBac) champs.push({ name: "Emplacement", value: p.nomBac, inline: true });
-  if (p.avantCroisement !== undefined && p.avantCroisement > 0) {
-    champs.push({ name: "Croisement dans", value: duree(p.avantCroisement), inline: true });
-  }
-  if (p.avantRecolte !== undefined && p.avantRecolte > 0) {
-    champs.push({ name: "Récolte dans", value: duree(p.avantRecolte), inline: true });
-  }
-  return champs;
 }
 
 export function carteRecolte(auteur: string | null, ressource: string, quantite: number): Carte {

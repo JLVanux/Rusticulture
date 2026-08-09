@@ -1,0 +1,23 @@
+name: Notifications Discord
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  envoyer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appeler la route d'envoi
+        run: |
+          reponse=$(curl -sS -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.URL_NOTIFICATIONS }}")
+          corps=$(echo "$reponse" | sed '$d')
+          code=$(echo "$reponse" | tail -n1)
+          echo "$corps"
+          if [ "$code" != "200" ]; then
+            echo "Échec : code HTTP $code"
+            exit 1
+          fi

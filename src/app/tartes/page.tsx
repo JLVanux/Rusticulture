@@ -36,7 +36,7 @@ export default function PageTartes() {
         intro="Une seule tarte touche à tes thés de récolte : celle à l'ours. Elle amplifie le gain, et coupe la durée de moitié."
       />
 
-      <div className="space-y-5 rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <div className="space-y-5 panneau">
         <Champ label="Thé de récolte">
           <Choix
             valeur={theId}
@@ -91,22 +91,22 @@ export default function PageTartes() {
             <li
               key={t.id}
               className={`rounded border p-4 ${
-                t.id === "ours" ? "border-lamp/50 bg-lamp/8" : "border-soil-600 bg-soil-850"
+                t.id === "ours" ? "border-lampe/50 bg-lampe/8" : "border-white/10 bg-nuit-800"
               }`}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3
                   className={`font-display text-lg font-semibold uppercase tracking-wide ${
-                    t.id === "ours" ? "text-lamp-glow" : "text-moss-100"
+                    t.id === "ours" ? "text-lampe-chaud" : "text-feuille-100"
                   }`}
                 >
                   {t.nom}
                 </h3>
-                <span className="font-mono text-[12px] text-moss-400">
+                <span className="font-mono text-[12px] text-feuille-400">
                   {t.buff} · {t.dureeMin} min
                 </span>
               </div>
-              <p className="mt-1.5 text-[14px] leading-snug text-moss-200">{t.detail}</p>
+              <p className="mt-1.5 text-[14px] leading-snug text-feuille-200">{t.detail}</p>
             </li>
           ))}
         </ul>
@@ -116,19 +116,19 @@ export default function PageTartes() {
         <Details titre="Toutes les recettes de tarte">
           <ul className="space-y-3">
             {TARTES.map((t) => (
-              <li key={t.id} className="border-b border-soil-700 pb-3 last:border-0">
+              <li key={t.id} className="border-b border-white/[0.07] pb-3 last:border-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-[15px] text-moss-100">{t.nom}</span>
-                  <span className="font-mono text-[12px] text-moss-400">{t.buff}</span>
+                  <span className="text-[15px] text-feuille-100">{t.nom}</span>
+                  <span className="font-mono text-[12px] text-feuille-400">{t.buff}</span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {t.ingredients.map((ing) => (
-                    <span key={ing.nom} className="puce border-soil-500 text-moss-400">
+                    <span key={ing.nom} className="puce border-nuit-500 text-feuille-400">
                       {ing.qte}× {ing.nom}
                     </span>
                   ))}
                 </div>
-                {t.avertissement && <p className="mt-1.5 text-[12px] text-ripe">{t.avertissement}</p>}
+                {t.avertissement && <p className="mt-1.5 text-[12px] text-mur">{t.avertissement}</p>}
               </li>
             ))}
           </ul>
@@ -143,7 +143,7 @@ export default function PageTartes() {
               ["Tarte à la citrouille + thé de vie max", false],
             ].map(([label, ok]) => (
               <li key={label as string} className="flex justify-between gap-3">
-                <span className="text-moss-200">{label as string}</span>
+                <span className="text-feuille-200">{label as string}</span>
                 <span className={ok ? "text-gene-g" : "text-gene-w"}>{ok ? "oui" : "non"}</span>
               </li>
             ))}
@@ -151,17 +151,17 @@ export default function PageTartes() {
         </Details>
 
         <Details titre="Monter la cuisine">
-          <ul className="space-y-2 text-[14px] leading-relaxed text-moss-200">
+          <ul className="space-y-2 text-[14px] leading-relaxed text-feuille-200">
             <li>
-              <span className="text-moss-100">Établi de cuisine</span> — fabrication à l&apos;établi 1. Il sert
+              <span className="text-feuille-100">Établi de cuisine</span> — fabrication à l&apos;établi 1. Il sert
               aussi de table de mixage pour les thés.
             </li>
             <li>
-              <span className="text-moss-100">Œufs et blé</span> — dans presque toutes les tartes. Le blé pousse
+              <span className="text-feuille-100">Œufs et blé</span> — dans presque toutes les tartes. Le blé pousse
               près des rivières et se met en bac comme le maïs.
             </li>
             <li>
-              <span className="text-moss-100">Frigo électrique, 1 W</span> — sans lui, la viande et les tartes
+              <span className="text-feuille-100">Frigo électrique, 1 W</span> — sans lui, la viande et les tartes
               pourrissent avant que tu t&apos;en serves.
             </li>
           </ul>

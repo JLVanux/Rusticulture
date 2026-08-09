@@ -1,9 +1,24 @@
+# Déclenche l'envoi des notifications Discord.
+#
+# Pourquoi pas les tâches planifiées de Vercel : le plan Hobby les limite à une
+# exécution par jour, ce qui est inutilisable pour des minuteurs. GitHub Actions
+# n'a pas cette limite et reste gratuit sur un dépôt public.
+#
+# Deux secrets à créer dans le dépôt (Settings → Secrets and variables →
+# Actions) :
+#   URL_NOTIFICATIONS  https://rusticulture.vercel.app/api/notifications
+#   CRON_SECRET        la même valeur que la variable du même nom sur Vercel
+#
+# GitHub n'assure pas la ponctualité : un passage prévu toutes les dix minutes
+# peut glisser de plusieurs minutes en période de charge. Sans conséquence ici,
+# la route rattrape les seuils franchis depuis trois heures.
+
 name: Notifications Discord
 
 on:
   schedule:
     - cron: "*/10 * * * *"
-  workflow_dispatch:
+  workflow_dispatch: # permet de déclencher à la main pour tester
 
 jobs:
   envoyer:

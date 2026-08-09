@@ -7,9 +7,9 @@ const APPARENCE: Record<
   StatutCase,
   { bordure: string; fond: string; texte: string; etiquette: string }
 > = {
-  acquis: { bordure: "border-soil-600", fond: "bg-soil-850", texte: "text-moss-400", etiquette: "déjà bon" },
+  acquis: { bordure: "border-white/10", fond: "bg-nuit-800", texte: "text-feuille-400", etiquette: "déjà bon" },
   gagne: { bordure: "border-gene-g/50", fond: "bg-gene-g/8", texte: "text-gene-g", etiquette: "corrigé" },
-  egalite: { bordure: "border-ripe/50", fond: "bg-ripe/8", texte: "text-ripe", etiquette: "pile ou face" },
+  egalite: { bordure: "border-mur/50", fond: "bg-mur/8", texte: "text-mur", etiquette: "pile ou face" },
   perdu: { bordure: "border-gene-w/50", fond: "bg-gene-w/8", texte: "text-gene-w", etiquette: "échec" },
   menace: { bordure: "border-gene-w/50", fond: "bg-gene-w/8", texte: "text-gene-w", etiquette: "tu vas le perdre" },
 };
@@ -59,31 +59,31 @@ export function ExplicationCases({ cases }: { cases: ExplicationCase[] }) {
         return (
           <li key={c.index} className={`rounded border ${a.bordure} ${a.fond} p-3`}>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-[11px] uppercase tracking-wider text-moss-400">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-feuille-400">
                 case {c.index + 1}
               </span>
               <Lettre l={c.geneCentre} taille="sm" />
-              <span className="text-moss-400">→</span>
+              <span className="text-feuille-400">→</span>
               <Lettre l={c.geneCible} taille="sm" />
               <span className={`ml-auto font-display text-[13px] font-semibold uppercase tracking-wide ${a.texte}`}>
                 {a.etiquette}
               </span>
             </div>
 
-            <p className="mt-2 text-[14px] leading-snug text-moss-200">{phrase(c)}</p>
+            <p className="mt-2 text-[14px] leading-snug text-feuille-200">{phrase(c)}</p>
 
             {c.votes.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-soil-700 pt-2 font-mono text-[11px]">
-                <span className="text-moss-400">le vote :</span>
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/[0.07] pt-2 font-mono text-[11px]">
+                <span className="text-feuille-400">le vote :</span>
                 {c.votes.map((v) => (
                   <span key={v.gene} className="flex items-center gap-1">
                     <Lettre l={v.gene} taille="sm" />
-                    <span className="text-moss-400">
+                    <span className="text-feuille-400">
                       ×{v.nb} = {v.poids.toFixed(1).replace(".", ",")}
                     </span>
                   </span>
                 ))}
-                <span className="text-moss-400">
+                <span className="text-feuille-400">
                   · le plant tient à {c.poidsCentre.toFixed(1).replace(".", ",")}
                 </span>
               </div>

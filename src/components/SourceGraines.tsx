@@ -33,7 +33,7 @@ export function SourceGrainesBandeau({
   // seront rangées — et l'ajout est bloqué le temps de le savoir.
   if (enAttente) {
     return (
-      <p className="mb-6 rounded border-l-2 border-soil-500 py-2 pl-3 text-[13px] text-moss-400">
+      <p className="mb-6 rounded border-l-2 border-nuit-500 py-2 pl-3 text-[13px] text-feuille-400">
         Chargement de ta ferme…
       </p>
     );
@@ -41,10 +41,10 @@ export function SourceGrainesBandeau({
 
   if (source === "local") {
     return (
-      <p className="mb-6 rounded border-l-2 border-soil-500 py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
-        Ces graines sont rangées dans <span className="text-moss-100">ce navigateur</span> et ne sont visibles
+      <p className="mb-6 rounded border-l-2 border-nuit-500 py-2 pl-3 text-[13px] leading-relaxed text-feuille-400">
+        Ces graines sont rangées dans <span className="text-feuille-100">ce navigateur</span> et ne sont visibles
         que de toi.{" "}
-        <Link href="/ferme" className="text-lamp-glow underline underline-offset-2">
+        <Link href="/ferme" className="text-lampe-chaud underline underline-offset-2">
           Crée ou rejoins une ferme
         </Link>{" "}
         pour les partager avec ton équipe.
@@ -53,13 +53,13 @@ export function SourceGrainesBandeau({
   }
 
   return (
-    <div className="mb-6 rounded border-l-2 border-lamp py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
+    <div className="mb-6 rounded border-l-2 border-lampe py-2 pl-3 text-[13px] leading-relaxed text-feuille-400">
       Ces graines appartiennent à la ferme{" "}
-      <span className="text-moss-100">{nomFerme}</span> : toute l&apos;équipe les voit.
-      {!modifiable && <span className="text-ripe"> Tu es en lecture seule.</span>}
+      <span className="text-feuille-100">{nomFerme}</span> : toute l&apos;équipe les voit.
+      {!modifiable && <span className="text-mur"> Tu es en lecture seule.</span>}
       {modifiable && (nbLocal ?? 0) > 0 && onTransferer && (
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <span className="text-moss-200">
+          <span className="text-feuille-200">
             {nbLocal} graine{(nbLocal ?? 0) > 1 ? "s" : ""} restent dans ton navigateur.
           </span>
           <button

@@ -38,7 +38,7 @@ export default function PagePoulailler() {
         intro="Les œufs sont le goulot d'étranglement de toutes les tartes. Quatre poules par poulailler, un œuf toutes les deux minutes chacune."
       />
 
-      <div className="flex flex-wrap gap-5 rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <div className="flex flex-wrap gap-5 panneau">
         <div className="w-28">
           <Champ label="Poulaillers">
             <input
@@ -103,49 +103,49 @@ export default function PagePoulailler() {
           {tartes.map((t) => (
             <li
               key={t.nom}
-              className="flex items-baseline justify-between gap-3 rounded border border-soil-600 bg-soil-850 px-3 py-2"
+              className="flex items-baseline justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2"
             >
-              <span className="text-[14px] text-moss-100">{t.nom}</span>
-              <span className="font-mono text-[13px] text-moss-400">
-                {t.oeufs} œufs · <span className="text-moss-100">{formatNombre(t.parHeure, 1)} / h</span>
+              <span className="text-[14px] text-feuille-100">{t.nom}</span>
+              <span className="font-mono text-[13px] text-feuille-400">
+                {t.oeufs} œufs · <span className="text-feuille-100">{formatNombre(t.parHeure, 1)} / h</span>
               </span>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-[13px] text-moss-400">
+        <p className="mt-3 text-[13px] text-feuille-400">
           Les œufs ne sont qu&apos;un ingrédient : le blé et la viande cuite limitent souvent plus vite.
         </p>
       </section>
 
       <div className="mt-10">
         <Details titre="Monter un poulailler">
-          <ol className="space-y-3 text-[14px] leading-relaxed text-moss-200">
+          <ol className="space-y-3 text-[14px] leading-relaxed text-feuille-200">
             <li>
-              <span className="text-moss-100">Trouve un œuf.</span> Les poules sauvages en lâchent un de temps
+              <span className="text-feuille-100">Trouve un œuf.</span> Les poules sauvages en lâchent un de temps
               en temps quand tu es à proximité. Un seul suffit : la boucle s&apos;auto-alimente ensuite.
             </li>
             <li>
-              <span className="text-moss-100">Pose le poulailler.</span> Plan de base, aucun établi requis. Il
+              <span className="text-feuille-100">Pose le poulailler.</span> Plan de base, aucun établi requis. Il
               déborde d&apos;une fondation — prévois la place. À ciel ouvert, sinon la jauge Soleil ne monte
               jamais.
             </li>
             <li>
-              <span className="text-moss-100">Fais éclore.</span> Œuf dans la case, bouton Éclore, 120
+              <span className="text-feuille-100">Fais éclore.</span> Œuf dans la case, bouton Éclore, 120
               secondes. Le poussin a besoin d&apos;environ une journée en jeu avant de pondre.
             </li>
             <li>
-              <span className="text-moss-100">Nourris et abreuve.</span> Graines, maïs, blé, baies, pommes de
+              <span className="text-feuille-100">Nourris et abreuve.</span> Graines, maïs, blé, baies, pommes de
               terre, citrouilles, vers. Le réservoir plafonne à 1000 mL.
             </li>
             <li>
-              <span className="text-moss-100">Caresse-les.</span> La jauge Amour se remplit en interagissant.
+              <span className="text-feuille-100">Caresse-les.</span> La jauge Amour se remplit en interagissant.
               Quatre jauges au vert, ponte maximale.
             </li>
           </ol>
         </Details>
 
         <Details titre="Le poulailler comme boucherie">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Abattre une poule donne du blanc de poulet, de la graisse animale et des plumes. Comme tu peux faire
             éclore un remplaçant dans la foulée sans pénaliser les autres, un poulailler tenu en mode couvoir
             tourne en boucle fermée : œufs dedans, viande dehors. La graisse alimente la table de mixage et le
@@ -154,7 +154,7 @@ export default function PagePoulailler() {
         </Details>
 
         <Details titre="Ce qui tue une poule">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Le réservoir de 1000 mL. Sans plomberie, il se vide bien avant que tu reviennes de raid. Branche un
             arroseur ou une pompe si tu tiens à ton élevage sur la durée.
           </p>

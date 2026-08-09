@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Champ, Details, Note } from "@/components/Ui";
 import { messageErreur, supabase } from "@/lib/supabase";
 
@@ -56,28 +57,32 @@ export function ReglageDiscord({ fermeId, estProprietaire }: { fermeId: string; 
 
   return (
     <Details titre="Notifications Discord">
-      <p className="text-[14px] leading-relaxed text-moss-200">
-        Reçois dans un salon Discord un message quand les gènes d&apos;un plant sont recalculés, et quand une
-        récolte est prête. C&apos;est la seule façon d&apos;être prévenu sans garder un onglet ouvert.
+      <p className="text-[14px] leading-relaxed text-feuille-200">
+        Reçois dans un salon Discord un message quand un plant est prêt à bouturer, puis quand il est prêt à
+        récolter. C&apos;est la seule façon d&apos;être prévenu sans garder un onglet ouvert.{" "}
+        <Link href="/aide/discord" className="text-lampe-chaud underline underline-offset-2">
+          Guide complet
+        </Link>
+        .
       </p>
 
-      <ol className="mt-4 space-y-2 text-[14px] leading-relaxed text-moss-200">
+      <ol className="mt-4 space-y-2 text-[14px] leading-relaxed text-feuille-200">
         <li>
-          <span className="text-moss-100">1.</span> Dans ton serveur Discord, ouvre les paramètres du salon
+          <span className="text-feuille-100">1.</span> Dans ton serveur Discord, ouvre les paramètres du salon
           voulu → Intégrations → Créer un webhook.
         </li>
         <li>
-          <span className="text-moss-100">2.</span> Copie l&apos;URL du webhook.
+          <span className="text-feuille-100">2.</span> Copie l&apos;URL du webhook.
         </li>
         <li>
-          <span className="text-moss-100">3.</span> Colle-la ci-dessous. Rien à installer, aucune application
+          <span className="text-feuille-100">3.</span> Colle-la ci-dessous. Rien à installer, aucune application
           à autoriser.
         </li>
       </ol>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <span
-          className={`puce ${configure ? "border-gene-g/50 text-gene-g" : "border-soil-500 text-moss-400"}`}
+          className={`puce ${configure ? "border-gene-g/50 text-gene-g" : "border-nuit-500 text-feuille-400"}`}
         >
           {configure === null ? "vérification…" : configure ? "configuré" : "non configuré"}
         </span>
@@ -124,7 +129,7 @@ export function ReglageDiscord({ fermeId, estProprietaire }: { fermeId: string; 
       )}
       {message && <p className="mt-3 font-mono text-[13px] text-gene-g">{message}</p>}
 
-      <p className="mt-4 text-[13px] leading-relaxed text-moss-400">
+      <p className="mt-4 text-[13px] leading-relaxed text-feuille-400">
         Les messages restent rares, exprès : seulement les deux moments qui demandent une action. Un bot qui
         commente chaque changement de stade transforme le salon en spam et se fait retirer dans la semaine.
       </p>

@@ -75,7 +75,7 @@ export default function PageThes() {
       <AlerteConditions />
 
       {/* Commande */}
-      <section className="rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <section className="panneau">
         <ul className="space-y-2">
           {commande.map((ligne, i) => (
             <li key={i} className="flex flex-wrap items-end gap-2">
@@ -129,7 +129,7 @@ export default function PageThes() {
               {commande.length > 1 && (
                 <button
                   type="button"
-                  className="pb-2.5 font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+                  className="pb-2.5 font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-gene-w"
                   onClick={() => setCommande((p) => p.filter((_, j) => j !== i))}
                 >
                   Retirer
@@ -167,14 +167,14 @@ export default function PageThes() {
           {couleursUtiles.map((d) => (
             <li
               key={d.id}
-              className="flex items-center gap-3 rounded border border-soil-600 bg-soil-850 px-3 py-2.5"
+              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"
             >
               <span className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ background: d.couleur }} aria-hidden />
-              <span className="text-[15px] text-moss-100">Baie {d.nom.toLowerCase()}</span>
-              <span className="ml-auto font-mono text-[15px] font-bold text-moss-100">
+              <span className="text-[15px] text-feuille-100">Baie {d.nom.toLowerCase()}</span>
+              <span className="ml-auto font-mono text-[15px] font-bold text-feuille-100">
                 {formatNombre(d.requis, 0)}
               </span>
-              <span className="w-32 text-right font-mono text-[12px] text-moss-400">
+              <span className="w-32 text-right font-mono text-[12px] text-feuille-400">
                 {d.cycles} cycle{d.cycles > 1 ? "s" : ""} · {formatDuree(d.minutes)}
               </span>
             </li>
@@ -208,7 +208,7 @@ export default function PageThes() {
               </Champ>
             </div>
           </div>
-          <p className="mt-4 text-[13px] leading-relaxed text-moss-400">
+          <p className="mt-4 text-[13px] leading-relaxed text-feuille-400">
             Ce gènes donne {formatNombre(plant.parPlant)} baies par plant, soit{" "}
             {formatNombre(plant.parBac, 0)} par grand bac et par cycle de {formatDuree(plant.minutes)}. Les
             couleurs ne se croisent pas entre elles : il te faut un bac par couleur au minimum.
@@ -238,9 +238,9 @@ export default function PageThes() {
             <div className="mt-5 overflow-x-auto">
             <table className="w-full min-w-[20rem] text-left text-[14px]">
               <thead>
-                <tr className="border-b border-soil-600">
+                <tr className="border-b border-white/10">
                   {["Thé", "Basique", "Avancé", "Pur"].map((h) => (
-                    <th key={h} className="pb-2 font-mono text-[11px] uppercase tracking-wider text-moss-400">
+                    <th key={h} className="pb-2 font-mono text-[11px] uppercase tracking-wider text-feuille-400">
                       {h}
                     </th>
                   ))}
@@ -251,10 +251,10 @@ export default function PageThes() {
                   const vals = PALIERS.map((p) => thesPossibles(t.id, p.id, stock));
                   if (vals.every((v) => v === 0)) return null;
                   return (
-                    <tr key={t.id} className="border-b border-soil-700">
-                      <td className="py-2 text-moss-100">{t.nom}</td>
+                    <tr key={t.id} className="border-b border-white/[0.07]">
+                      <td className="py-2 text-feuille-100">{t.nom}</td>
                       {vals.map((v, i) => (
-                        <td key={i} className={`font-mono ${v > 0 ? "text-moss-100" : "text-moss-400 opacity-40"}`}>
+                        <td key={i} className={`font-mono ${v > 0 ? "text-feuille-100" : "text-feuille-400 opacity-40"}`}>
                           {v || "—"}
                         </td>
                       ))}
@@ -281,12 +281,12 @@ export default function PageThes() {
                     />
                   ))}
                 </span>
-                <span className="text-[14px] text-moss-100">{t.nom}</span>
-                <span className="font-mono text-[12px] text-moss-400">{t.paliers.join(" · ")}</span>
+                <span className="text-[14px] text-feuille-100">{t.nom}</span>
+                <span className="font-mono text-[12px] text-feuille-400">{t.paliers.join(" · ")}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[13px] text-moss-400">
+          <p className="mt-4 text-[13px] text-feuille-400">
             Quatre baies pour un thé basique, quatre thés du palier inférieur pour monter d&apos;un cran.
             L&apos;ordre des baies compte sur la table de mixage.
           </p>

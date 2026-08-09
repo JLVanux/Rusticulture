@@ -2,64 +2,187 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   RustiCulture — voir CHARTE.md
+   Source : l'inventaire de Rust. Des cases, des traits, un orange.
+   Ni verre, ni halo, ni dégradé, ni coin arrondi.
+   ========================================================================= */
+
 :root {
   color-scheme: dark;
+  --t-geant: clamp(2.25rem, 9vw, 3.75rem);
+  --t-grand: clamp(1.6rem, 5.5vw, 2.25rem);
+  --barre-basse: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 html,
 body {
-  background: #0b0f0d;
-  color: #c3d2c8;
+  background: theme("colors.fond");
+  color: theme("colors.cendre");
 }
 
+/**
+ * Le fond : du béton. Une trame de points très fine, rien d'autre.
+ * Pas de dégradé coloré — c'est le marqueur le plus reconnaissable d'une
+ * interface produite sans intention.
+ */
 body {
   font-family: var(--font-body), system-ui, sans-serif;
-  /* Lueur diffuse de lampe horticole, en haut de page. */
-  background-image: radial-gradient(
-    120% 60% at 50% -10%,
-    rgba(217, 79, 156, 0.14) 0%,
-    rgba(217, 79, 156, 0.04) 35%,
-    transparent 70%
-  );
-  background-attachment: fixed;
+  min-height: 100dvh;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 4px 4px;
 }
 
 @layer components {
-  .eyebrow {
-    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-moss-400;
+  /* -----------------------------------------------------------------------
+     La case — l'atome, repris de l'inventaire du jeu.
+     --------------------------------------------------------------------- */
+  .verre {
+    @apply relative rounded-sm border border-trait bg-case;
   }
-  .titre {
-    @apply font-display font-bold uppercase tracking-[0.02em] text-moss-100;
+
+  .verre-flou {
+    @apply verre;
   }
+
   .panneau {
-    @apply rounded-lg border border-soil-600 bg-soil-850/80 p-4 sm:p-5;
+    @apply verre p-4 sm:p-5;
   }
+
+  /* Un emplacement : plus sombre que son support, comme une alvéole. */
+  .fente {
+    @apply flex items-center justify-center rounded-sm border border-trait bg-case-creuse;
+  }
+
+  /* Étiquette et filet : l'en-tête de section d'une fiche technique. */
+  .filet {
+    @apply flex items-center gap-3;
+  }
+  .filet::after {
+    content: "";
+    @apply h-px flex-1 bg-trait;
+  }
+
+  .rampe::before {
+    content: none;
+  }
+
+  .plaque {
+    clip-path: none;
+  }
+
+  /* -----------------------------------------------------------------------
+     Texte
+     --------------------------------------------------------------------- */
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.16em] text-poussiere;
+  }
+
+  /* Casse normale, poids fort, chasse serrée. Les capitales condensées
+     partout sont le cliché du « site de jeu ». */
+  .titre {
+    @apply font-display font-extrabold tracking-[-0.02em] text-craie;
+    text-transform: none;
+  }
+
+  .chiffre {
+    @apply font-mono font-bold tabular-nums text-craie;
+  }
+
+  /* -----------------------------------------------------------------------
+     Contrôles — 44 px minimum, 16 px de texte sinon iOS zoome.
+     --------------------------------------------------------------------- */
   .champ {
-    @apply w-full rounded border border-soil-600 bg-soil-900 px-3 py-2 text-moss-100
-           outline-none transition focus:border-lamp focus:ring-1 focus:ring-lamp/40;
+    @apply w-full rounded-sm border border-trait bg-case-creuse px-3 py-2.5
+           text-[16px] text-craie outline-none transition;
+    min-height: 2.75rem;
   }
+
+  .champ::placeholder {
+    @apply text-poussiere;
+  }
+
+  .champ:focus {
+    @apply border-rouille;
+  }
+
   .bouton {
-    @apply inline-flex items-center justify-center gap-2 rounded border border-soil-500
-           bg-soil-700 px-3 py-2 font-display text-sm font-semibold uppercase tracking-wider
-           text-moss-100 transition hover:border-lamp/60 hover:bg-soil-600
-           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
-           focus-visible:outline-lamp disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-sm border
+           border-trait bg-case px-4 text-[14px] font-semibold text-craie transition;
+    min-height: 2.75rem;
+    font-family: var(--font-display), system-ui, sans-serif;
   }
+
+  .bouton:hover:not(:disabled) {
+    @apply border-trait-vif bg-case-haute;
+  }
+
+  .bouton:active:not(:disabled) {
+    @apply bg-case-creuse;
+  }
+
+  .bouton:disabled {
+    @apply cursor-not-allowed opacity-35;
+  }
+
   .bouton-primaire {
-    @apply border-lamp/70 bg-lamp/15 text-lamp-glow hover:border-lamp hover:bg-lamp/25;
+    @apply border-rouille bg-rouille text-craie;
   }
+
+  .bouton-primaire:hover:not(:disabled) {
+    @apply border-braise bg-braise;
+  }
+
   .bouton-danger {
-    @apply border-gene-w/40 bg-transparent text-gene-w hover:border-gene-w hover:bg-gene-w/10;
+    @apply border-trait bg-transparent text-gene-w;
   }
+
+  .bouton-danger:hover:not(:disabled) {
+    @apply border-gene-w/60 bg-gene-w/10;
+  }
+
   .puce {
-    @apply inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[11px] uppercase tracking-wider;
+    @apply inline-flex items-center rounded-sm border border-trait px-2 py-0.5
+           font-mono text-[11px] uppercase tracking-wider;
+  }
+
+  /* Rangée qui défile : dix boutons empilés sur quatre lignes mangent un
+     écran de téléphone entier. */
+  .rangee {
+    @apply -mx-4 flex snap-x gap-1.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0;
+    scrollbar-width: none;
+  }
+  .rangee::-webkit-scrollbar {
+    display: none;
+  }
+  .rangee > * {
+    @apply shrink-0 snap-start;
   }
 }
 
-/* Le focus doit rester visible partout : on joue souvent au clavier. */
 :focus-visible {
-  outline: 2px solid #d94f9c;
+  outline: 2px solid theme("colors.braise");
   outline-offset: 2px;
+}
+
+input[type="range"] {
+  accent-color: theme("colors.rouille");
+  min-height: 2.75rem;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: theme("colors.fond");
+}
+::-webkit-scrollbar-thumb {
+  background: theme("colors.trait.DEFAULT");
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -68,21 +191,6 @@ body {
   *::after {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
-}
-
-input[type="range"] {
-  accent-color: #d94f9c;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #0b0f0d;
-}
-::-webkit-scrollbar-thumb {
-  background: #26332c;
-  border-radius: 6px;
 }

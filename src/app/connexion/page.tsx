@@ -63,7 +63,7 @@ export default function PageCompte() {
     return (
       <Page>
         <EnTetePage titre="Mon compte" />
-        <p className="text-[15px] text-moss-400">Vérification…</p>
+        <p className="text-[15px] text-feuille-400">Vérification…</p>
       </Page>
     );
   }
@@ -76,7 +76,7 @@ export default function PageCompte() {
           <div className="font-display text-xl font-semibold uppercase tracking-wide text-gene-g">
             Connecté
           </div>
-          <p className="mt-1 text-[15px] text-moss-200">
+          <p className="mt-1 text-[15px] text-feuille-200">
             {profil?.pseudo
               ? `Tes coéquipiers te voient sous le nom ${profil.pseudo}.`
               : "Compte actif."}
@@ -93,11 +93,11 @@ export default function PageCompte() {
 
         <div className="mt-10">
           <Details titre="Supprimer mon compte">
-            <p className="text-[14px] leading-relaxed text-moss-200">
+            <p className="text-[14px] leading-relaxed text-feuille-200">
               La suppression est immédiate et définitive : ton compte, tes appartenances et tout ce qui te
               signe dans les fermes disparaissent. Aucune archive, aucune corbeille.
             </p>
-            <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+            <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
               Une ferme dont tu es propriétaire n&apos;est pas détruite si d&apos;autres membres y sont : elle
               est transmise au plus ancien d&apos;entre eux. Elle n&apos;est supprimée que si tu y es seul.
             </p>
@@ -123,7 +123,7 @@ export default function PageCompte() {
           </Details>
 
           <Details titre="Changer de pseudo">
-            <p className="text-[14px] leading-relaxed text-moss-200">
+            <p className="text-[14px] leading-relaxed text-feuille-200">
               Ce n&apos;est pas possible : le pseudo est ton identifiant de connexion. Le modifier
               t&apos;empêcherait de te reconnecter. Si tu tiens à en changer, crée un nouveau compte et
               rejoins la ferme avec le code d&apos;invitation.
@@ -158,7 +158,7 @@ export default function PageCompte() {
         />
       </div>
 
-      <div className="space-y-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <div className="space-y-4 panneau">
         <Champ
           label="Pseudo"
           aide={
@@ -191,14 +191,14 @@ export default function PageCompte() {
         </Champ>
 
         {tropCourt && (
-          <p className="font-mono text-[12px] text-ripe">
+          <p className="font-mono text-[12px] text-mur">
             Encore {LONGUEUR_MINI - motDePasse.length} caractère
             {LONGUEUR_MINI - motDePasse.length > 1 ? "s" : ""}.
           </p>
         )}
 
         {pseudo.trim().length > 0 && !pseudoValable(pseudo) && (
-          <p className="font-mono text-[12px] text-ripe">
+          <p className="font-mono text-[12px] text-mur">
             Il faut au moins deux lettres ou chiffres.
           </p>
         )}
@@ -221,12 +221,12 @@ export default function PageCompte() {
 
       <div className="mt-10">
         <Details titre="Note bien ton mot de passe">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Comme il n&apos;y a pas d&apos;adresse e-mail,{" "}
-            <span className="text-moss-100">un mot de passe oublié ne peut pas être récupéré</span>. Le compte
+            <span className="text-feuille-100">un mot de passe oublié ne peut pas être récupéré</span>. Le compte
             serait perdu, et pour un propriétaire, la ferme avec.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
             C&apos;est le prix de la simplicité que tu vois ici. Le jour où ça devient gênant, on pourra
             proposer d&apos;ajouter une adresse de secours, en option — sans rien changer aux comptes
             existants.
@@ -234,12 +234,12 @@ export default function PageCompte() {
         </Details>
 
         <Details titre="Pourquoi un compte">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Une ferme est partagée : il faut savoir qui est qui. Les timers, les graines et les récoltes
             appartiennent à la ferme et non à un navigateur — c&apos;est ce qui permet à ton coéquipier de voir
             le décompte que tu as lancé.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
             Le reste du site n&apos;a pas changé : génétique, scanner, thés et coût de raid restent utilisables
             sans compte, stockés uniquement dans ton navigateur.
           </p>

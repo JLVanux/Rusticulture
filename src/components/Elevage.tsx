@@ -30,7 +30,7 @@ export function SectionElevage() {
   return (
     <section className="mt-10">
       <h2 className="titre text-2xl">Élevage</h2>
-      <p className="mt-1 text-[14px] text-moss-400">
+      <p className="mt-1 text-[14px] text-feuille-400">
         Les œufs limitent toutes les tartes. Déclare tes poulaillers pour qu&apos;ils comptent dans ta
         production.
       </p>
@@ -38,30 +38,30 @@ export function SectionElevage() {
       {erreur && <p className="mt-3 font-mono text-[13px] text-gene-w">{erreur}</p>}
 
       {elevage.poulaillers === 0 && !modifiable ? (
-        <p className="mt-4 text-[14px] text-moss-400">Aucun poulailler déclaré.</p>
+        <p className="mt-4 text-[14px] text-feuille-400">Aucun poulailler déclaré.</p>
       ) : (
         <>
           {oeufs.poules > 0 && (
-            <div className="mt-4 rounded-lg border border-soil-600 bg-soil-850 p-4">
+            <div className="mt-4 verre rampe p-4">
               <div className="flex flex-wrap items-baseline gap-x-8 gap-y-3">
                 <div>
                   <div className="eyebrow">œufs / heure</div>
-                  <div className="font-display text-3xl font-bold text-lamp-glow">
+                  <div className="font-display text-3xl font-bold text-lampe-chaud">
                     {formatNombre(oeufs.parHeure, 0)}
                   </div>
                 </div>
                 <div>
                   <div className="eyebrow">Poules</div>
-                  <div className="font-mono text-lg text-moss-100">{oeufs.poules}</div>
+                  <div className="font-mono text-lg text-feuille-100">{oeufs.poules}</div>
                 </div>
                 <div>
                   <div className="eyebrow">Saturation</div>
-                  <div className="font-mono text-lg text-moss-100">
+                  <div className="font-mono text-lg text-feuille-100">
                     {formatDuree(oeufs.minutesAvantSaturation)}
                   </div>
                 </div>
               </div>
-              <p className="mt-3 border-t border-soil-700 pt-3 text-[13px] leading-relaxed text-moss-400">
+              <p className="mt-3 border-t border-white/[0.07] pt-3 text-[13px] leading-relaxed text-feuille-400">
                 La case de sortie plafonne à {CAPACITE_SORTIE} œufs par poulailler, et la ponte s&apos;arrête
                 quand elle est pleine. Passe ramasser toutes les{" "}
                 {formatDuree(oeufs.minutesAvantSaturation)}, sinon tu produis dans le vide.
@@ -134,10 +134,10 @@ export function SectionElevage() {
                   {occupe ? "…" : modifie ? "Enregistrer" : "À jour"}
                 </button>
 
-                <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
+                <p className="mt-3 text-[13px] leading-relaxed text-feuille-400">
                   Quatre poules par poulailler au maximum. Les jauges — faim, soif, soleil, amour — se remplissent
                   en nourrissant et en caressant ; toutes au vert, la ponte est maximale. Le détail est sur la{" "}
-                  <Link href="/poulailler" className="text-lamp-glow underline underline-offset-2">
+                  <Link href="/poulailler" className="text-lampe-chaud underline underline-offset-2">
                     page Poulailler
                   </Link>
                   .

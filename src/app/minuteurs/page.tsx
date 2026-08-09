@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
+import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import { calculerCroissance, formatDuree } from "@/lib/model";
@@ -97,15 +98,15 @@ export default function PageMinuteurs() {
       />
 
       {source === "ferme" ? (
-        <p className="mb-6 rounded border-l-2 border-lamp py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
-          Ces minuteurs appartiennent à la ferme <span className="text-moss-100">{ferme?.nom}</span> : toute
+        <p className="mb-6 rounded border-l-2 border-lampe py-2 pl-3 text-[13px] leading-relaxed text-feuille-400">
+          Ces minuteurs appartiennent à la ferme <span className="text-feuille-100">{ferme?.nom}</span> : toute
           l&apos;équipe voit les mêmes décomptes.
-          {!modifiable && <span className="text-ripe"> Tu es en lecture seule.</span>}
+          {!modifiable && <span className="text-mur"> Tu es en lecture seule.</span>}
         </p>
       ) : (
-        <p className="mb-6 rounded border-l-2 border-soil-500 py-2 pl-3 text-[13px] leading-relaxed text-moss-400">
-          Ces minuteurs sont dans <span className="text-moss-100">ce navigateur</span>.{" "}
-          <Link href="/ferme" className="text-lamp-glow underline underline-offset-2">
+        <p className="mb-6 rounded border-l-2 border-nuit-500 py-2 pl-3 text-[13px] leading-relaxed text-feuille-400">
+          Ces minuteurs sont dans <span className="text-feuille-100">ce navigateur</span>.{" "}
+          <Link href="/ferme" className="text-lampe-chaud underline underline-offset-2">
             Rejoins une ferme
           </Link>{" "}
           pour que ton équipe les voie.
@@ -115,8 +116,8 @@ export default function PageMinuteurs() {
       <AlerteConditions />
 
       {permission === "default" && (
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-lamp/40 bg-lamp/8 p-4">
-          <span className="flex-1 text-[14px] text-moss-200">
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-lampe/40 bg-lampe/8 p-4">
+          <span className="flex-1 text-[14px] text-feuille-200">
             Sans autorisation, tu dois revenir sur l&apos;onglet pour voir où en sont tes plants.
           </span>
           <button
@@ -136,16 +137,23 @@ export default function PageMinuteurs() {
       )}
 
       {modifiable && (
-        <section className="space-y-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
+        <section className="space-y-4 panneau">
           <div className="flex flex-wrap items-end gap-4">
             <Champ label="Gènes">
               <EditeurGenes genome={genome} onChange={setGenome} taille="md" />
             </Champ>
-            <div className="min-w-[10rem] flex-1">
-              <Champ label="Repère (facultatif)">
+            <div className="min-w-[12rem] flex-1">
+              <Champ
+                label="Quel bac ?"
+                aide={
+                  source === "ferme"
+                    ? "C'est ce que ton équipe verra dans Discord. « Bac du fond » est plus utile que « Chanvre GGGYYY »."
+                    : "Pour t'y retrouver si tu lances plusieurs minuteurs."
+                }
+              >
                 <input
                   className="champ"
-                  placeholder="bac du fond"
+                  placeholder="bac du fond, serre 2 · bac 3…"
                   value={nom}
                   onChange={(e) => setNom(e.target.value)}
                 />
@@ -154,14 +162,18 @@ export default function PageMinuteurs() {
           </div>
 
           <Champ label="Plante">
-            <Choix valeur={plante} onChange={setPlante} options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))} />
+            <Choix valeur={plante} onChange={setPlante} options={PLANTES.map((p) => ({
+              label: p.nom,
+              valeur: p.id,
+              icone: <IconePlante plante={p.id} taille={16} />,
+            }))} />
           </Champ>
 
-          <div className="flex flex-wrap items-center gap-4 border-t border-soil-600 pt-4">
+          <div className="flex flex-wrap items-center gap-4 border-t border-white/10 pt-4">
             <button type="button" className="bouton bouton-primaire" onClick={lancerMinuteur}>
               Lancer le minuteur
             </button>
-            <span className="font-mono text-[13px] text-moss-400">
+            <span className="font-mono text-[13px] text-feuille-400">
               croisement à {formatDuree(apercu.minutesAvantCroisement)} · récolte à{" "}
               {formatDuree(apercu.minutesJusquMur)}
             </span>
@@ -171,10 +183,10 @@ export default function PageMinuteurs() {
 
       <section className="mt-8 space-y-3">
         {!charge ? (
-          <p className="text-[15px] text-moss-400">Chargement…</p>
+          <p className="text-[15px] text-feuille-400">Chargement…</p>
         ) : tries.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-soil-600 p-10 text-center">
-            <p className="text-moss-200">Aucun minuteur en cours.</p>
+          <div className="rounded-verre border border-dashed border-white/15 p-10 text-center">
+            <p className="text-feuille-200">Aucun minuteur en cours.</p>
           </div>
         ) : (
           tries.map((t) => (
@@ -191,7 +203,7 @@ export default function PageMinuteurs() {
 
       <div className="mt-10">
         <Details titre="Quand bouturer, exactement">
-          <div className="space-y-3 text-[14px] leading-relaxed text-moss-200">
+          <div className="space-y-3 text-[14px] leading-relaxed text-feuille-200">
             <p>
               Les gènes sont recalculés au moment où le plant entre en stade Croisement. Avant ça, inutile de
               l&apos;inspecter : tu lirais ses gènes de départ, pas le résultat du croisement.
@@ -205,13 +217,13 @@ export default function PageMinuteurs() {
         </Details>
 
         <Details titre="Les notifications et l'onglet fermé">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Les décomptes sont calculés depuis l&apos;heure de plantation : ferme l&apos;onglet, reviens deux
             heures plus tard, l&apos;affichage sera juste. Les notifications, elles, ont besoin qu&apos;un
             onglet reste ouvert quelque part — c&apos;est une limite du navigateur, pas du site.
           </p>
           {source === "ferme" && (
-            <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+            <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
               Chaque appareil reçoit ses propres alertes. Si ton coéquipier a vu passer la sienne, tu recevras
               quand même la tienne.
             </p>
@@ -245,26 +257,26 @@ function CarteTimer({
     <article
       className={`rounded-lg border p-4 ${
         enCroisement
-          ? "border-lamp bg-lamp/8"
+          ? "border-lampe bg-lampe/8"
           : mur
-            ? "border-ripe/60 bg-ripe/8"
+            ? "border-mur/60 bg-mur/8"
             : mort
-              ? "border-soil-600 opacity-45"
-              : "border-soil-600 bg-soil-850"
+              ? "border-white/10 opacity-45"
+              : "border-white/10 bg-nuit-800"
       }`}
     >
       <div className="flex flex-wrap items-center gap-3">
         {timer.genome && <ChaineGenes genome={timer.genome} taille="sm" />}
-        <span className="font-display text-lg font-semibold uppercase tracking-wide text-moss-100">
+        <span className="font-display text-lg font-semibold uppercase tracking-wide text-feuille-100">
           {timer.nom}
         </span>
         {timer.parQui && (
-          <span className="font-mono text-[12px] text-moss-400">lancé par {timer.parQui}</span>
+          <span className="font-mono text-[12px] text-feuille-400">lancé par {timer.parQui}</span>
         )}
         {modifiable && (
           <button
             type="button"
-            className="ml-auto font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+            className="ml-auto font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-gene-w"
             onClick={onSupprimer}
           >
             Supprimer
@@ -275,34 +287,34 @@ function CarteTimer({
       <div className="mt-3 flex items-baseline gap-3">
         <span
           className={`font-mono text-3xl font-bold ${
-            enCroisement ? "text-lamp-glow" : mur ? "text-ripe" : "text-moss-100"
+            enCroisement ? "text-lampe-chaud" : mur ? "text-mur" : "text-feuille-100"
           }`}
         >
           {enCroisement ? "À INSPECTER" : mur ? "RÉCOLTE" : mort ? "MORT" : compte(avantC * 60000)}
         </span>
         {!enCroisement && !mur && !mort && (
-          <span className="text-[13px] text-moss-400">avant le recalcul des gènes</span>
+          <span className="text-[13px] text-feuille-400">avant le recalcul des gènes</span>
         )}
       </div>
 
-      <div className="relative mt-3 h-2 w-full overflow-hidden rounded-sm bg-soil-700">
+      <div className="relative mt-3 h-2 w-full overflow-hidden rounded-sm bg-nuit-600">
         <span
-          className={`block h-full ${mort ? "bg-soil-500" : mur ? "bg-ripe" : "bg-lamp"}`}
+          className={`block h-full ${mort ? "bg-nuit-500" : mur ? "bg-mur" : "bg-lampe"}`}
           style={{ width: `${progression * 100}%` }}
         />
         <span
-          className="absolute top-0 h-full w-px bg-moss-100/70"
+          className="absolute top-0 h-full w-px bg-feuille-100/70"
           style={{ left: `${(timer.minutesCroisement / timer.minutesFin) * 100}%` }}
           aria-hidden
         />
         <span
-          className="absolute top-0 h-full w-px bg-moss-100/70"
+          className="absolute top-0 h-full w-px bg-feuille-100/70"
           style={{ left: `${(timer.minutesMur / timer.minutesFin) * 100}%` }}
           aria-hidden
         />
       </div>
 
-      <p className="mt-2 font-mono text-[12px] text-moss-400">
+      <p className="mt-2 font-mono text-[12px] text-feuille-400">
         récolte {avantM > 0 ? `dans ${compte(avantM * 60000)}` : "disponible"}
       </p>
     </article>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EditeurGenes } from "@/components/Genes";
+import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
 import { GENE_LETTERS, PLANTES, type Genome, type PlanteId } from "@/data/game";
 import { formatGenome } from "@/lib/crossbreed";
@@ -217,8 +218,8 @@ export default function PageScanner() {
       )}
 
       {!partage ? (
-        <div className="rounded-lg border border-soil-600 bg-soil-850 p-8 text-center">
-          <p className="mx-auto max-w-md text-[15px] leading-relaxed text-moss-200">
+        <div className="rounded-lg border border-white/10 bg-nuit-800 p-8 text-center">
+          <p className="mx-auto max-w-md text-[15px] leading-relaxed text-feuille-200">
             Rien ne sort de ton navigateur. L&apos;image est analysée sur ta machine, aucune capture
             n&apos;est envoyée nulle part.
           </p>
@@ -227,12 +228,12 @@ export default function PageScanner() {
               <button type="button" className="bouton bouton-primaire mt-5" onClick={demarrer}>
                 Partager mon écran
               </button>
-              <p className="mt-3 font-mono text-[12px] text-moss-400">
+              <p className="mt-3 font-mono text-[12px] text-feuille-400">
                 Lance Rust en fenêtré sans bordure — le plein écran exclusif se capture mal, voire pas du tout.
               </p>
             </>
           ) : (
-            <p className="mx-auto mt-5 max-w-md rounded border-l-2 border-ripe py-2 pl-3 text-left text-[14px] leading-relaxed text-moss-200">
+            <p className="mx-auto mt-5 max-w-md rounded border-l-2 border-mur py-2 pl-3 text-left text-[14px] leading-relaxed text-feuille-200">
               Ton navigateur ne sait pas partager l&apos;écran. C&apos;est le cas de tous les navigateurs
               mobiles : cette page n&apos;a de sens que sur l&apos;ordinateur où tourne Rust. Sur téléphone,
               saisis tes gènes à la main depuis Mes graines.
@@ -244,7 +245,7 @@ export default function PageScanner() {
           <div>
             <div
               ref={conteneurRef}
-              className="relative select-none overflow-hidden rounded-lg border border-soil-600 bg-black"
+              className="relative select-none overflow-hidden rounded-lg border border-white/10 bg-black"
               onMouseDown={(e) => debutTrace(e.clientX, e.clientY)}
               onMouseMove={(e) => pendantTrace(e.clientX, e.clientY)}
               onMouseUp={finTrace}
@@ -269,7 +270,7 @@ export default function PageScanner() {
                 <Colonnes zone={selection ?? zone} video={videoRef.current} conteneur={conteneurRef.current} />
               )}
             </div>
-            <p className="mt-2 text-[13px] text-moss-400">
+            <p className="mt-2 text-[13px] text-feuille-400">
               {zone
                 ? "Zone enregistrée. Retrace un rectangle pour la déplacer."
                 : "Trace un rectangle autour des six lettres, au plus serré possible."}
@@ -299,14 +300,14 @@ export default function PageScanner() {
               />
             </Champ>
           ) : (
-            <div className="rounded-lg border border-soil-600 bg-soil-850 p-4">
+            <div className="verre rampe p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="titre text-lg">Apprendre la palette</h2>
-                <span className="font-mono text-[12px] text-moss-400">
+                <span className="font-mono text-[12px] text-feuille-400">
                   {lettresApprises.length}/5 lettres connues
                 </span>
               </div>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-moss-400">
+              <p className="mt-1.5 text-[13px] leading-relaxed text-feuille-400">
                 Affiche en jeu une graine dont tu connais les gènes, saisis-les ci-dessous, puis apprends. Le
                 site retient la couleur de chaque lettre. Recommence avec d&apos;autres graines jusqu&apos;à
                 avoir les cinq.
@@ -329,7 +330,7 @@ export default function PageScanner() {
                   <span
                     key={l}
                     className={`puce ${
-                      palette[l] ? "border-gene-g/40 text-gene-g" : "border-soil-500 text-moss-400"
+                      palette[l] ? "border-gene-g/40 text-gene-g" : "border-nuit-500 text-feuille-400"
                     }`}
                   >
                     {l} {palette[l] ? "appris" : "manquant"}
@@ -348,13 +349,13 @@ export default function PageScanner() {
             >
               {occupe ? "Lecture…" : "Scanner maintenant"}
             </button>
-            <label className="flex items-center gap-2 text-[14px] text-moss-200">
+            <label className="flex items-center gap-2 text-[14px] text-feuille-200">
               <input
                 type="checkbox"
                 checked={auto}
                 onChange={(e) => setAuto(e.target.checked)}
                 disabled={!zone || (mode === "couleur" && lettresApprises.length === 0)}
-                className="h-4 w-4 accent-lamp"
+                className="h-4 w-4 accent-lampe"
               />
               Relire en continu
             </label>
@@ -375,7 +376,11 @@ export default function PageScanner() {
             <Choix
               valeur={plante}
               onChange={setPlante}
-              options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))}
+              options={PLANTES.map((p) => ({
+              label: p.nom,
+              valeur: p.id,
+              icone: <IconePlante plante={p.id} taille={16} />,
+            }))}
             />
           </Champ>
         </div>
@@ -386,7 +391,7 @@ export default function PageScanner() {
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="titre text-xl">
               Lu à l&apos;écran{" "}
-              <span className="font-mono text-sm font-normal text-moss-400">{trouvailles.length}</span>
+              <span className="font-mono text-sm font-normal text-feuille-400">{trouvailles.length}</span>
             </h2>
             <div className="flex gap-2">
               <button type="button" className="bouton" onClick={() => setTrouvailles([])}>
@@ -403,7 +408,7 @@ export default function PageScanner() {
               <li
                 key={t.id}
                 className={`flex flex-wrap items-center gap-3 rounded border p-2.5 ${
-                  t.doute ? "border-ripe/50 bg-ripe/5" : "border-soil-600 bg-soil-850"
+                  t.doute ? "border-mur/50 bg-mur/5" : "border-white/10 bg-nuit-800"
                 }`}
               >
                 <EditeurGenes
@@ -414,11 +419,11 @@ export default function PageScanner() {
                   taille="md"
                 />
                 {t.vu > 1 && <span className="puce border-gene-g/40 text-gene-g">lu {t.vu}×</span>}
-                {t.doute && <span className="puce border-ripe/50 text-ripe">à vérifier</span>}
+                {t.doute && <span className="puce border-mur/50 text-mur">à vérifier</span>}
                 <div className="ml-auto flex gap-2">
                   <button
                     type="button"
-                    className="font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+                    className="font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-gene-w"
                     onClick={() => setTrouvailles((p) => p.filter((x) => x.id !== t.id))}
                   >
                     Jeter
@@ -435,19 +440,19 @@ export default function PageScanner() {
 
       <div className="mt-10">
         <Details titre="Quelle méthode choisir">
-          <p className="text-[14px] leading-relaxed text-moss-200">
-            <span className="text-moss-100">Reconnaissance de texte</span> — marche tout de suite, sans rien
+          <p className="text-[14px] leading-relaxed text-feuille-200">
+            <span className="text-feuille-100">Reconnaissance de texte</span> — marche tout de suite, sans rien
             configurer. Elle reconnaît la forme des lettres, en s&apos;interdisant tout ce qui n&apos;est pas
             G, Y, H, W ou X. Bridée à cinq caractères possibles au lieu de vingt-six, elle se trompe beaucoup
             moins qu&apos;un OCR ordinaire — mais elle reste sensible à la résolution et au lissage des polices.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
-            <span className="text-moss-100">Couleur</span> — demande cinq minutes de mise en route, puis ne se
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
+            <span className="text-feuille-100">Couleur</span> — demande cinq minutes de mise en route, puis ne se
             trompe quasiment plus. Chaque gène s&apos;affiche dans une teinte distincte en jeu : le site découpe
             la zone en six colonnes et compare la teinte dominante de chacune à ce que tu lui as enseigné. Pas
             de téléchargement, lecture instantanée. Si la première méthode te déçoit, bascule ici.
           </p>
-          <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
+          <p className="mt-3 text-[13px] leading-relaxed text-feuille-400">
             Pourquoi te faire enseigner les couleurs plutôt que de les coder en dur : je n&apos;ai pas accès au
             jeu, je ne peux donc pas connaître la palette exacte, et elle peut changer d&apos;un patch à
             l&apos;autre. Te la faire apprendre une fois est plus fiable que de la deviner.
@@ -455,34 +460,34 @@ export default function PageScanner() {
         </Details>
 
         <Details titre="Obtenir une lecture propre">
-          <ol className="space-y-3 text-[14px] leading-relaxed text-moss-200">
+          <ol className="space-y-3 text-[14px] leading-relaxed text-feuille-200">
             <li>
-              <span className="text-moss-100">Rust en fenêtré sans bordure.</span> Le plein écran exclusif est
+              <span className="text-feuille-100">Rust en fenêtré sans bordure.</span> Le plein écran exclusif est
               souvent incapturable.
             </li>
             <li>
-              <span className="text-moss-100">Partage la fenêtre, pas l&apos;écran entier.</span> Le partage
+              <span className="text-feuille-100">Partage la fenêtre, pas l&apos;écran entier.</span> Le partage
               d&apos;écran complet redimensionne l&apos;image et brouille les petites lettres.
             </li>
             <li>
-              <span className="text-moss-100">Encadre au plus serré.</span> Un rectangle qui contient du décor
+              <span className="text-feuille-100">Encadre au plus serré.</span> Un rectangle qui contient du décor
               en plus fait chuter la précision. En mode couleur c&apos;est critique : les six colonnes sont
               découpées à parts égales dans le rectangle.
             </li>
             <li>
-              <span className="text-moss-100">Le premier scan en mode texte est lent.</span> Le moteur (environ
+              <span className="text-feuille-100">Le premier scan en mode texte est lent.</span> Le moteur (environ
               3 Mo) se télécharge à ce moment-là, puis reste en cache.
             </li>
           </ol>
           {brut && (
-            <p className="mt-4 font-mono text-[12px] text-moss-400">
-              Dernière lecture brute : <span className="text-moss-200">{brut}</span>
+            <p className="mt-4 font-mono text-[12px] text-feuille-400">
+              Dernière lecture brute : <span className="text-feuille-200">{brut}</span>
             </p>
           )}
         </Details>
 
         <Details titre="Ce que le scanner ne fait pas">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Il lit des lettres ou des couleurs, il ne comprend pas l&apos;interface de Rust. Il ne sait pas de
             quelle plante il s&apos;agit — c&apos;est le sélecteur qui le lui dit — et il ne distingue pas une
             graine d&apos;une bouture. Vois-le comme une saisie assistée qui t&apos;évite de taper, pas comme
@@ -512,7 +517,7 @@ function Cadre({
   if (!zone || e === null) return null;
   return (
     <div
-      className="pointer-events-none absolute border-2 border-lamp bg-lamp/10"
+      className="pointer-events-none absolute border-2 border-lampe bg-lampe/10"
       style={{ left: zone.x * e, top: zone.y * e, width: zone.largeur * e, height: zone.hauteur * e }}
     />
   );
@@ -535,7 +540,7 @@ function Colonnes({
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="pointer-events-none absolute w-px bg-lamp-glow/70"
+          className="pointer-events-none absolute w-px bg-lampe-chaud/70"
           style={{
             left: (zone.x + (zone.largeur * i) / 6) * e,
             top: zone.y * e,

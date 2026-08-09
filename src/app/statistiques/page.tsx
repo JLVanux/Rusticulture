@@ -6,6 +6,7 @@ import { formatNombre } from "@/lib/model";
 import { usePlantations, useProductionEstimee } from "@/lib/plantations";
 import { useRecoltes, useStatistiques } from "@/lib/recoltes";
 import { ilYA } from "@/lib/activites";
+import { IconeRessource } from "@/components/IconeRessource";
 import { EvolutionRecoltes } from "@/components/Evolution";
 import { SectionBadges } from "@/components/Badges";
 import { useGraines } from "@/lib/graines";
@@ -21,10 +22,10 @@ export default function PageStatistiques() {
 
   if (!connecte || !disponible) {
     return (
-      <Page>
+      <Page large>
         <EnTetePage titre="Statistiques" />
-        <div className="rounded-lg border border-soil-600 bg-soil-850 p-6 text-center">
-          <p className="text-[15px] text-moss-200">
+        <div className="verre rampe p-6 text-center">
+          <p className="text-[15px] text-feuille-200">
             Les statistiques suivent une ferme sur toute la durée d&apos;un wipe.
           </p>
           <Link href={connecte ? "/equipe" : "/connexion"} className="bouton bouton-primaire mt-4 inline-flex">
@@ -40,23 +41,23 @@ export default function PageStatistiques() {
     : null;
 
   return (
-    <Page>
+    <Page large>
       <EnTetePage
         titre="Statistiques"
         intro="Ce que ta ferme a réellement produit, comparé à ce qu'elle devrait produire."
       />
 
-      <p className="mb-6 font-mono text-[13px] text-moss-400">
+      <p className="mb-6 font-mono text-[13px] text-feuille-400">
         {wipe?.nom} · jour {jour} · {stats.nombreRecoltes} récolte
         {stats.nombreRecoltes > 1 ? "s" : ""} enregistrée{stats.nombreRecoltes > 1 ? "s" : ""}
       </p>
 
       {!charge ? (
-        <p className="text-[15px] text-moss-400">Chargement…</p>
+        <p className="text-[15px] text-feuille-400">Chargement…</p>
       ) : stats.parRessource.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-soil-600 p-10 text-center">
-          <p className="text-moss-200">Aucune récolte enregistrée.</p>
-          <p className="mt-1 text-[13px] text-moss-400">
+        <div className="rounded-verre border border-dashed border-white/15 p-10 text-center">
+          <p className="text-feuille-200">Aucune récolte enregistrée.</p>
+          <p className="mt-1 text-[13px] text-feuille-400">
             Enregistre-en une depuis le tableau de bord : c&apos;est ce qui donne un sens à tout le reste.
           </p>
           <Link href="/ferme" className="bouton mt-4 inline-flex">
@@ -64,28 +65,31 @@ export default function PageStatistiques() {
           </Link>
         </div>
       ) : (
-        <section className="space-y-2">
+        <section className="grid gap-2 lg:grid-cols-2">
           {stats.parRessource.map((s) => (
-            <article key={s.ressource} className="rounded-lg border border-soil-600 bg-soil-850 p-5">
+            <article key={s.ressource} className="panneau">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="titre text-xl">{s.ressource}</h2>
-                <span className="font-display text-3xl font-bold text-lamp-glow">
+                <h2 className="titre flex items-center gap-2 text-xl">
+                  <IconeRessource ressource={s.ressource} taille={22} />
+                  {s.ressource}
+                </h2>
+                <span className="font-display text-3xl font-bold text-lampe-chaud">
                   {formatNombre(s.total, 0)}
                 </span>
               </div>
 
-              <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-soil-700 pt-3">
+              <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/[0.07] pt-3">
                 <div>
                   <dt className="eyebrow">Récoltes</dt>
-                  <dd className="font-mono text-lg text-moss-100">{s.nombre}</dd>
+                  <dd className="font-mono text-lg text-feuille-100">{s.nombre}</dd>
                 </div>
                 <div>
                   <dt className="eyebrow">Moyenne</dt>
-                  <dd className="font-mono text-lg text-moss-100">{formatNombre(s.moyenne, 0)}</dd>
+                  <dd className="font-mono text-lg text-feuille-100">{formatNombre(s.moyenne, 0)}</dd>
                 </div>
                 <div>
                   <dt className="eyebrow">Meilleure</dt>
-                  <dd className="font-mono text-lg text-moss-100">{formatNombre(s.meilleure, 0)}</dd>
+                  <dd className="font-mono text-lg text-feuille-100">{formatNombre(s.meilleure, 0)}</dd>
                 </div>
                 {s.efficacite !== null && (
                   <div>
@@ -95,7 +99,7 @@ export default function PageStatistiques() {
                         s.efficacite >= 0.7
                           ? "text-gene-g"
                           : s.efficacite >= 0.4
-                            ? "text-ripe"
+                            ? "text-mur"
                             : "text-gene-w"
                       }`}
                     >
@@ -106,7 +110,7 @@ export default function PageStatistiques() {
               </dl>
 
               {s.efficacite !== null && (
-                <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
+                <p className="mt-3 text-[13px] leading-relaxed text-feuille-400">
                   Ta ferme aurait pu produire environ {formatNombre(s.attendu, 0)} depuis le début du wipe si
                   elle avait tourné en continu.{" "}
                   {s.efficacite >= 0.7
@@ -141,19 +145,22 @@ export default function PageStatistiques() {
             {recoltes.slice(0, 20).map((r) => (
               <li
                 key={r.id}
-                className="flex flex-wrap items-baseline gap-x-3 border-b border-soil-700 py-2 last:border-0"
+                className="flex flex-wrap items-baseline gap-x-3 border-b border-white/[0.07] py-2 last:border-0"
               >
-                <span className="font-mono text-[15px] font-bold text-moss-100">
+                <span className="font-mono text-[15px] font-bold text-feuille-100">
                   {formatNombre(r.quantite, 0)}
                 </span>
-                <span className="text-[14px] text-moss-200">{r.ressource}</span>
-                {r.parQui && <span className="text-[13px] text-moss-400">par {r.parQui}</span>}
-                {r.note && <span className="text-[13px] italic text-moss-400">{r.note}</span>}
-                <span className="ml-auto font-mono text-[12px] text-moss-400">{ilYA(new Date(r.recolteLe).toISOString())}</span>
+                <span className="flex items-center gap-1.5 text-[14px] text-feuille-200">
+                  <IconeRessource ressource={r.ressource} taille={16} />
+                  {r.ressource}
+                </span>
+                {r.parQui && <span className="text-[13px] text-feuille-400">par {r.parQui}</span>}
+                {r.note && <span className="text-[13px] italic text-feuille-400">{r.note}</span>}
+                <span className="ml-auto font-mono text-[12px] text-feuille-400">{ilYA(new Date(r.recolteLe).toISOString())}</span>
                 {modifiable && (
                   <button
                     type="button"
-                    className="font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+                    className="font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-gene-w"
                     onClick={() => {
                       if (confirm("Supprimer cette récolte des statistiques ?")) void supprimer(r.id);
                     }}
@@ -169,25 +176,25 @@ export default function PageStatistiques() {
 
       <div className="mt-10">
         <Details titre="Comment lire le rendement réel">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             C&apos;est ce que tu as réellement enregistré, divisé par ce que ta ferme aurait produit en
             tournant sans interruption depuis le début du wipe. Personne n&apos;atteint 100 % : il faudrait
             replanter à la seconde près, jour et nuit.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
-            C&apos;est surtout une mesure de <span className="text-moss-100">régularité</span>, pas de taille
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
+            C&apos;est surtout une mesure de <span className="text-feuille-100">régularité</span>, pas de taille
             de ferme. Une petite ferme bien tenue peut afficher un meilleur rendement qu&apos;une grosse
             laissée à l&apos;abandon — et c&apos;est exactement ce qu&apos;un classement devrait récompenser.
           </p>
         </Details>
 
         <Details titre="Ce que ces chiffres ne savent pas">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Les récoltes sont saisies à la main : le site ne peut pas les vérifier. Il compare seulement
             chaque saisie à la capacité théorique de la ferme déclarée et t&apos;avertit quand un chiffre
             dépasse le possible.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
             Autre limite : la configuration de la ferme n&apos;est pas historisée. Si tu montes dix bacs
             aujourd&apos;hui, le site calcule ta production attendue des jours passés comme si tu les avais
             déjà — ton rendement réel apparaîtra donc plus bas qu&apos;il ne l&apos;était.

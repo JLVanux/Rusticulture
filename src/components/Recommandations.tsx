@@ -15,12 +15,12 @@ import type { Recommandation } from "@/lib/recommandations";
 export function Recommandations({ recommandations }: { recommandations: Recommandation[] }) {
   if (recommandations.length === 0) {
     return (
-      <section className="rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <section className="panneau">
         <div className="eyebrow">Que faire maintenant</div>
-        <p className="mt-2 text-[15px] leading-relaxed text-moss-200">
+        <p className="mt-2 text-[15px] leading-relaxed text-feuille-200">
           Rien d&apos;urgent. Tes plants poussent, tes bacs sont configurés, aucune fenêtre ne se referme.
         </p>
-        <p className="mt-2 text-[13px] text-moss-400">
+        <p className="mt-2 text-[13px] text-feuille-400">
           C&apos;est le bon moment pour croiser une génération de plus, ou aller miner pendant que ça pousse.
         </p>
       </section>
@@ -53,10 +53,10 @@ export function Recommandations({ recommandations }: { recommandations: Recomman
 function Carte({ reco, principale }: { reco: Recommandation; principale?: boolean }) {
   const couleur =
     reco.ton === "alerte"
-      ? { bordure: "border-ripe/60", fond: "bg-ripe/8", texte: "text-ripe" }
+      ? { bordure: "border-mur/60", fond: "bg-mur/8", texte: "text-mur" }
       : reco.ton === "action"
-        ? { bordure: "border-lamp", fond: "bg-lamp/10", texte: "text-lamp-glow" }
-        : { bordure: "border-soil-600", fond: "bg-soil-850", texte: "text-moss-100" };
+        ? { bordure: "border-lampe", fond: "bg-lampe/10", texte: "text-lampe-chaud" }
+        : { bordure: "border-white/10", fond: "bg-nuit-800", texte: "text-feuille-100" };
 
   return (
     <article className={`rounded-lg border ${couleur.bordure} ${couleur.fond} ${principale ? "p-5" : "p-4"}`}>
@@ -70,13 +70,13 @@ function Carte({ reco, principale }: { reco: Recommandation; principale?: boolea
         {reco.titre}
       </h3>
 
-      <p className={`mt-2 leading-relaxed text-moss-200 ${principale ? "text-[15px]" : "text-[14px]"}`}>
+      <p className={`mt-2 leading-relaxed text-feuille-200 ${principale ? "text-[15px]" : "text-[14px]"}`}>
         {reco.detail}
       </p>
 
       {/* Le fait déclencheur, toujours visible : sans lui, le site joue les
           oracles et on ne peut ni le contredire ni le corriger. */}
-      <p className="mt-2 font-mono text-[12px] leading-relaxed text-moss-400">{reco.pourquoi}</p>
+      <p className="mt-2 font-mono text-[12px] leading-relaxed text-feuille-400">{reco.pourquoi}</p>
 
       {reco.lien && (
         <Link href={reco.lien.href} className={`bouton mt-4 inline-flex ${principale ? "bouton-primaire" : ""}`}>

@@ -12,7 +12,7 @@ export function SectionBadges(contexte: ContexteBadges) {
     <section className="mt-10">
       <h2 className="titre text-xl">
         Records{" "}
-        <span className="font-mono text-sm font-normal text-moss-400">
+        <span className="font-mono text-sm font-normal text-feuille-400">
           {obtenus.length} / {badges.length}
         </span>
       </h2>
@@ -40,15 +40,15 @@ export function SectionBadges(contexte: ContexteBadges) {
               {restants.map((b) => (
                 <li key={b.id}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-display text-[15px] font-semibold uppercase tracking-wide text-moss-200">
+                    <span className="font-display text-[15px] font-semibold uppercase tracking-wide text-feuille-200">
                       {b.nom}
                     </span>
-                    <span className="font-mono text-[12px] text-moss-400">{b.detail}</span>
+                    <span className="font-mono text-[12px] text-feuille-400">{b.detail}</span>
                   </div>
-                  <p className="mt-0.5 text-[13px] leading-snug text-moss-400">{b.description}</p>
-                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-sm bg-soil-700">
+                  <p className="mt-0.5 text-[13px] leading-snug text-feuille-400">{b.description}</p>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-sm bg-nuit-600">
                     <span
-                      className="block h-full bg-lamp"
+                      className="block h-full bg-lampe"
                       style={{ width: `${Math.max(1, b.progression * 100)}%` }}
                     />
                   </div>
@@ -59,7 +59,7 @@ export function SectionBadges(contexte: ContexteBadges) {
         </div>
       )}
 
-      <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
+      <p className="mt-3 text-[13px] leading-relaxed text-feuille-400">
         Volontairement peu nombreux et lents à obtenir. Un badge distribué à chaque geste ne récompense rien.
         Les classements viendront quand il y aura des fermes à comparer.
       </p>

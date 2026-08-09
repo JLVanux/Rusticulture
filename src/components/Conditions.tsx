@@ -26,21 +26,21 @@ export function AlerteConditions() {
   ].filter(Boolean) as string[];
 
   return (
-    <div className="mb-6 rounded border border-ripe/50 bg-ripe/8 px-4 py-3">
+    <div className="mb-6 rounded border border-mur/50 bg-mur/8 px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-display text-[14px] font-semibold uppercase tracking-wide text-ripe">
+        <span className="font-display text-[14px] font-semibold uppercase tracking-wide text-mur">
           Conditions dégradées
         </span>
-        <span className="font-mono text-[12px] text-moss-200">{manquants.join(" · ")}</span>
+        <span className="font-mono text-[12px] text-feuille-200">{manquants.join(" · ")}</span>
         <button
           type="button"
-          className="ml-auto font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-lamp-glow"
+          className="ml-auto font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-lampe-chaud"
           onClick={() => setConditions({ ...conditions, eau: 1, lumiere: 1, temperature: 1 })}
         >
           Tout remettre à 100 %
         </button>
       </div>
-      <p className="mt-1.5 text-[13px] leading-snug text-moss-200">
+      <p className="mt-1.5 text-[13px] leading-snug text-feuille-200">
         Toutes les durées du site sont rallongées en conséquence, y compris tes minuteurs en cours.
       </p>
     </div>
@@ -64,16 +64,16 @@ export function ReglageConditions() {
         valeur={conditions.temperature}
         onChange={(v) => setConditions({ ...conditions, temperature: v })}
       />
-      <label className="flex items-center gap-2 text-[14px] text-moss-200">
+      <label className="flex items-center gap-2 text-[14px] text-feuille-200">
         <input
           type="checkbox"
           checked={conditions.engrais}
           onChange={(e) => setConditions({ ...conditions, engrais: e.target.checked })}
-          className="h-4 w-4 accent-lamp"
+          className="h-4 w-4 accent-lampe"
         />
         Engrais dans le bac
       </label>
-      <p className="text-[13px] leading-relaxed text-moss-400">
+      <p className="text-[13px] leading-relaxed text-feuille-400">
         Un plafonnier par bac met la lumière à 100 % en continu, un arroseur fait pareil pour l&apos;eau, et un
         chauffage électrique pour la température en biome neige. Ces trois réglages allongent les durées
         partout sur le site.

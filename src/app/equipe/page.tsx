@@ -67,7 +67,7 @@ export default function PageFerme() {
 
   if (!supabaseConfigure) {
     return (
-      <Page>
+      <Page large>
         <EnTetePage titre="Équipe" />
         <Note ton="alerte">
           La base de données n&apos;est pas configurée sur cette installation. Le reste du site fonctionne
@@ -81,7 +81,7 @@ export default function PageFerme() {
     return (
       <Page>
         <EnTetePage titre="Équipe" />
-        <p className="text-[15px] text-moss-400">Chargement…</p>
+        <p className="text-[15px] text-feuille-400">Chargement…</p>
       </Page>
     );
   }
@@ -93,12 +93,12 @@ export default function PageFerme() {
           titre="Équipe"
           intro="Une ferme se partage avec tes coéquipiers : timers communs, graines communes, statistiques communes."
         />
-        <div className="rounded-lg border border-soil-600 bg-soil-850 p-6 text-center">
-          <p className="text-[15px] text-moss-200">Il faut être connecté pour créer ou rejoindre une ferme.</p>
+        <div className="verre rampe p-6 text-center">
+          <p className="text-[15px] text-feuille-200">Il faut être connecté pour créer ou rejoindre une ferme.</p>
           <Link href="/connexion" className="bouton bouton-primaire mt-4 inline-flex">
             Créer un compte ou se connecter
           </Link>
-          <p className="mt-3 text-[13px] text-moss-400">
+          <p className="mt-3 text-[13px] text-feuille-400">
             Le reste du site reste utilisable sans compte.
           </p>
         </div>
@@ -137,14 +137,14 @@ export default function PageFerme() {
 
       {courante ? (
         <>
-          <section className="rounded-lg border border-soil-600 bg-soil-850 p-5">
+          <section className="panneau">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 className="titre text-2xl">{courante.ferme.nom}</h2>
-              <span className="puce border-lamp/50 text-lamp-glow">{LIBELLE_ROLE[courante.role]}</span>
+              <span className="puce border-lampe/50 text-lampe-chaud">{LIBELLE_ROLE[courante.role]}</span>
             </div>
 
             {wipe ? (
-              <p className="mt-2 font-mono text-[13px] text-moss-400">
+              <p className="mt-2 font-mono text-[13px] text-feuille-400">
                 {wipe.nom}
                 {wipe.serveur && ` · ${wipe.serveur}`} · jour{" "}
                 {Math.max(
@@ -153,22 +153,22 @@ export default function PageFerme() {
                 )}
               </p>
             ) : (
-              <p className="mt-2 text-[13px] text-ripe">Aucun wipe actif.</p>
+              <p className="mt-2 text-[13px] text-mur">Aucun wipe actif.</p>
             )}
           </section>
 
           {/* Membres */}
           <section className="mt-8">
             <h3 className="titre mb-3 text-xl">
-              Membres <span className="font-mono text-sm font-normal text-moss-400">{membres.length}</span>
+              Membres <span className="font-mono text-sm font-normal text-feuille-400">{membres.length}</span>
             </h3>
             <ul className="space-y-1.5">
               {membres.map((m) => (
                 <li
                   key={m.profil_id}
-                  className="flex flex-wrap items-center gap-3 rounded border border-soil-600 bg-soil-850 px-3 py-2.5"
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"
                 >
-                  <span className="text-[15px] text-moss-100">{m.profils?.pseudo ?? "Fermier"}</span>
+                  <span className="text-[15px] text-feuille-100">{m.profils?.pseudo ?? "Fermier"}</span>
                   {courante.role === "proprietaire" && m.role !== "proprietaire" ? (
                     <select
                       className="champ ml-auto w-auto py-1 text-[13px]"
@@ -184,14 +184,14 @@ export default function PageFerme() {
                       <option value="lecture">Lecture seule</option>
                     </select>
                   ) : (
-                    <span className="ml-auto font-mono text-[12px] text-moss-400">
+                    <span className="ml-auto font-mono text-[12px] text-feuille-400">
                       {LIBELLE_ROLE[m.role]}
                     </span>
                   )}
                   {courante.role === "proprietaire" && m.role !== "proprietaire" && (
                     <button
                       type="button"
-                      className="font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+                      className="font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-gene-w"
                       disabled={occupe}
                       onClick={() => {
                         if (confirm(`Retirer ${m.profils?.pseudo ?? "ce membre"} de la ferme ?`)) {
@@ -209,9 +209,9 @@ export default function PageFerme() {
 
           {/* Invitation */}
           {courante.role === "proprietaire" && (
-            <section className="mt-8 rounded-lg border border-soil-600 bg-soil-850 p-5">
+            <section className="mt-8 panneau">
               <h3 className="titre text-xl">Inviter un coéquipier</h3>
-              <p className="mt-1 text-[14px] text-moss-400">
+              <p className="mt-1 text-[14px] text-feuille-400">
                 Donne-lui ce code. Il le saisit dans « Rejoindre une ferme » après s&apos;être connecté.
               </p>
               <div className="mt-4">
@@ -231,12 +231,12 @@ export default function PageFerme() {
                 >
                   {occupe ? "…" : "Régénérer"}
                 </button>
-                <span className="text-[13px] text-moss-400">
+                <span className="text-[13px] text-feuille-400">
                   L&apos;ancien code cessera immédiatement de fonctionner.
                 </span>
               </div>
 
-              <p className="mt-4 text-[13px] leading-relaxed text-moss-400">
+              <p className="mt-4 text-[13px] leading-relaxed text-feuille-400">
                 Le code est masqué par défaut : quiconque le voit peut rejoindre la ferme, et une seconde à
                 l&apos;image en direct suffit à le faire fuiter. Il se remasque tout seul après quelques
                 secondes, et la copie fonctionne sans avoir à le révéler.
@@ -320,20 +320,20 @@ export default function PageFerme() {
         )}
 
         <Details titre="Les trois rôles">
-          <ul className="space-y-2 text-[14px] leading-relaxed text-moss-200">
+          <ul className="space-y-2 text-[14px] leading-relaxed text-feuille-200">
             <li>
-              <span className="text-moss-100">Propriétaire</span> — gère la ferme, les membres, les rôles et
+              <span className="text-feuille-100">Propriétaire</span> — gère la ferme, les membres, les rôles et
               les wipes.
             </li>
             <li>
-              <span className="text-moss-100">Membre</span> — ajoute des graines, lance des timers, enregistre
+              <span className="text-feuille-100">Membre</span> — ajoute des graines, lance des timers, enregistre
               des récoltes, modifie les plantations.
             </li>
             <li>
-              <span className="text-moss-100">Lecture seule</span> — consulte tout, ne modifie rien.
+              <span className="text-feuille-100">Lecture seule</span> — consulte tout, ne modifie rien.
             </li>
           </ul>
-          <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
+          <p className="mt-3 text-[13px] leading-relaxed text-feuille-400">
             Ces règles sont appliquées par la base de données elle-même, pas par l&apos;interface. Masquer un
             bouton n&apos;empêche personne d&apos;appeler l&apos;API directement — c&apos;est pour ça
             qu&apos;elles ne vivent pas dans le code du site.

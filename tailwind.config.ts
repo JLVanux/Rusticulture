@@ -1,29 +1,62 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Jetons de la charte — voir CHARTE.md.
+ *
+ * Source : l'inventaire de Rust. Du béton sale, du métal oxydé, un orange qui
+ * ne sert qu'à signaler. Aucune couleur froide, aucune ombre colorée.
+ *
+ * Les anciens noms de jetons (`nuit`, `feuille`, `lampe`, `verre`, `mur`) sont
+ * conservés comme alias : les réécrire dans vingt et une pages n'aurait rien
+ * changé au rendu et aurait multiplié les risques.
+ */
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        soil: {
-          900: "#0b0f0d",
-          850: "#0f1512",
-          800: "#141c18",
-          700: "#1b2620",
-          600: "#26332c",
-          500: "#35453b",
+        fond: "#141210",
+        case: {
+          DEFAULT: "#1c1a17",
+          haute: "#242019",
+          creuse: "#100e0c",
         },
-        moss: {
-          400: "#7d9187",
-          200: "#c3d2c8",
-          100: "#e2ebe4",
+        trait: {
+          DEFAULT: "#2f2a24",
+          vif: "#453d34",
         },
-        lamp: {
-          DEFAULT: "#d94f9c",
-          dim: "#a83a78",
-          glow: "#ff7bc0",
+        rouille: "#ce422b",
+        braise: "#e8683f",
+        craie: "#e8e2d8",
+        cendre: "#a09788",
+        poussiere: "#6b6358",
+
+        // Alias vers les anciens noms.
+        nuit: {
+          900: "#141210",
+          800: "#1c1a17",
+          700: "#242019",
+          600: "#2f2a24",
+          500: "#453d34",
         },
-        ripe: "#f0a830",
+        feuille: {
+          100: "#e8e2d8",
+          200: "#cfc7ba",
+          400: "#a09788",
+          600: "#6b6358",
+        },
+        lampe: {
+          DEFAULT: "#ce422b",
+          froid: "#8a2f1c",
+          chaud: "#e8683f",
+        },
+        verre: {
+          bord: "#2f2a24",
+          haut: "#1c1a17",
+          bas: "#1c1a17",
+        },
+        mur: "#d8a13c",
+
         gene: {
           g: "#5fd39a",
           y: "#f2cf5b",
@@ -33,12 +66,27 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "Impact", "sans-serif"],
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
         body: ["var(--font-body)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
+      // Rust est anguleux : 4 px au maximum, 2 px pour les cases.
+      borderRadius: {
+        none: "0",
+        sm: "2px",
+        DEFAULT: "3px",
+        md: "3px",
+        lg: "4px",
+        xl: "4px",
+        "2xl": "4px",
+        "3xl": "6px",
+        full: "9999px",
+        verre: "4px",
+      },
       boxShadow: {
-        lamp: "0 0 0 1px rgba(217,79,156,.35), 0 0 24px -6px rgba(217,79,156,.45)",
+        // Aucune ombre colorée, aucun halo. La structure vient des traits.
+        verre: "none",
+        lueur: "none",
       },
     },
   },

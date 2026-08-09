@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Note } from "@/components/Ui";
+import { IconeRessource } from "@/components/IconeRessource";
 import type { LigneProduction } from "@/lib/plantations";
 import { evaluerPlausibilite, RESSOURCES, type Recolte } from "@/lib/recoltes";
 
@@ -73,13 +74,18 @@ export function EnregistrerRecolte({
         </div>
         <div className="min-w-[9rem]">
           <Champ label="Ressource">
-            <select className="champ" value={ressource} onChange={(e) => setRessource(e.target.value)}>
+            <div className="flex items-center gap-2">
+              <span className="fente h-11 w-11 shrink-0">
+                <IconeRessource ressource={ressource} taille={26} />
+              </span>
+              <select className="champ" value={ressource} onChange={(e) => setRessource(e.target.value)}>
               {RESSOURCES.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
-            </select>
+              </select>
+            </div>
           </Champ>
         </div>
         <div className="min-w-[10rem] flex-1">

@@ -20,10 +20,10 @@ export default function PageWipes() {
 
   if (!ferme) {
     return (
-      <Page>
+      <Page large>
         <EnTetePage titre="Wipes" />
-        <div className="rounded-lg border border-soil-600 bg-soil-850 p-6 text-center">
-          <p className="text-[15px] text-moss-200">Un wipe appartient à une ferme.</p>
+        <div className="verre rampe p-6 text-center">
+          <p className="text-[15px] text-feuille-200">Un wipe appartient à une ferme.</p>
           <Link href="/equipe" className="bouton bouton-primaire mt-4 inline-flex">
             Créer une ferme
           </Link>
@@ -56,19 +56,19 @@ export default function PageWipes() {
       )}
 
       {!charge ? (
-        <p className="text-[15px] text-moss-400">Chargement…</p>
+        <p className="text-[15px] text-feuille-400">Chargement…</p>
       ) : (
         <>
           {/* En cours */}
           <section>
             <h2 className="titre mb-3 text-xl">En cours</h2>
             {actif ? (
-              <div className="rounded-lg border border-lamp/50 bg-lamp/8 p-5">
+              <div className="rounded-lg border border-lampe/50 bg-lampe/8 p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-display text-2xl font-bold uppercase tracking-wide text-lamp-glow">
+                  <span className="font-display text-2xl font-bold uppercase tracking-wide text-lampe-chaud">
                     {actif.nom}
                   </span>
-                  <span className="font-mono text-[13px] text-moss-400">
+                  <span className="font-mono text-[13px] text-feuille-400">
                     jour {jourDe(actif)}
                     {actif.serveur && ` · ${actif.serveur}`}
                     {actif.nbJoueurs && ` · ${actif.nbJoueurs} joueurs`}
@@ -106,7 +106,7 @@ export default function PageWipes() {
           {estProprietaire && (
             <section className="mt-8">
               <Details titre="Démarrer un nouveau wipe" ouvert={!actif}>
-                <p className="mb-4 text-[14px] leading-relaxed text-moss-400">
+                <p className="mb-4 text-[14px] leading-relaxed text-feuille-400">
                   Le wipe en cours sera clôturé automatiquement. Tout repart de zéro : graines, bacs,
                   minuteurs, récoltes et objectifs. L&apos;ancien reste consultable ici.
                 </p>
@@ -161,12 +161,12 @@ export default function PageWipes() {
               <h2 className="titre mb-3 text-xl">Wipes passés</h2>
               <ul className="space-y-2">
                 {archives.map((w) => (
-                  <li key={w.id} className="rounded-lg border border-soil-600 bg-soil-850 p-4">
+                  <li key={w.id} className="verre rampe p-4">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-display text-lg font-semibold uppercase tracking-wide text-moss-100">
+                      <span className="font-display text-lg font-semibold uppercase tracking-wide text-feuille-100">
                         {w.nom}
                       </span>
-                      <span className="font-mono text-[12px] text-moss-400">
+                      <span className="font-mono text-[12px] text-feuille-400">
                         {formatDate(w.debut)}
                         {w.fin && ` → ${formatDate(w.fin)}`}
                       </span>
@@ -204,19 +204,19 @@ export default function PageWipes() {
 
       <div className="mt-10">
         <Details titre="Ce que change une clôture">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Rien n&apos;est supprimé. Les graines, bacs, minuteurs, récoltes et objectifs restent attachés au
             wipe clôturé et alimentent son résumé. Ils cessent simplement d&apos;apparaître dans le tableau de
             bord, les statistiques et les outils, qui ne montrent que le wipe actif.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
             Un wipe clôturé par erreur se rouvre, à condition qu&apos;aucun autre ne soit actif — le site
             refuse d&apos;en clôturer un dans ton dos.
           </p>
         </Details>
 
         <Details titre="Pourquoi le résumé n'est pas figé">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Il est recalculé à chaque affichage à partir des faits enregistrés. Rouvrir un wipe et y ajouter
             une récolte oubliée met le résumé à jour tout seul. Un total figé au moment de la clôture aurait
             fini par ne plus correspondre à ses propres données.
@@ -230,29 +230,29 @@ export default function PageWipes() {
 function Resume({ wipeId }: { wipeId: string }) {
   const { resume, charge } = useResumeWipe(wipeId);
 
-  if (!charge) return <p className="mt-4 text-[14px] text-moss-400">Calcul…</p>;
+  if (!charge) return <p className="mt-4 text-[14px] text-feuille-400">Calcul…</p>;
   if (!resume) return null;
 
   const rien = resume.totaux.length === 0 && resume.nombreGraines === 0;
 
   return (
-    <div className="mt-4 border-t border-soil-700 pt-4">
+    <div className="mt-4 border-t border-white/[0.07] pt-4">
       {rien ? (
-        <p className="text-[14px] text-moss-400">Aucune donnée enregistrée sur ce wipe.</p>
+        <p className="text-[14px] text-feuille-400">Aucune donnée enregistrée sur ce wipe.</p>
       ) : (
         <>
           <ul className="space-y-1">
             {resume.totaux.map((t) => (
               <li key={t.ressource} className="flex items-baseline justify-between gap-3">
-                <span className="text-[14px] text-moss-200">{t.ressource}</span>
-                <span className="font-mono text-[15px] font-bold text-moss-100">
+                <span className="text-[14px] text-feuille-200">{t.ressource}</span>
+                <span className="font-mono text-[15px] font-bold text-feuille-100">
                   {formatNombre(t.total, 0)}
                 </span>
               </li>
             ))}
           </ul>
 
-          <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-soil-700 pt-3">
+          <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/[0.07] pt-3">
             <Bloc label="Durée" valeur={`${resume.jours} j`} />
             <Bloc label="Récoltes" valeur={String(resume.nombreRecoltes)} />
             {resume.meilleureRecolte && (
@@ -272,7 +272,7 @@ function Resume({ wipeId }: { wipeId: string }) {
           </dl>
 
           {resume.meilleursGenes && (
-            <div className="mt-4 border-t border-soil-700 pt-3">
+            <div className="mt-4 border-t border-white/[0.07] pt-3">
               <div className="eyebrow mb-1.5">Meilleurs gènes obtenus</div>
               <ChaineGenes genome={resume.meilleursGenes} taille="md" />
             </div>
@@ -287,7 +287,7 @@ function Bloc({ label, valeur }: { label: string; valeur: string }) {
   return (
     <div>
       <dt className="eyebrow">{label}</dt>
-      <dd className="font-mono text-lg text-moss-100">{valeur}</dd>
+      <dd className="font-mono text-lg text-feuille-100">{valeur}</dd>
     </div>
   );
 }

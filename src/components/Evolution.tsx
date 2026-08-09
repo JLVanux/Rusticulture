@@ -16,6 +16,11 @@ import type { Recolte } from "@/lib/recoltes";
  * Un tableau reste lisible par les lecteurs d'écran sous le graphique : une
  * image de données sans équivalent textuel n'est pas consultable.
  */
+// Le SVG ne peut pas lire les jetons Tailwind : les deux couleurs du graphique
+// sont donc reprises ici. À tenir en accord avec `lampe.DEFAULT` et `gene.g`.
+const COULEUR_BARRE = "#d9482c";
+const COULEUR_CUMUL = "#5fd39a";
+
 export function EvolutionRecoltes({
   recoltes,
   debutWipe,
@@ -56,7 +61,7 @@ export function EvolutionRecoltes({
   return (
     <section className="mt-10">
       <h2 className="titre text-xl">Évolution</h2>
-      <p className="mt-1 text-[14px] text-moss-400">
+      <p className="mt-1 text-[14px] text-feuille-400">
         Production par jour de wipe. Les barres sont les récoltes du jour, la courbe le cumul.
       </p>
 
@@ -70,7 +75,7 @@ export function EvolutionRecoltes({
         </div>
       )}
 
-      <div className="mt-4 rounded-lg border border-soil-600 bg-soil-850 p-4">
+      <div className="mt-4 verre rampe p-4">
         <svg
           viewBox={`0 0 ${largeur} ${hauteur}`}
           className="w-full"
@@ -85,11 +90,11 @@ export function EvolutionRecoltes({
                 y1={yMoyenne}
                 x2={largeur}
                 y2={yMoyenne}
-                stroke="#4a6357"
+                stroke="#3a332e"
                 strokeWidth="1"
                 strokeDasharray="4 4"
               />
-              <text x="4" y={yMoyenne - 4} fill="#7d9187" fontSize="11" fontFamily="monospace">
+              <text x="4" y={yMoyenne - 4} fill="#9b918a" fontSize="11" fontFamily="monospace">
                 moyenne {formatNombre(moyenne, 0)}
               </text>
             </>
@@ -105,7 +110,7 @@ export function EvolutionRecoltes({
                 width={largeurBarre}
                 height={Math.max(h, j.total > 0 ? 2 : 0)}
                 rx="2"
-                fill={j.total > 0 ? "#d94f9c" : "transparent"}
+                fill={j.total > 0 ? COULEUR_BARRE : "transparent"}
               >
                 <title>{`Jour ${j.jour} — ${formatNombre(j.total, 0)} ${ressource}`}</title>
               </rect>
@@ -113,10 +118,10 @@ export function EvolutionRecoltes({
           })}
 
           {cumulMax > 0 && (
-            <path d={courbe} fill="none" stroke="#5fd39a" strokeWidth="2" strokeLinejoin="round" />
+            <path d={courbe} fill="none" stroke={COULEUR_CUMUL} strokeWidth="2" strokeLinejoin="round" />
           )}
 
-          <line x1="0" y1={zone} x2={largeur} y2={zone} stroke="#26332c" strokeWidth="1" />
+          <line x1="0" y1={zone} x2={largeur} y2={zone} stroke="#25211d" strokeWidth="1" />
 
           {jours
             .filter((_, i) => i === 0 || i === jours.length - 1 || (i + 1) % 7 === 0)
@@ -127,7 +132,7 @@ export function EvolutionRecoltes({
                   key={j.jour}
                   x={i * pas + pas / 2}
                   y={hauteur - 6}
-                  fill="#7d9187"
+                  fill="#9b918a"
                   fontSize="11"
                   fontFamily="monospace"
                   textAnchor="middle"
@@ -138,9 +143,9 @@ export function EvolutionRecoltes({
             })}
         </svg>
 
-        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 border-t border-soil-700 pt-3 font-mono text-[12px] text-moss-400">
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 border-t border-white/[0.07] pt-3 font-mono text-[12px] text-feuille-400">
           <span>
-            <span className="text-lamp-glow">▇</span> par jour
+            <span className="text-lampe-chaud">▇</span> par jour
           </span>
           <span>
             <span className="text-gene-g">—</span> cumul : {formatNombre(total, 0)}
@@ -150,7 +155,7 @@ export function EvolutionRecoltes({
       </div>
 
       {semaines && (
-        <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+        <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
           Ces sept derniers jours : {formatNombre(semaines.recents, 0)} {ressource}, contre{" "}
           {formatNombre(semaines.precedents, 0)} la semaine précédente —{" "}
           <span className={semaines.variation >= 0 ? "text-gene-g" : "text-gene-w"}>
@@ -163,15 +168,15 @@ export function EvolutionRecoltes({
 
       {/* Équivalent textuel : un graphique seul n'est pas consultable au lecteur d'écran. */}
       <details className="mt-3">
-        <summary className="cursor-pointer font-mono text-[12px] uppercase tracking-wider text-moss-400 hover:text-moss-200">
+        <summary className="cursor-pointer font-mono text-[12px] uppercase tracking-wider text-feuille-400 hover:text-feuille-200">
           Voir les chiffres
         </summary>
         <table className="mt-3 w-full text-left text-[13px]">
           <thead>
-            <tr className="border-b border-soil-600">
-              <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-moss-400">Jour</th>
-              <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-moss-400">Récolté</th>
-              <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-moss-400">Cumul</th>
+            <tr className="border-b border-white/10">
+              <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-feuille-400">Jour</th>
+              <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-feuille-400">Récolté</th>
+              <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-feuille-400">Cumul</th>
             </tr>
           </thead>
           <tbody>
@@ -179,10 +184,10 @@ export function EvolutionRecoltes({
               .filter((j) => j.total > 0)
               .reverse()
               .map((j) => (
-                <tr key={j.jour} className="border-b border-soil-700">
-                  <td className="py-1.5 font-mono text-moss-400">j{j.jour}</td>
-                  <td className="font-mono text-moss-100">{formatNombre(j.total, 0)}</td>
-                  <td className="font-mono text-moss-400">{formatNombre(j.cumul, 0)}</td>
+                <tr key={j.jour} className="border-b border-white/[0.07]">
+                  <td className="py-1.5 font-mono text-feuille-400">j{j.jour}</td>
+                  <td className="font-mono text-feuille-100">{formatNombre(j.total, 0)}</td>
+                  <td className="font-mono text-feuille-400">{formatNombre(j.cumul, 0)}</td>
                 </tr>
               ))}
           </tbody>

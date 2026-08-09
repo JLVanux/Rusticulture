@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
+import { IconePlante } from "@/components/IconePlante";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
 import {
   CONSTANTES_DEFAUT,
@@ -128,9 +129,9 @@ export default function PageReglages() {
         intro="Les durées et les rendements sont un modèle approché. Mesure un cycle en jeu, corrige ici, tout le site suit."
       />
 
-      <section className="space-y-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <section className="space-y-4 panneau">
         <h2 className="titre text-xl">Caler sur un cycle mesuré</h2>
-        <p className="text-[13px] text-moss-400">
+        <p className="text-[13px] text-feuille-400">
           Chronomètre une pousse de la plantation au stade Mûr, puis rentre le résultat.
         </p>
 
@@ -138,7 +139,11 @@ export default function PageReglages() {
           <Choix
             valeur={calPlante}
             onChange={setCalPlante}
-            options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))}
+            options={PLANTES.map((p) => ({
+              label: p.nom,
+              valeur: p.id,
+              icone: <IconePlante plante={p.id} taille={16} />,
+            }))}
           />
         </Champ>
 
@@ -168,9 +173,9 @@ export default function PageReglages() {
           </button>
         </div>
 
-        <p className="border-t border-soil-600 pt-3 font-mono text-[13px] text-moss-400">
-          prévision actuelle <span className="text-moss-100">{formatDuree(prevision)}</span> · ta mesure{" "}
-          <span className="text-lamp-glow">{formatDuree(calMinutes)}</span>
+        <p className="border-t border-white/10 pt-3 font-mono text-[13px] text-feuille-400">
+          prévision actuelle <span className="text-feuille-100">{formatDuree(prevision)}</span> · ta mesure{" "}
+          <span className="text-lampe-chaud">{formatDuree(calMinutes)}</span>
         </p>
 
         {nbG === 0 && (
@@ -178,9 +183,9 @@ export default function PageReglages() {
         )}
       </section>
 
-      <section className="mt-6 space-y-4 rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <section className="mt-6 space-y-4 panneau">
         <h2 className="titre text-xl">Caler sur une récolte mesurée</h2>
-        <p className="text-[13px] text-moss-400">
+        <p className="text-[13px] text-feuille-400">
           Récolte un plant seul, sans thé de récolte, et compte ce qu&apos;il donne.
         </p>
 
@@ -188,7 +193,11 @@ export default function PageReglages() {
           <Choix
             valeur={renPlante}
             onChange={setRenPlante}
-            options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))}
+            options={PLANTES.map((p) => ({
+              label: p.nom,
+              valeur: p.id,
+              icone: <IconePlante plante={p.id} taille={16} />,
+            }))}
           />
         </Champ>
 
@@ -219,9 +228,9 @@ export default function PageReglages() {
           </button>
         </div>
 
-        <p className="border-t border-soil-600 pt-3 font-mono text-[13px] text-moss-400">
-          prévision actuelle <span className="text-moss-100">{formatNombre(previsionRendement)}</span> · ta
-          mesure <span className="text-lamp-glow">{formatNombre(renMesure)}</span>
+        <p className="border-t border-white/10 pt-3 font-mono text-[13px] text-feuille-400">
+          prévision actuelle <span className="text-feuille-100">{formatNombre(previsionRendement)}</span> · ta
+          mesure <span className="text-lampe-chaud">{formatNombre(renMesure)}</span>
         </p>
 
         {nbY === 0 && <Note ton="alerte">Il faut au moins un gène Y pour en déduire le coefficient.</Note>}
@@ -234,10 +243,10 @@ export default function PageReglages() {
               <div key={c.cle}>
                 <label className="flex items-baseline justify-between" htmlFor={c.cle}>
                   <span className="eyebrow">{c.label}</span>
-                  <span className="font-mono text-sm text-moss-100">
+                  <span className="font-mono text-sm text-feuille-100">
                     {constantes[c.cle].toFixed(2)}
                     {constantes[c.cle] !== CONSTANTES_DEFAUT[c.cle] && (
-                      <span className="ml-2 text-[11px] text-lamp-glow">modifié</span>
+                      <span className="ml-2 text-[11px] text-lampe-chaud">modifié</span>
                     )}
                   </span>
                 </label>
@@ -251,7 +260,7 @@ export default function PageReglages() {
                   onChange={(e) => setConstantes({ ...constantes, [c.cle]: Number(e.target.value) })}
                   className="mt-1.5 w-full"
                 />
-                <p className="mt-1 text-[12px] text-moss-400">{c.aide}</p>
+                <p className="mt-1 text-[12px] text-feuille-400">{c.aide}</p>
               </div>
             ))}
           </div>
@@ -265,7 +274,7 @@ export default function PageReglages() {
         </Details>
 
         <Details titre="Tes données">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             {banque.length} gènes{banque.length > 1 ? "s" : ""} en banque, {minuteurs.length} minuteur
             {minuteurs.length > 1 ? "s" : ""}. Tout est dans le stockage de ce navigateur : rien n&apos;est
             envoyé nulle part, et rien ne suit si tu changes de machine.
@@ -306,19 +315,19 @@ export default function PageReglages() {
         </Details>
 
         <Details titre="Ce qui est sûr et ce qui ne l'est pas">
-          <ul className="space-y-2 text-[14px] leading-relaxed text-moss-200">
+          <ul className="space-y-2 text-[14px] leading-relaxed text-feuille-200">
             <li>
               <span className="text-gene-g">Fiable</span> — les poids de croisement, la règle du dépassement
               strict, les recettes des thés principaux, les paliers 4 pour 1, les coûts de raid.
             </li>
             <li>
-              <span className="text-ripe">Approché</span> — les durées de pousse, la découpe en stades et les
+              <span className="text-mur">Approché</span> — les durées de pousse, la découpe en stades et les
               rendements par plant. Les sources communautaires se contredisent franchement là-dessus. Le
               modèle par défaut retient les repères les plus souvent cités : environ 3 h pour une graine sans
               gène G, et une réduction dégressive d&apos;environ 17 % par G.
             </li>
             <li>
-              <span className="text-ripe">À vérifier</span> — les recettes des thés réchauffant, rafraîchissant,
+              <span className="text-mur">À vérifier</span> — les recettes des thés réchauffant, rafraîchissant,
               de récolte et de qualité d&apos;artisanat divergent entre les sources.
             </li>
           </ul>

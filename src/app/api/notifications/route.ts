@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { PLANTE_PAR_ID } from "@/data/game";
 
 // -----------------------------------------------------------------------------
 // Envoi des notifications Discord
@@ -26,6 +27,7 @@ interface LigneTimer {
   id: string;
   nom: string;
   plante: string;
+  genes: string | null;
   debut: string;
   minutes_croisement: number;
   minutes_mur: number;
@@ -62,7 +64,7 @@ export async function GET(requete: Request) {
   const { data, error } = await sb
     .from("timers")
     .select(
-      "id, nom, plante, debut, minutes_croisement, minutes_mur, minutes_fin, wipes!inner ( ferme_id, fermes!inner ( nom ) ), profils:cree_par ( pseudo )"
+      "id, nom, plante, genes, debut, minutes_croisement, minutes_mur, minutes_fin, wipes!inner ( ferme_id, fermes!inner ( nom ) ), profils:cree_par ( pseudo )"
     )
     .eq("archive", false)
     .gte("debut", new Date(maintenant - 7 * 24 * 3600_000).toISOString());
@@ -136,13 +138,39 @@ export async function GET(requete: Request) {
       continue;
     }
 
+    // Le message dit ce qu'il faut FAIRE, pas ce que le jeu a calculé, et il
+    // commence par l'emplacement : dans une base à quinze bacs, savoir QUOI
+    // faire ne sert à rien si on ne sait pas OÙ.
+    //
+    // L'emplacement est le repère libre saisi au lancement du minuteur. Pas de
+    // lien vers une plantation déclarée : une plantation représente « N grands
+    // bacs de chanvre », pas un bac précis. Elle ne saurait donc pas dire
+    // « bac 3 », et un identifiant technique ne parlerait à personne. Le nom que
+    // la personne donne à son bac reste le plus juste.
     const auteur = c.ligne.profils?.pseudo;
+    const infos = PLANTE_PAR_ID[c.ligne.plante];
+    const plante = (infos?.nom ?? "plant").toLowerCase();
+
+    // Le nom du bac ouvre le message : « Bac 3 » dit où aller, « Chanvre GGGYYY »
+    // ne dit que ce qu'on savait déjà. Quand aucun nom n'a été saisi, le site en
+    // génère un à partir de la plante et des gènes — inutile de le répéter.
+    const nomAutomatique = `${infos?.nom ?? ""} ${c.ligne.genes ?? ""}`.trim();
+    const bac = c.ligne.nom.trim() === nomAutomatique ? null : c.ligne.nom.trim();
+    const accord = infos?.genre === "f" ? "prête" : "prêt";
+
+    const genes = c.ligne.genes ? ` ${c.ligne.genes}` : "";
+    const signature = auteur ? `\n-# planté par ${auteur}` : "";
+
     const contenu =
       c.type === "croisement"
-        ? `🧬 **${c.ligne.nom}** — les gènes viennent d'être recalculés. Va voir le résultat, tu peux le bouturer.${
-            auteur ? `\n_Planté par ${auteur}._` : ""
-          }`
-        : `🌾 **${c.ligne.nom}** est prêt à être récolté.${auteur ? `\n_Planté par ${auteur}._` : ""}`;
+        ? `🧬 **${c.ligne.nom} — le croisement est fait.**\n` +
+          `Va inspecter ce plant de ${plante}${genes} en jeu pour découvrir ses nouveaux gènes. ` +
+          `S'ils te plaisent, bouture-le (hache en main) : la bouture les copie à l'identique.` +
+          signature
+        : `🌾 **${c.ligne.nom} — ${accord} à récolter.**\n` +
+          `Ce plant de ${plante}${genes} est au rendement maximum. Passe le ramasser : ` +
+          `ensuite il dépérit et tu perds les fruits.` +
+          signature;
 
     try {
       const reponse = await fetch(webhook, {

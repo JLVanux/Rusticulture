@@ -44,7 +44,7 @@ export function CodeMasque({
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? "Masquer le code" : "Révéler le code"}
-        className="relative rounded border border-lamp/50 bg-lamp/10 px-4 py-2 font-mono text-xl tracking-[0.2em] text-lamp-glow transition hover:border-lamp"
+        className="relative rounded border border-lampe/50 bg-lampe/10 px-4 py-2 font-mono text-xl tracking-[0.2em] text-lampe-chaud transition hover:border-lampe"
       >
         <span
           className={visible ? "" : "select-none blur-[7px]"}
@@ -54,7 +54,7 @@ export function CodeMasque({
           {code}
         </span>
         {!visible && (
-          <span className="absolute inset-0 flex items-center justify-center font-display text-[12px] font-semibold uppercase tracking-widest text-moss-200">
+          <span className="absolute inset-0 flex items-center justify-center font-display text-[12px] font-semibold uppercase tracking-widest text-feuille-200">
             Révéler
           </span>
         )}
@@ -77,7 +77,7 @@ export function CodeMasque({
       </button>
 
       {visible && (
-        <span className="font-mono text-[12px] text-moss-400">masqué dans {reste} s</span>
+        <span className="font-mono text-[12px] text-feuille-400">masqué dans {reste} s</span>
       )}
     </div>
   );

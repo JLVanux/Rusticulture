@@ -96,7 +96,7 @@ export function BarreDistribution({ dist }: { dist: Distribution }) {
   const entrees = GENE_LETTERS.map((l) => [l, dist[l] ?? 0] as const).filter(([, p]) => p > 0.0001);
   return (
     <div className="w-full">
-      <div className="flex h-2 w-full overflow-hidden rounded-sm bg-soil-700">
+      <div className="flex h-2 w-full overflow-hidden rounded-sm bg-nuit-600">
         {entrees.map(([l, p]) => (
           <span
             key={l}
@@ -105,7 +105,7 @@ export function BarreDistribution({ dist }: { dist: Distribution }) {
           />
         ))}
       </div>
-      <div className="mt-1 flex flex-wrap gap-x-2 font-mono text-[10px] text-moss-400">
+      <div className="mt-1 flex flex-wrap gap-x-2 font-mono text-[10px] text-feuille-400">
         {entrees.map(([l, p]) => (
           <span key={l} style={{ color: GENES[l].couleur }}>
             {l} {Math.round(p * 100)}%
@@ -121,7 +121,7 @@ export function LegendeGenes() {
   return (
     <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
       {GENE_LETTERS.map((l) => (
-        <div key={l} className="rounded border border-soil-600 bg-soil-850 p-3">
+        <div key={l} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <dt className="flex items-baseline gap-2">
             <span
               className="inline-flex h-7 w-7 items-center justify-center rounded-sm font-mono text-base font-bold"
@@ -133,13 +133,13 @@ export function LegendeGenes() {
             >
               {l}
             </span>
-            <span className="font-display font-semibold uppercase tracking-wide text-moss-100">
+            <span className="font-display font-semibold uppercase tracking-wide text-feuille-100">
               {GENES[l].nom}
             </span>
           </dt>
-          <dd className="mt-1.5 text-[13px] leading-snug text-moss-400">
+          <dd className="mt-1.5 text-[13px] leading-snug text-feuille-400">
             {GENES[l].effet}
-            <span className="mt-1 block font-mono text-[11px] text-moss-400">poids {GENES[l].poids.toFixed(1)}</span>
+            <span className="mt-1 block font-mono text-[11px] text-feuille-400">poids {GENES[l].poids.toFixed(1)}</span>
           </dd>
         </div>
       ))}

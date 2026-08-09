@@ -72,13 +72,13 @@ export default function PageRaid() {
                     key={c.id}
                     type="button"
                     onClick={() => ajouter(c.id)}
-                    className="flex items-center gap-3 rounded border border-soil-600 bg-soil-850 px-3 py-2.5 text-left transition hover:border-lamp/60"
+                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left transition hover:border-lampe/60"
                   >
-                    <span className="text-[15px] text-moss-100">{c.nom}</span>
-                    <span className="ml-auto font-mono text-[12px] text-moss-400">
+                    <span className="text-[15px] text-feuille-100">{c.nom}</span>
+                    <span className="ml-auto font-mono text-[12px] text-feuille-400">
                       {b?.nb}× {ex?.nom}
                     </span>
-                    <span className="font-mono text-[13px] text-lamp-glow">
+                    <span className="font-mono text-[13px] text-lampe-chaud">
                       {formatNombre(b?.soufre ?? 0, 0)}
                     </span>
                   </button>
@@ -111,13 +111,13 @@ export default function PageRaid() {
                 return (
                   <li
                     key={l.cibleId}
-                    className="flex items-center gap-2 rounded border border-soil-600 bg-soil-850 px-3 py-2"
+                    className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2"
                   >
-                    <span className="flex-1 text-[14px] text-moss-100">{c.nom}</span>
+                    <span className="flex-1 text-[14px] text-feuille-100">{c.nom}</span>
                     <button
                       type="button"
                       aria-label="Retirer"
-                      className="h-7 w-7 rounded border border-soil-500 text-moss-200"
+                      className="h-7 w-7 rounded border border-nuit-500 text-feuille-200"
                       onClick={() =>
                         setPlan((p) =>
                           p
@@ -128,11 +128,11 @@ export default function PageRaid() {
                     >
                       −
                     </button>
-                    <span className="w-7 text-center font-mono text-sm text-moss-100">{l.quantite}</span>
+                    <span className="w-7 text-center font-mono text-sm text-feuille-100">{l.quantite}</span>
                     <button
                       type="button"
                       aria-label="Ajouter"
-                      className="h-7 w-7 rounded border border-soil-500 text-moss-200"
+                      className="h-7 w-7 rounded border border-nuit-500 text-feuille-200"
                       onClick={() => ajouter(l.cibleId)}
                     >
                       +
@@ -158,9 +158,9 @@ export default function PageRaid() {
                 { label: "Pur + tarte", valeur: gainPur * (OURS.multiplicateurThe ?? 1) },
               ]}
             />
-            <p className="mt-3 text-[13px] text-moss-400">
+            <p className="mt-3 text-[13px] text-feuille-400">
               C&apos;est là que l&apos;agriculture paie : le{" "}
-              <Link href="/tartes" className="text-lamp-glow underline underline-offset-2">
+              <Link href="/tartes" className="text-lampe-chaud underline underline-offset-2">
                 combo thé + tarte
               </Link>{" "}
               enlève des heures de minage sur un gros raid.
@@ -174,13 +174,13 @@ export default function PageRaid() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[14px]">
               <thead>
-                <tr className="border-b border-soil-600">
-                  <th className="pb-2 font-mono text-[11px] uppercase tracking-wider text-moss-400">Cible</th>
-                  <th className="pb-2 font-mono text-[11px] uppercase tracking-wider text-moss-400">PV</th>
+                <tr className="border-b border-white/10">
+                  <th className="pb-2 font-mono text-[11px] uppercase tracking-wider text-feuille-400">Cible</th>
+                  <th className="pb-2 font-mono text-[11px] uppercase tracking-wider text-feuille-400">PV</th>
                   {EXPLOSIFS.map((e) => (
                     <th
                       key={e.id}
-                      className="pb-2 text-right font-mono text-[11px] uppercase tracking-wider text-moss-400"
+                      className="pb-2 text-right font-mono text-[11px] uppercase tracking-wider text-feuille-400"
                     >
                       {e.nom}
                     </th>
@@ -191,9 +191,9 @@ export default function PageRaid() {
                 {CIBLES.map((c) => {
                   const b = moinsCher(c.id);
                   return (
-                    <tr key={c.id} className="border-b border-soil-700">
-                      <td className="py-2 text-moss-100">{c.nom}</td>
-                      <td className="font-mono text-[13px] text-moss-400">{c.pv}</td>
+                    <tr key={c.id} className="border-b border-white/[0.07]">
+                      <td className="py-2 text-feuille-100">{c.nom}</td>
+                      <td className="font-mono text-[13px] text-feuille-400">{c.pv}</td>
                       {EXPLOSIFS.map((e) => {
                         const nb = c.couts[e.id];
                         return (
@@ -201,10 +201,10 @@ export default function PageRaid() {
                             key={e.id}
                             className={`text-right font-mono text-[13px] ${
                               b?.id === e.id
-                                ? "font-bold text-lamp-glow"
+                                ? "font-bold text-lampe-chaud"
                                 : nb
-                                  ? "text-moss-200"
-                                  : "text-moss-400 opacity-30"
+                                  ? "text-feuille-200"
+                                  : "text-feuille-400 opacity-30"
                             }`}
                           >
                             {nb ?? "—"}
@@ -217,7 +217,7 @@ export default function PageRaid() {
               </tbody>
             </table>
           </div>
-          <p className="mt-3 text-[13px] text-moss-400">
+          <p className="mt-3 text-[13px] text-feuille-400">
             En surbrillance : l&apos;option la moins chère en soufre. Les balles explosives sont souvent les
             moins chères sur le papier, mais il faut une arme à tir soutenu pour en placer cinquante sans temps
             de recharge.

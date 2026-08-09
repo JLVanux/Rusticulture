@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
+import { IconePlante } from "@/components/IconePlante";
+import { IconeRessource } from "@/components/IconeRessource";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
 import { PLANTES, type Genome, type PlanteId } from "@/data/game";
 import { decrireActivite, ilYA, useActivites } from "@/lib/activites";
@@ -91,8 +93,8 @@ export default function PageTableauDeBord() {
     return (
       <Page>
         <EnTetePage titre="Ma ferme" />
-        <div className="rounded-lg border border-soil-600 bg-soil-850 p-6 text-center">
-          <p className="text-[15px] text-moss-200">
+        <div className="verre rampe p-6 text-center">
+          <p className="text-[15px] text-feuille-200">
             {connecte
               ? "Crée ou rejoins une ferme pour suivre ta production."
               : "Connecte-toi pour suivre ta ferme et la partager avec ton équipe."}
@@ -100,7 +102,7 @@ export default function PageTableauDeBord() {
           <Link href={connecte ? "/equipe" : "/connexion"} className="bouton bouton-primaire mt-4 inline-flex">
             {connecte ? "Créer une ferme" : "Se connecter"}
           </Link>
-          <p className="mt-3 text-[13px] text-moss-400">
+          <p className="mt-3 text-[13px] text-feuille-400">
             Les calculateurs restent utilisables sans compte.
           </p>
         </div>
@@ -112,17 +114,17 @@ export default function PageTableauDeBord() {
     <Page large>
       <EnTetePage titre={ferme?.nom ?? "Ma ferme"} />
 
-      <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[13px] text-moss-400">
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[13px] text-feuille-400">
         {wipe && (
           <span>
             {wipe.nom}
             {wipe.serveur && ` · ${wipe.serveur}`} · jour {jour}
           </span>
         )}
-        <Link href="/wipes" className="text-lamp-glow hover:underline">
+        <Link href="/wipes" className="text-lampe-chaud hover:underline">
           Wipes →
         </Link>
-        <Link href="/equipe" className="text-lamp-glow hover:underline">
+        <Link href="/equipe" className="text-lampe-chaud hover:underline">
           Équipe →
         </Link>
       </div>
@@ -142,28 +144,31 @@ export default function PageTableauDeBord() {
       {/* Production estimée */}
       <section>
         <h2 className="titre text-2xl">Production estimée</h2>
-        <p className="mt-1 text-[14px] leading-relaxed text-moss-400">
+        <p className="mt-1 text-[14px] leading-relaxed text-feuille-400">
           Calculée à partir de ta configuration et du modèle du site.{" "}
-          <span className="text-moss-200">Ce n&apos;est pas une production constatée</span> — pour ça, il
+          <span className="text-feuille-200">Ce n&apos;est pas une production constatée</span> — pour ça, il
           faudra enregistrer tes récoltes.
         </p>
 
         {production.length === 0 ? (
-          <div className="mt-4 rounded-lg border border-dashed border-soil-600 p-8 text-center">
-            <p className="text-moss-200">Aucune plantation déclarée.</p>
-            <p className="mt-1 text-[13px] text-moss-400">
+          <div className="mt-4 rounded-verre border border-dashed border-white/15 p-8 text-center">
+            <p className="text-feuille-200">Aucune plantation déclarée.</p>
+            <p className="mt-1 text-[13px] text-feuille-400">
               Renseigne tes bacs plus bas pour voir ta production.
             </p>
           </div>
         ) : (
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {production.map((l) => (
-              <li key={l.ressource} className="rounded-lg border border-soil-600 bg-soil-850 p-4">
-                <div className="eyebrow">{l.ressource} / heure</div>
-                <div className="font-display text-3xl font-bold text-lamp-glow">
+              <li key={l.ressource} className="verre rampe p-4">
+                <div className="flex items-center gap-2">
+                  <IconeRessource ressource={l.ressource} taille={18} />
+                  <span className="eyebrow">{l.ressource} / heure</span>
+                </div>
+                <div className="font-display text-3xl font-bold text-lampe-chaud">
                   {formatNombre(l.parHeure, 0)}
                 </div>
-                <div className="mt-2 border-t border-soil-700 pt-2 font-mono text-[12px] text-moss-400">
+                <div className="mt-2 border-t border-white/[0.07] pt-2 font-mono text-[12px] text-feuille-400">
                   {formatNombre(l.parCycle, 0)} par cycle de {formatDuree(l.minutesCycle)} · {l.plants} plants
                 </div>
               </li>
@@ -172,7 +177,7 @@ export default function PageTableauDeBord() {
         )}
 
         {production.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2 font-mono text-[13px] text-moss-400">
+          <div className="mt-3 flex flex-wrap gap-x-8 gap-y-2 font-mono text-[13px] text-feuille-400">
             <span>
               {totaux.contenants} contenant{totaux.contenants > 1 ? "s" : ""}
             </span>
@@ -186,11 +191,11 @@ export default function PageTableauDeBord() {
 
       {/* Récolte réelle */}
       {peutRecolter && (
-        <section className="mt-10 rounded-lg border border-soil-600 bg-soil-850 p-5">
+        <section className="mt-10 panneau">
           <h2 className="titre text-xl">Enregistrer une récolte</h2>
-          <p className="mb-4 mt-1 text-[14px] leading-relaxed text-moss-400">
+          <p className="mb-4 mt-1 text-[14px] leading-relaxed text-feuille-400">
             Ce que tu as réellement ramassé. C&apos;est la seule donnée observée du site —{" "}
-            <Link href="/statistiques" className="text-lamp-glow underline underline-offset-2">
+            <Link href="/statistiques" className="text-lampe-chaud underline underline-offset-2">
               tes statistiques
             </Link>{" "}
             en découlent.
@@ -209,22 +214,22 @@ export default function PageTableauDeBord() {
         <h2 className="titre text-2xl">Mes bacs</h2>
 
         {!charge ? (
-          <p className="mt-3 text-[15px] text-moss-400">Chargement…</p>
+          <p className="mt-3 text-[15px] text-feuille-400">Chargement…</p>
         ) : (
           <ul className="mt-4 space-y-1.5">
             {plantations.map((p) => (
               <li
                 key={p.id}
-                className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded border border-soil-600 bg-soil-850 px-3 py-2.5"
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5"
               >
-                <span className="font-display text-[15px] font-semibold uppercase tracking-wide text-moss-100">
+                <span className="font-display text-[15px] font-semibold uppercase tracking-wide text-feuille-100">
                   {CONTENANT_PAR_ID[p.contenant]?.nom}
                 </span>
-                <span className="text-[14px] text-moss-200">
+                <span className="text-[14px] text-feuille-200">
                   {PLANTES.find((x) => x.id === p.plante)?.nom}
                 </span>
                 {p.genome && <ChaineGenes genome={p.genome} taille="sm" />}
-                <span className="font-mono text-[12px] text-moss-400">
+                <span className="font-mono text-[12px] text-feuille-400">
                   {(CONTENANT_PAR_ID[p.contenant]?.plants ?? 1) * p.quantite} plants
                 </span>
 
@@ -233,36 +238,36 @@ export default function PageTableauDeBord() {
                     <button
                       type="button"
                       aria-label="Retirer un contenant"
-                      className="h-7 w-7 rounded border border-soil-500 text-moss-200 hover:border-lamp/50"
+                      className="h-7 w-7 rounded border border-nuit-500 text-feuille-200 hover:border-lampe/50"
                       onClick={() => void modifierQuantite(p.id, p.quantite - 1)}
                       disabled={p.quantite <= 1}
                     >
                       −
                     </button>
-                    <span className="w-8 text-center font-mono text-sm text-moss-100">×{p.quantite}</span>
+                    <span className="w-8 text-center font-mono text-sm text-feuille-100">×{p.quantite}</span>
                     <button
                       type="button"
                       aria-label="Ajouter un contenant"
-                      className="h-7 w-7 rounded border border-soil-500 text-moss-200 hover:border-lamp/50"
+                      className="h-7 w-7 rounded border border-nuit-500 text-feuille-200 hover:border-lampe/50"
                       onClick={() => void modifierQuantite(p.id, p.quantite + 1)}
                     >
                       +
                     </button>
                     <button
                       type="button"
-                      className="ml-2 font-mono text-[11px] uppercase tracking-wider text-moss-400 hover:text-gene-w"
+                      className="ml-2 font-mono text-[11px] uppercase tracking-wider text-feuille-400 hover:text-gene-w"
                       onClick={() => void supprimer(p.id)}
                     >
                       Retirer
                     </button>
                   </div>
                 ) : (
-                  <span className="ml-auto font-mono text-[13px] text-moss-400">×{p.quantite}</span>
+                  <span className="ml-auto font-mono text-[13px] text-feuille-400">×{p.quantite}</span>
                 )}
               </li>
             ))}
             {plantations.length === 0 && (
-              <li className="rounded border border-dashed border-soil-600 p-6 text-center text-[14px] text-moss-400">
+              <li className="rounded border border-dashed border-white/10 p-6 text-center text-[14px] text-feuille-400">
                 Rien de déclaré pour l&apos;instant.
               </li>
             )}
@@ -280,13 +285,17 @@ export default function PageTableauDeBord() {
                     options={CONTENANTS.map((c) => ({ label: c.nom, valeur: c.id }))}
                   />
                 </Champ>
-                <p className="text-[13px] text-moss-400">{CONTENANT_PAR_ID[contenant]?.note}</p>
+                <p className="text-[13px] text-feuille-400">{CONTENANT_PAR_ID[contenant]?.note}</p>
 
                 <Champ label="Plante">
                   <Choix
                     valeur={plante}
                     onChange={setPlante}
-                    options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))}
+                    options={PLANTES.map((p) => ({
+              label: p.nom,
+              valeur: p.id,
+              icone: <IconePlante plante={p.id} taille={16} />,
+            }))}
                   />
                 </Champ>
 
@@ -334,10 +343,10 @@ export default function PageTableauDeBord() {
             {activites.map((a) => (
               <li
                 key={a.id}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-soil-700 py-2 last:border-0"
+                className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-white/[0.07] py-2 last:border-0"
               >
-                <span className="text-[14px] text-moss-200">{decrireActivite(a)}</span>
-                <span className="font-mono text-[12px] text-moss-400">{ilYA(a.cree_le)}</span>
+                <span className="text-[14px] text-feuille-200">{decrireActivite(a)}</span>
+                <span className="font-mono text-[12px] text-feuille-400">{ilYA(a.cree_le)}</span>
               </li>
             ))}
           </ul>
@@ -346,18 +355,18 @@ export default function PageTableauDeBord() {
 
       <div className="mt-10">
         <Details titre="Estimé, pas constaté">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Ces chiffres sortent du modèle du site appliqué à ce que tu as déclaré : ils supposent que tout
             pousse en conditions idéales et que tu replantes dès la récolte. La réalité sera plus basse.
           </p>
-          <p className="mt-3 text-[14px] leading-relaxed text-moss-200">
+          <p className="mt-3 text-[14px] leading-relaxed text-feuille-200">
             Tant que tu n&apos;enregistres pas tes récoltes réelles, rien ici ne permet de savoir de combien.
             C&apos;est la prochaine étape, et c&apos;est elle qui donnera un sens aux statistiques.
           </p>
         </Details>
 
         <Details titre="Pourquoi le croisement ne concerne que le grand bac">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Le croisement dépend du nombre de voisines qu&apos;un plant touche. Seul le grand bac a la grille
             3×3 qui produit les probabilités calculées par le site. Les bacs triangulaires et les pots comptent
             ici, pour la production, mais pas dans les outils de génétique.

@@ -11,7 +11,7 @@ export default function PageConfidentialite() {
         intro="Ce que le site conserve, pourquoi, et comment tout effacer."
       />
 
-      <section className="space-y-5 text-[15px] leading-relaxed text-moss-200">
+      <section className="space-y-5 text-[15px] leading-relaxed text-feuille-200">
         <p>
           RustiCulture est un outil gratuit et sans publicité pour les joueurs francophones de Rust. Il ne
           revend rien, ne suit personne à travers le web, et ne dépose aucun cookie publicitaire.
@@ -33,7 +33,7 @@ export default function PageConfidentialite() {
         <div>
           <h2 className="titre mb-2 text-xl">Avec un compte</h2>
           <p>Créer un compte enregistre :</p>
-          <ul className="mt-2 space-y-1.5 pl-5 text-moss-200">
+          <ul className="mt-2 space-y-1.5 pl-5 text-feuille-200">
             <li className="list-disc">ton pseudo, et l&apos;identifiant technique qui en est dérivé ;</li>
             <li className="list-disc">une empreinte de ton mot de passe, jamais le mot de passe lui-même ;</li>
             <li className="list-disc">
@@ -60,7 +60,7 @@ export default function PageConfidentialite() {
           <h2 className="titre mb-2 text-xl">Effacer</h2>
           <p>
             Tu peux supprimer ton compte à tout moment depuis{" "}
-            <Link href="/connexion" className="text-lamp-glow underline underline-offset-2">
+            <Link href="/connexion" className="text-lampe-chaud underline underline-offset-2">
               Mon compte
             </Link>
             . La suppression est immédiate et définitive : rien n&apos;est conservé, pas d&apos;archive, pas de
@@ -75,7 +75,7 @@ export default function PageConfidentialite() {
 
       <div className="mt-10">
         <Details titre="Les données locales">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Ce qui est stocké dans ton navigateur ne peut être effacé que depuis ton navigateur. Les boutons
             « Tout supprimer » de la page Mes graines et de la page Réglages le font proprement ; vider les
             données de site depuis les préférences du navigateur fonctionne aussi.
@@ -83,7 +83,7 @@ export default function PageConfidentialite() {
         </Details>
 
         <Details titre="Contact">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             Pour toute question sur tes données, passe par le dépôt du projet sur GitHub.
           </p>
         </Details>

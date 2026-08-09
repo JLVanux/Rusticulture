@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
+import { IconePlante } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Page, Reponse } from "@/components/Ui";
 import { AlerteConditions, ReglageConditions } from "@/components/Conditions";
 import { PLANTES, PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
@@ -59,12 +60,16 @@ export default function PageRendement() {
 
       <AlerteConditions />
 
-      <div className="space-y-5 rounded-lg border border-soil-600 bg-soil-850 p-5">
+      <div className="space-y-5 panneau">
         <Champ label="Gènes">
           <EditeurGenes genome={genome} onChange={setGenome} taille="md" />
         </Champ>
         <Champ label="Plante">
-          <Choix valeur={plante} onChange={setPlante} options={PLANTES.map((p) => ({ label: p.nom, valeur: p.id }))} />
+          <Choix valeur={plante} onChange={setPlante} options={PLANTES.map((p) => ({
+              label: p.nom,
+              valeur: p.id,
+              icone: <IconePlante plante={p.id} taille={16} />,
+            }))} />
         </Champ>
         <div className="w-32">
           <Champ label="Grands bacs">
@@ -95,7 +100,7 @@ export default function PageRendement() {
 
       <section className="mt-8">
         <h2 className="titre mb-1 text-xl">Le cycle</h2>
-        <p className="mb-4 text-[14px] text-moss-400">
+        <p className="mb-4 text-[14px] text-feuille-400">
           Instants comptés depuis la plantation. Les deux derniers stades viennent après la récolte idéale.
         </p>
         <ul className="space-y-1.5">
@@ -108,33 +113,33 @@ export default function PageRendement() {
                 key={s.id}
                 className={`rounded border px-3 py-2.5 ${
                   cle
-                    ? "border-lamp/50 bg-lamp/8"
+                    ? "border-lampe/50 bg-lampe/8"
                     : mur
-                      ? "border-ripe/50 bg-ripe/8"
+                      ? "border-mur/50 bg-mur/8"
                       : mourant
                         ? "border-gene-w/40 bg-gene-w/5"
-                        : "border-soil-600 bg-soil-850"
+                        : "border-white/10 bg-nuit-800"
                 }`}
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span
                     className={`font-display text-[15px] font-semibold uppercase tracking-wide ${
-                      cle ? "text-lamp-glow" : mur ? "text-ripe" : mourant ? "text-gene-w" : "text-moss-200"
+                      cle ? "text-lampe-chaud" : mur ? "text-mur" : mourant ? "text-gene-w" : "text-feuille-200"
                     }`}
                   >
                     {s.nom}
                   </span>
-                  <span className="font-mono text-[13px] text-moss-400">
+                  <span className="font-mono text-[13px] text-feuille-400">
                     {s.debut < 0.5 ? "dès la plantation" : `à partir de ${formatDuree(s.debut)}`} · dure{" "}
                     {formatDuree(s.minutes)}
                   </span>
                 </div>
-                <p className="mt-1 text-[13px] leading-snug text-moss-400">{s.note}</p>
+                <p className="mt-1 text-[13px] leading-snug text-feuille-400">{s.note}</p>
               </li>
             );
           })}
         </ul>
-        <p className="mt-3 text-[13px] leading-relaxed text-moss-400">
+        <p className="mt-3 text-[13px] leading-relaxed text-feuille-400">
           Les noms des sept stades sont ceux du jeu, confirmés par plusieurs sources. Leurs durées relatives,
           elles, sont estimées à partir d&apos;une seule série de mesures publiée — prends-les comme un ordre
           de grandeur.
@@ -147,22 +152,22 @@ export default function PageRendement() {
             {comparatif.map((c) => (
               <li key={c.code} className="flex flex-wrap items-center gap-3">
                 <ChaineGenes genome={c.genome} taille="sm" />
-                <span className="w-20 font-mono text-[12px] text-moss-400">{formatDuree(c.minutes)}</span>
+                <span className="w-20 font-mono text-[12px] text-feuille-400">{formatDuree(c.minutes)}</span>
                 <div className="min-w-[80px] flex-1">
-                  <div className="h-2 w-full overflow-hidden rounded-sm bg-soil-700">
+                  <div className="h-2 w-full overflow-hidden rounded-sm bg-nuit-600">
                     <span
-                      className="block h-full bg-lamp"
+                      className="block h-full bg-lampe"
                       style={{ width: `${Math.max(2, (c.parHeure / meilleur) * 100)}%` }}
                     />
                   </div>
                 </div>
-                <span className="w-24 text-right font-mono text-[13px] text-moss-100">
+                <span className="w-24 text-right font-mono text-[13px] text-feuille-100">
                   {formatNombre(c.parHeure, 0)} /h
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[13px] text-moss-400">
+          <p className="mt-3 text-[13px] text-feuille-400">
             Débit sur {nbBacs} bac{nbBacs > 1 ? "s" : ""}. Si tu joues peu, préfère le rendement : tes plants
             t&apos;attendront de toute façon.
           </p>
@@ -183,17 +188,17 @@ export default function PageRendement() {
               { label: "Pur", valeur: THE_RECOLTE?.gain?.[2] ?? 0.9 },
             ]}
           />
-          <p className="mt-3 text-[13px] text-moss-400">
+          <p className="mt-3 text-[13px] text-feuille-400">
             À boire juste avant de tout ramasser. Les valeurs Avancé et Pur ne sont confirmées que par une seule
             source — à vérifier en jeu.
           </p>
         </Details>
 
         <Details titre="D'où viennent ces chiffres">
-          <p className="text-[14px] leading-relaxed text-moss-200">
+          <p className="text-[14px] leading-relaxed text-feuille-200">
             D&apos;un modèle calé sur deux repères communautaires, pas de valeurs officielles. Chronomètre un
             cycle en jeu et corrige-le dans{" "}
-            <Link href="/reglages" className="text-lamp-glow underline underline-offset-2">
+            <Link href="/reglages" className="text-lampe-chaud underline underline-offset-2">
               Réglages
             </Link>
             .

@@ -72,10 +72,35 @@ Dernière mise à jour : après la suppression de compte et la page de confident
 - Anti-doublon par clé primaire composite dans `notifications_envoyees`, pas par une fenêtre de temps : deux exécutions concurrentes ne peuvent pas envoyer deux fois.
 - Un webhook supprimé côté Discord renvoie 404 : l'intégration est désactivée plutôt que réessayée indéfiniment.
 - Deux messages seulement, les deux qui demandent une action. Le bruit est ce qui fait retirer un bot d'un serveur.
+- **Les messages disent quoi faire, pas ce que le jeu a calculé.** « Les gènes viennent d'être recalculés » est exact mais ne dit rien à qui n'a pas la mécanique en tête ; « Va voir ton chanvre, le croisement est fait » se comprend sans explication.
+- `Plante.genre` porte le genre grammatical : sans lui, la moitié des plantes produisaient « ton citrouille » à chaque message.
 
 ### Badges
 - Tous personnels et dérivés des faits : aucun ne dépend des autres joueurs. « Top 10 » viendra avec le classement.
 - Volontairement peu nombreux et lents. Un badge par geste ne récompense rien.
+
+### Charte graphique — voir CHARTE.md
+Les trois tentatives précédentes changeaient les couleurs sans changer le **langage** : fond sombre, verre dépoli, halo, coins arrondis, capitales condensées. C'est la signature de toute interface produite sans intention, et elle survit à n'importe quel changement de palette.
+
+La charte part donc d'une source précise : **l'inventaire de Rust**. Des cases carrées, des bordures d'un pixel, des surfaces plates, un orange qui ne sert qu'à signaler. Un joueur reconnaît ce langage avant de lire un mot.
+
+`CHARTE.md` liste les jetons et surtout **les interdits**, avec leur raison : pas de `backdrop-filter`, pas de halo, pas de taches floues en fond, pas de texte en dégradé, rayon maximum 4 px, pas de capitales condensées en dehors des étiquettes, pas d'émoji dans l'interface, pas d'ombre portée douce.
+
+- **La case** est l'atome : lettre de gène, icône, emplacement de bac, statistique. C'est elle qui donne son unité au site, sans effet.
+- **Les sections s'annoncent par une étiquette et un filet**, comme sur un plan technique, pas par des cartes flottantes. La structure vient des traits ; la profondeur n'existe pas.
+- **Archivo** remplace Barlow Condensed. Titres en 800, casse normale — les capitales condensées partout étaient le cliché du « site de jeu ».
+- **JetBrains Mono pour tous les chiffres.** C'est un outil de lecture de chiffres.
+- Les anciens noms de jetons sont conservés comme alias : les réécrire dans vingt et une pages n'aurait rien changé au rendu et aurait multiplié les risques.
+
+Mobile d'abord, inchangé : barre sous le pouce avec marge iPhone, cibles de 44 px, champs de 16 px, échelle fluide, rangées défilantes.
+
+### Les trois états d'une culture
+- **`public/icons` est exclu du script de mise à jour.** Ces fichiers ne sont jamais livrés avec l'archive : sans l'exclusion, `rsync --delete` les effaçait à chaque mise à jour, silencieusement.
+- Une culture n'est pas une chose mais une chaîne : **graine → buisson → produit**, chacun avec son nom exact et son icône. C'est la confusion la plus fréquente chez un débutant, d'autant que les noms ne se déduisent pas — la baie bleue donne des « Myrtilles », le chanvre donne du « Tissu ».
+- `Plante.etats` porte les trois noms et les trois noms de fichiers.
+- `IconePlante` lit `public/icons/{Graine,Buisson,Baie}/<fichier>.png`, avec repli sur `.webp` puis sur une pastille colorée. Les images ne sont pas fournies : ressources de Facepunch.
+- `ChaineCulture` affiche la progression complète, à la manière des fiches d'objet de RustHelp.
+- **Les noms de fichiers des quatre cultures alimentaires sont déduits du motif, pas vérifiés** : citrouille, maïs, pomme de terre, blé. À corriger dans `src/data/game.ts` si besoin.
 
 ### Navigation
 - Tiroir mobile donnant accès aux dix-huit pages. Colonne fixe au-dessus de 1024 px.

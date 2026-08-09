@@ -35,6 +35,11 @@ export const COULEURS = {
   fete: 0xe8683f, // braise — un bon moment
 } as const;
 
+/** Une série sans aucun gène rouge : celle qu'on ne veut pas perdre. */
+function sansRouge(genes: string | null | undefined): boolean {
+  return Boolean(genes) && !genes!.toUpperCase().split("").some((l) => l === "W" || l === "X");
+}
+
 /** Le génome en couleurs, dans un bloc ANSI. */
 export function genesColories(genes: string | null | undefined): string | null {
   if (!genes) return null;
@@ -181,16 +186,46 @@ export function carteDeperit(p: InfosPlant): Carte {
   };
 }
 
+/**
+ * Une plantation.
+ *
+ * Ici le titre porte CE QUI EST PLANTÉ, pas l'emplacement — l'inverse des
+ * autres cartes. Quand une alerte demande d'aller quelque part, savoir où est
+ * la première chose utile ; quand elle annonce une plantation, aucune action
+ * n'est attendue et c'est le contenu qui intéresse. Un GGGYYY qui part en terre
+ * n'a pas le même poids qu'une graine sauvage.
+ */
 export function cartePlantation(p: InfosPlant): Carte {
   const a = accords(p.plante);
-  const genes = genesColories(p.genes);
+  const nomPlante = PLANTE_PAR_ID[p.plante]?.nom ?? a.nom;
   return {
-    title: `🌱 ${p.nomBac ?? `${a.maj} ${a.nom}`} — planté`,
-    description: `Inutile de replanter par-dessus.` + (genes ?? ""),
+    title: `🌱 ${nomPlante}${p.genes ? ` ${p.genes}` : ""} — planté`,
+    // Pas de phrase de remplissage : le message dit déjà tout par sa seule
+    // existence. On ne parle que quand on a quelque chose à ajouter — et une
+    // graine sans gène rouge mérite qu'on rappelle les boutures, parce qu'un
+    // croisement raté sans copie en caisse fait repartir de zéro.
+    description:
+      (sansRouge(p.genes)
+        ? "Pense à en garder une bouture en caisse avant qu'elle ne se recroise."
+        : "") + (genesColories(p.genes) ?? ""),
     color: COULEURS.info,
-    fields: champsPlant(p),
+    fields: champsPlantation(p),
     footer: { text: p.auteur ? `Planté par ${p.auteur}` : "Nouvelle plantation" },
   };
+}
+
+/** Les champs d'une plantation : l'emplacement passe devant, la plante étant
+ *  déjà dans le titre. */
+function champsPlantation(p: InfosPlant): Champ[] {
+  const champs: Champ[] = [];
+  if (p.nomBac) champs.push({ name: "Emplacement", value: p.nomBac, inline: true });
+  if (p.avantCroisement !== undefined && p.avantCroisement > 0) {
+    champs.push({ name: "Croisement dans", value: duree(p.avantCroisement), inline: true });
+  }
+  if (p.avantRecolte !== undefined && p.avantRecolte > 0) {
+    champs.push({ name: "Récolte dans", value: duree(p.avantRecolte), inline: true });
+  }
+  return champs;
 }
 
 export function carteRecolte(auteur: string | null, ressource: string, quantite: number): Carte {

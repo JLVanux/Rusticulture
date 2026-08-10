@@ -113,6 +113,59 @@ Les tartes et l'œuf ont aussi leurs icônes, branchées sur `/tartes` et sur le
 - `ChaineCulture` affiche la progression complète, à la manière des fiches d'objet de RustHelp.
 - **Les noms de fichiers des quatre cultures alimentaires sont déduits du motif, pas vérifiés** : citrouille, maïs, pomme de terre, blé. À corriger dans `src/data/game.ts` si besoin.
 
+### Répertoire de bases et administration
+- **Seul YouTube est accepté**, et on ne stocke pas une URL mais l'**identifiant** de la vidéo, contraint à onze caractères par la base. Une URL libre pourrait mener n'importe où et il suffirait d'un lien piégé validé par inadvertance ; un identifiant ne peut désigner qu'une vidéo.
+- **Titre et chaîne remplis automatiquement** via oEmbed, le point d'accès public de YouTube : aucune clé, aucun quota. Il passe par une route serveur parce que YouTube n'autorise pas les requêtes croisées dessus — le navigateur recevrait une erreur sans voir la réponse.
+- **oEmbed ne fournit pas la description.** Elle reste à coller à la main pour que la lecture des quantités fonctionne ; l'obtenir demanderait l'API Data et donc une clé avec quota.
+- La route valide la forme de l'identifiant **avant** d'appeler quoi que ce soit : sans ça, la valeur venue du client se retrouverait telle quelle dans une URL sortante.
+- Le remplissage automatique n'écrase jamais une saisie manuelle.
+- **La miniature ne demande aucune clé d'API** : `img.youtube.com/vi/<id>`. Pas de quota, pas de configuration.
+- **Deux régimes de dépôt** : un administrateur publie directement, tout compte peut proposer et attend validation. La politique d'insertion refuse `publiee = true` à qui n'est pas administrateur — sans ce contrôle, n'importe qui publierait.
+- **La description est lue pour PRÉ-REMPLIR**, jamais pour valider : une lecture automatique se trompe, et ce n'est acceptable que parce qu'un humain corrige derrière. On ne peut pas déduire d'une vidéo combien elle contient de bacs.
+- L'entrée Administration est masquée quand on n'est pas administrateur, mais **ce n'est pas ce qui protège** : la page refuse l'accès et les politiques refusent l'écriture. Cacher un bouton n'a jamais empêché d'appeler l'API.
+- Un administrateur ne peut ni supprimer un compte ni lire les données d'une ferme. Le drapeau donne accès au répertoire et à la liste des comptes, rien de plus.
+- **Un administrateur corrige avant de publier.** Ce qu'un joueur saisit n'est pas forcément exact, et la relecture est le seul moment où quelqu'un vérifie. Les bases déjà publiées se corrigent aussi.
+- Les propositions en attente passent devant tout sur la page d'administration, avec un bandeau quand il y en a : c'est la seule chose de cette page qui demande une action.
+- Le formulaire passe en **modale**, ouverte par un bouton. La modale gère ce qu'on oublie souvent : fermeture par Échap et par le fond, blocage du défilement derrière, focus pris à l'ouverture et rendu à la fermeture, `role="dialog"`. Sur téléphone elle occupe le bas de l'écran — là où arrive le pouce, et où le clavier virtuel ne la recouvre pas.
+- **Coût réel de cette fonctionnalité : la modération.** Un répertoire ouvert sans relecture régulière devient une décharge en quelques jours.
+
+### Profils
+Le compte ne permettait rien : ni changer son mot de passe, ni se présenter autrement que par son identifiant.
+
+- **Changement de mot de passe**, avec vérification de l'ancien. Supabase ne le demande pas ; sans ce contrôle, une session laissée ouverte sur un poste partagé suffirait à verrouiller quelqu'un hors de son compte — et sans e-mail, il n'aurait aucun recours.
+- **Nom affiché** distinct du pseudo, qui reste l'identifiant de connexion et ne change pas.
+- **Avatars choisis dans une liste fermée, pas téléversés.** Accepter un fichier, c'est hériter d'un devoir de modération et du risque qu'on y mette n'importe quoi.
+- **Profil privé par défaut**, page publique `/u/pseudo` sur consentement explicite. La page Confidentialité promet que rien n'est visible de l'extérieur.
+- La page publique ne distingue pas « profil privé » de « pseudo inexistant » : sinon elle devient un moyen de savoir qui est inscrit.
+- Drapeau `administrateur` posé à la main dans la base — personne ne se nomme administrateur soi-même.
+
+### Accueil — point d'entrée plutôt que plaquette
+Refondu autour d'une phrase : le site optimise les cultures **et prévient sur Discord quand la récolte est prête**. Les outils viennent après, ce sont des moyens.
+
+- Hero compact, deux actions : programmer une récolte, créer un génome.
+- Quatre temps — tu plantes, le site calcule, Discord prévient, tu récoltes.
+- « Que veux-tu faire ? » : six cartes **entièrement cliquables**, la récolte occupant deux colonnes. Viser un lien de trois mots dans une carte est pénible au pouce.
+- La partie pédagogique n'est pas supprimée, elle **change de priorité** : on utilise d'abord, on comprend ensuite.
+
+**Trois arbitrages contre le cahier des charges reçu :**
+- Il demandait des émojis ; `CHARTE.md` les interdit. Icônes SVG au trait, dans le style de la navigation.
+- Il faisait promettre les alertes Discord à tout visiteur. **Le webhook appartient à une ferme** : sans compte, il n'y a pas d'alerte. C'est dit sous le hero plutôt que tu par omission.
+- La démonstration animée du moteur n'était pas au plan. Conservée, plus bas : c'est la seule preuve visuelle du site.
+
+### Menu allégé — 17 entrées à 15
+Aucune page n'a disparu ; trois ont changé de statut.
+
+- **Scanner** quitte le menu : il ne sert qu'à remplir la banque, sa place est un bouton en tête de Mes graines, là où son résultat atterrit. Il reste dans la barre du pouce sur mobile, où c'est un geste fréquent.
+- **Wipes** descend dans le groupe d'administration, avec Réglages. On clôture un wipe une fois par serveur : c'est un réglage, pas une consultation quotidienne.
+- **Confidentialité** passe en pied de page. Elle doit rester atteignable de n'importe où, pas occuper une ligne du menu principal.
+
+**Fusion écartée : Statistiques + Wipes.** Les deux répondent à la même question, mais les réunir imposait de réécrire deux pages qui fonctionnent, pour un gain d'une ligne de menu. Le changement de groupe donne le même résultat sans le risque.
+
+### Ergonomie mobile
+- **Seize champs numériques sur dix-sept n'ouvraient pas le clavier numérique** sur téléphone : `type="number"` ne suffit pas, il faut `inputMode="numeric"`. Sans lui, on vise des touches minuscules du clavier alphabétique pour saisir une quantité de récolte.
+- **Validation par Entrée** sur les champs suivis d'une action unique. Au clavier virtuel, atteindre le bouton oblige d'abord à refermer le clavier.
+- Vérifié comme déjà correct : retour visuel après copie du code, cibles de 44 px, champs de 16 px, tableaux qui défilent.
+
 ### Navigation
 - Tiroir mobile donnant accès aux dix-huit pages. Colonne fixe au-dessus de 1024 px.
 
@@ -189,6 +242,20 @@ Personne ne lance le minuteur au moment exact où il plante. Le champ « Planté
 - Marche à suivre complète dans `supabase/PLANIFICATEUR.md`. **Deux extensions à activer à la main** avant la migration : `pg_cron` et `pg_net`.
 - GitHub Actions et son workflow ont été entièrement retirés du projet.
 
+### Troisième audit — compacité
+- **`lib/reveil.ts` supprimé.** Il déclenchait une vérification des notifications à l'ouverture du site pour compenser les dix à trente minutes de retard de GitHub Actions. Avec `pg_cron` toutes les minutes, il coûtait une requête par visite pour gagner moins d'une minute.
+- **`GENOME_VIDE` n'était pas mort, il était ignoré** : la même liste de six `X` était recopiée à la main dans trois fichiers. La constante est maintenant utilisée.
+- Quatre fonctions réellement mortes supprimées, dont `nomRessource` qui renvoyait purement et simplement son propre argument.
+- `IconeRessource` fusionné dans `IconePlante` : même sujet, et trente-six lignes ne justifient pas un fichier.
+- **Aucun autre regroupement.** La plupart des composants n'ont qu'un consommateur, mais c'est voulu : les fusionner ferait du tableau de bord un fichier de neuf cents lignes. Compacter pour compacter irait contre la lisibilité.
+
+### Second audit
+- **La notification « graine sans rouge » n'était jamais envoyée.** Le réglage existait dans l'interface, la carte était écrite, rien ne l'appelait — l'utilisateur cochait une case sans effet. Même classe de défaut que la dérive génétique : une promesse affichée sans implémentation derrière. Branchée via une entrée dédiée du journal.
+- Code mort retiré : `BarreDistribution`, `TOUTES_LES_ETAPES`.
+- Le tableau des chiffres de l'évolution pouvait déborder sur mobile : il défile désormais comme les deux autres.
+- **Tableau de bord réordonné par fréquence d'usage** : parcours et saisie de récolte en haut, configuration des bacs et élevage tout en bas. On règle sa configuration une fois, on consulte le parcours tous les jours — l'ordre inverse imposait un long défilement avant d'atteindre l'utile.
+- Vérifié : aucune page absente du menu, aucune trace de débogage, aucun type `any`, aucun fichier orphelin.
+
 ### Audit — corrections trouvées
 - **La dérive génétique était calculée mais jamais affichée.** L'accueil la présentait pourtant comme l'argument que personne d'autre n'offre : le site promettait une fonctionnalité qu'il n'avait pas. Désormais branchée dans l'assistant, sous le plan, avec le raisonnement par **position** et non par génome — la même graine dans un coin ou sur un bord n'a pas les mêmes voisines, donc pas le même risque.
 - `analyserBac` était importé dans `/bac` sans jamais être appelé.
@@ -228,6 +295,12 @@ Personne ne lance le minuteur au moment exact où il plante. Le champ « Planté
 
 ## Pièges rencontrés, à ne pas refaire
 
+- **`create policy` n'a pas de variante « si absent ».** `create table` accepte `if not exists`, `create function` accepte `or replace` — mais une politique, non. Rejouer une migration échoue donc sur la première politique déjà présente, avec `ERROR: 42710: policy "..." already exists`.
+
+  Et comme le SQL Editor exécute tout dans une transaction, **cet échec annule aussi tout ce qui précédait** : on croit avoir passé la migration, les colonnes n'existent pas, et le défaut ne se manifeste que bien plus tard à l'usage. C'est exactement ce qui est arrivé avec les colonnes `notif_*`.
+
+  Règle : **toujours faire précéder un `create policy` d'un `drop policy if exists`**, y compris dans les politiques générées en boucle par `execute format`. Une migration qui ne se rejoue pas est une migration qu'on n'ose pas relancer, donc qu'on ne relance pas quand il le faudrait.
+
 - `min(uuid)` n'existe pas en Postgres. Passer par `min(id::text)::uuid`.
 - `set search_path = public` **exclut le schéma des extensions**. Une fonction `SECURITY DEFINER` n'y trouve pas `gen_random_bytes`. Ne pas élargir le chemin — c'est lui qui protège la fonction — mais supprimer la dépendance.
 - Un `.gitignore` avec `.env*.local` laisse passer `.env`, `.env.development` et `.env.production`.
@@ -239,6 +312,9 @@ Personne ne lance le minuteur au moment exact où il plante. Le champ « Planté
 ---
 
 ## Migrations
+
+**`supabase/schema.sql` réunit tout en un seul fichier.** C'est celui à exécuter : un bloc, une fois, rejouable autant que nécessaire. Les fichiers de `migrations/` restent la référence pour l'historique et les raisons ; `schema.sql` en est la concaténation, régénérée depuis eux et jamais modifiée à la main.
+
 
 À exécuter dans l'ordre, une seule fois chacune.
 

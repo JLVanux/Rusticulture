@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
-import { formatGenome, parseGenome } from "@/lib/crossbreed";
+import { formatGenome, parseGenome, GENOME_VIDE } from "@/lib/crossbreed";
 import { peutEcrire } from "@/lib/compte";
 import { journaliser, useFermeActive } from "@/lib/graines";
 import { calculerCroissance, calculerRendement } from "@/lib/model";
@@ -189,7 +189,7 @@ export function useProductionEstimee(plantations: Plantation[]) {
 
       // Sans gènes renseignés, on suppose une graine brute : c'est le pire cas,
       // donc une estimation basse plutôt que flatteuse.
-      const genome: Genome = p.genome ?? ["X", "X", "X", "X", "X", "X"];
+      const genome: Genome = p.genome ?? GENOME_VIDE;
       const plantsParContenant = CONTENANT_PAR_ID[p.contenant]?.plants ?? 1;
       const plants = plantsParContenant * p.quantite;
 

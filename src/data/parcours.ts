@@ -229,4 +229,3 @@ export const PHASES: Phase[] = [
   },
 ];
 
-export const TOUTES_LES_ETAPES = PHASES.flatMap((p) => p.etapes);

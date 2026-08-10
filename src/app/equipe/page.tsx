@@ -296,6 +296,18 @@ export default function PageFerme() {
                 placeholder="a1b2c3d4"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
+                onKeyDown={(e) => {
+                  // Un champ unique suivi d'un seul bouton : taper Entrée est
+                  // le geste attendu, surtout au clavier virtuel où atteindre
+                  // le bouton demande de refermer le clavier.
+                  if (e.key === "Enter" && code.trim().length >= 4) {
+                    void agir(async () => {
+                      const id = await rejoindreFerme(code);
+                      setFermeActive(id);
+                      setCode("");
+                    });
+                  }
+                }}
               />
             </Champ>
             <button

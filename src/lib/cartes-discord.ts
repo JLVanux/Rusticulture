@@ -265,15 +265,16 @@ export function carteRecolte(auteur: string | null, ressource: string, quantite:
 }
 
 export function carteGraineParfaite(genes: string, planteId: string, auteur: string | null): Carte {
+  const nom = PLANTE_PAR_ID[planteId]?.nom ?? "plant";
+  const recolte = recolteEstimee(planteId, genes);
   return {
-    title: "✨ Nouvelle graine sans aucun gène rouge",
+    title: `✨ ${nom} ${genes} — aucun gène rouge`,
     description:
-      (genesColories(genes) ?? `\`${genes}\``) +
-      `\nPense à en faire des **boutures de secours** avant de la planter : ` +
-      `un croisement raté sans copie en caisse, et tu repars de zéro.`,
+      `Mets-en une bouture en caisse **avant** de la planter : un croisement raté ` +
+      `sans copie de secours, et tu repars de zéro.` + (genesColories(genes) ?? ""),
     color: COULEURS.fete,
     fields: [
-      { name: "Plante", value: PLANTE_PAR_ID[planteId]?.nom ?? "—", inline: true },
+      ...(recolte ? [{ name: "Vaut par bac", value: recolte, inline: true }] : []),
       ...(auteur ? [{ name: "Obtenue par", value: auteur, inline: true }] : []),
     ],
   };

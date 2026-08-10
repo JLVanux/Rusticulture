@@ -343,3 +343,54 @@ export async function supprimerMonCompte() {
   if (error) throw error;
   await sb.auth.signOut();
 }
+
+/**
+ * Change le mot de passe.
+ *
+ * Il n'existait aucun moyen de le faire : le compte ne permettait que sa propre
+ * suppression. Sans adresse e-mail il n'y a pas de récupération possible, ce
+ * qui rend ce changement d'autant plus nécessaire — c'est la seule reprise en
+ * main dont dispose quelqu'un dont le mot de passe a fuité.
+ */
+export async function changerMotDePasse(ancien: string, nouveau: string) {
+  const sb = supabase();
+  if (!sb) throw new Error("base de données non configurée");
+  if (nouveau.length < 8) throw new Error("Le mot de passe doit faire au moins 8 caractères.");
+
+  const { data } = await sb.auth.getUser();
+  const email = data.user?.email;
+  if (!email) throw new Error("connexion requise");
+
+  // Supabase ne redemande pas l'ancien mot de passe : on le vérifie nous-mêmes,
+  // sinon une session laissée ouverte suffirait à verrouiller quelqu'un dehors.
+  const { error: verif } = await sb.auth.signInWithPassword({ email, password: ancien });
+  if (verif) throw new Error("Ancien mot de passe incorrect.");
+
+  const { error } = await sb.auth.updateUser({ password: nouveau });
+  if (error) throw error;
+}
+
+export interface Profil2 {
+  nomAffiche: string | null;
+  bio: string | null;
+  avatar: string | null;
+  public: boolean;
+  administrateur: boolean;
+}
+
+export async function modifierProfil(champs: {
+  nomAffiche?: string;
+  bio?: string;
+  avatar?: string;
+  public?: boolean;
+}) {
+  const sb = supabase();
+  if (!sb) throw new Error("base de données non configurée");
+  const { error } = await sb.rpc("modifier_profil", {
+    p_nom_affiche: champs.nomAffiche ?? null,
+    p_bio: champs.bio ?? null,
+    p_avatar: champs.avatar ?? null,
+    p_public: champs.public ?? null,
+  });
+  if (error) throw error;
+}

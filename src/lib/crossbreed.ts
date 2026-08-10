@@ -53,14 +53,6 @@ export function probabiliteCible(centre: Genome, voisins: Genome[], cible: Genom
   return dists.reduce((acc, d, i) => acc * (d[cible[i]] ?? 0), 1);
 }
 
-/** Probabilité que chaque case tombe sur un gène « vert » (G, Y ou H). */
-export function probabiliteSansRouge(centre: Genome, voisins: Genome[]): number {
-  const dists = resoudrePlant(centre, voisins);
-  return dists.reduce(
-    (acc, d) => acc * (1 - (d.W ?? 0) - (d.X ?? 0)),
-    1
-  );
-}
 
 /** Score d'une série de gènes : somme des scores de chaque case. Sert à trier une banque de graines. */
 const SCORES: Record<GeneLetter, number> = { G: 3, Y: 2.5, H: 0.5, W: -1, X: 0 };
@@ -159,50 +151,6 @@ export interface ResultatCase {
 
 const DERIVE_NULLE: Derive = { probaPerte: 0, probaGain: 0, esperance: 0 };
 
-export function analyserBac(grille: (Genome | null)[], cible: Genome | null): ResultatCase[] {
-  return grille.map((genome, index) => {
-    if (!genome) {
-      return {
-        index,
-        genome: null,
-        distributions: [],
-        probaCible: 0,
-        probaSansRouge: 0,
-        genomeAttendu: null,
-        derive: DERIVE_NULLE,
-        nbVoisins: 0,
-      };
-    }
-    const voisins = voisinsGrille(index)
-      .map((i) => grille[i])
-      .filter((g): g is Genome => g !== null);
-
-    const distributions = resoudrePlant(genome, voisins);
-    const genomeAttendu = distributions.map((d) => {
-      let best: GeneLetter = "X";
-      let bv = -1;
-      for (const l of GENE_LETTERS) {
-        const v = d[l] ?? 0;
-        if (v > bv) {
-          bv = v;
-          best = l;
-        }
-      }
-      return best;
-    }) as Genome;
-
-    return {
-      index,
-      genome,
-      distributions,
-      probaCible: cible ? distributions.reduce((a, d, i) => a * (d[cible[i]] ?? 0), 1) : 0,
-      probaSansRouge: distributions.reduce((a, d) => a * (1 - (d.W ?? 0) - (d.X ?? 0)), 1),
-      genomeAttendu,
-      derive: calculerDerive(genome, voisins),
-      nbVoisins: voisins.length,
-    };
-  });
-}
 
 // -----------------------------------------------------------------------------
 // Optimiseur : quelle disposition mettre dans le bac ?
@@ -540,9 +488,6 @@ export function plansProgres(banque: EntreeBanque[], cible: Genome): PlanProgres
   return plans.sort((a, b) => b.casesApres - a.casesApres);
 }
 
-export function optimiserProgres(banque: EntreeBanque[], cible: Genome): PlanProgres | null {
-  return plansProgres(banque, cible)[0] ?? null;
-}
 
 
 // -----------------------------------------------------------------------------

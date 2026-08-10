@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Champ, Note } from "@/components/Ui";
-import { IconeRessource } from "@/components/IconeRessource";
+import { IconeRessource } from "@/components/IconePlante";
 import type { LigneProduction } from "@/lib/plantations";
 import { evaluerPlausibilite, RESSOURCES, type Recolte } from "@/lib/recoltes";
 
@@ -60,8 +60,8 @@ export function EnregistrerRecolte({
           <Champ label="Quantité">
             <input
               type="number"
-              min={1}
               inputMode="numeric"
+              min={1}
               className="champ"
               placeholder="1842"
               value={quantite}

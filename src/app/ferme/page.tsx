@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlerteConditions } from "@/components/Conditions";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
 import { IconePlante } from "@/components/IconePlante";
-import { IconeRessource } from "@/components/IconeRessource";
+import { IconeRessource } from "@/components/IconePlante";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
 import { PLANTES, type Genome, type PlanteId } from "@/data/game";
 import { decrireActivite, ilYA, useActivites } from "@/lib/activites";
@@ -19,7 +19,6 @@ import {
   type Contenant,
 } from "@/lib/plantations";
 import { useTimers } from "@/lib/timers";
-import { useReveilNotifications } from "@/lib/reveil";
 import { useRecoltes } from "@/lib/recoltes";
 import { EnregistrerRecolte } from "@/components/EnregistrerRecolte";
 import { SectionObjectifs } from "@/components/Objectifs";
@@ -55,7 +54,6 @@ export default function PageTableauDeBord() {
   const { objectifs } = useObjectifs();
 
   // Un membre qui ouvre sa ferme déclenche l'envoi des notifications en attente.
-  useReveilNotifications();
   const [conditions] = useConditions();
   const [constantes] = useConstantes();
 
@@ -146,6 +144,37 @@ export default function PageTableauDeBord() {
         <Recommandations recommandations={recommandations} />
       </div>
 
+      <SectionParcours
+        contexte={{
+          graines,
+          plantations,
+          recoltes,
+          timers,
+          elevage,
+          jour: jour ?? 1,
+        }}
+      />
+
+      {/* Récolte réelle */}
+      {peutRecolter && (
+        <section className="mt-10 panneau">
+          <h2 className="titre text-xl">Enregistrer une récolte</h2>
+          <p className="mb-4 mt-1 text-[14px] leading-relaxed text-feuille-400">
+            Ce que tu as réellement ramassé. C&apos;est la seule donnée observée du site —{" "}
+            <Link href="/statistiques" className="text-lampe-chaud underline underline-offset-2">
+              tes statistiques
+            </Link>{" "}
+            en découlent.
+          </p>
+          <EnregistrerRecolte
+            recoltes={recoltes}
+            production={production}
+            debutWipe={wipe ? new Date(wipe.debut).getTime() : null}
+            onEnregistrer={enregistrer}
+          />
+        </section>
+      )}
+
       {/* Production estimée */}
       <section>
         <h2 className="titre text-2xl">Production estimée</h2>
@@ -194,25 +223,7 @@ export default function PageTableauDeBord() {
         )}
       </section>
 
-      {/* Récolte réelle */}
-      {peutRecolter && (
-        <section className="mt-10 panneau">
-          <h2 className="titre text-xl">Enregistrer une récolte</h2>
-          <p className="mb-4 mt-1 text-[14px] leading-relaxed text-feuille-400">
-            Ce que tu as réellement ramassé. C&apos;est la seule donnée observée du site —{" "}
-            <Link href="/statistiques" className="text-lampe-chaud underline underline-offset-2">
-              tes statistiques
-            </Link>{" "}
-            en découlent.
-          </p>
-          <EnregistrerRecolte
-            recoltes={recoltes}
-            production={production}
-            debutWipe={wipe ? new Date(wipe.debut).getTime() : null}
-            onEnregistrer={enregistrer}
-          />
-        </section>
-      )}
+      <SectionObjectifs recoltes={recoltes} graines={graines} plantations={plantations} />
 
       {/* Configuration */}
       <section className="mt-10">
@@ -312,6 +323,7 @@ export default function PageTableauDeBord() {
                   <Champ label="Combien">
                     <input
                       type="number"
+                      inputMode="numeric"
                       min={1}
                       className="champ"
                       value={quantite}
@@ -336,20 +348,7 @@ export default function PageTableauDeBord() {
         )}
       </section>
 
-      <SectionParcours
-        contexte={{
-          graines,
-          plantations,
-          recoltes,
-          timers,
-          elevage,
-          jour: jour ?? 1,
-        }}
-      />
-
       <SectionElevage />
-
-      <SectionObjectifs recoltes={recoltes} graines={graines} plantations={plantations} />
 
       {/* Journal */}
       {activites.length > 0 && (

@@ -63,6 +63,30 @@ export default function PageGenetique() {
         intro="Saisis tes graines une fois. Le plan de bac et les calculs de rendement piochent dedans."
       />
 
+      {/* Mis en avant sur ordinateur seulement : le partage d'écran n'existe
+          pas sur téléphone, et Rust tourne sur PC. Proposer un bouton qui ne
+          peut pas fonctionner serait pire que de ne rien proposer. */}
+      <div className="mb-6 hidden items-center gap-4 rounded-sm border border-trait bg-case p-5 lg:flex">
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-[16px] font-bold text-craie">
+            Remplis ta banque sans rien saisir
+          </div>
+          <p className="mt-1 text-[14px] leading-snug text-cendre">
+            Partage la fenêtre de Rust, encadre une fois la zone des gènes, et le site les lit à ta
+            place — y compris quand tu inspectes plusieurs plants d&apos;affilée.
+          </p>
+        </div>
+        <Link href="/scanner" className="bouton bouton-primaire shrink-0">
+          Scanner l&apos;écran
+        </Link>
+      </div>
+
+      {/* Sur téléphone, on l'annonce sans le proposer. */}
+      <p className="mb-6 rounded-sm border-l-2 border-trait-vif py-2 pl-3 text-[13px] leading-relaxed text-poussiere lg:hidden">
+        Depuis un ordinateur, le scanner lit les gènes directement sur l&apos;écran de Rust et remplit
+        cette banque tout seul.
+      </p>
+
       <SourceGrainesBandeau
         source={source}
         nomFerme={ferme?.nom}

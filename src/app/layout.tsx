@@ -36,7 +36,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col lg:flex-row">
           <Nav />
-          <main className="min-w-0 flex-1 px-4 pt-5 pb-[calc(var(--barre-basse)+1.5rem)] sm:px-6 lg:px-10 lg:pb-16 lg:pt-8">{children}</main>
+          <main className="min-w-0 flex-1 px-4 pt-5 pb-[calc(var(--barre-basse)+1.5rem)] sm:px-6 lg:px-10 lg:pb-16 lg:pt-8">
+            {children}
+
+            {/* Confidentialité quitte le menu pour le pied de page : elle doit
+                rester atteignable partout, elle n'a pas à occuper une ligne du
+                menu principal. */}
+            <footer className="mt-16 border-t border-trait pt-5 text-[13px] text-poussiere">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <a href="/confidentialite" className="transition hover:text-cendre">
+                  Confidentialité
+                </a>
+                <a href="/aide" className="transition hover:text-cendre">
+                  Aide
+                </a>
+                <span className="ml-auto">
+                  Non affilié à Facepunch Studios. Rust est une marque de Facepunch Studios Ltd.
+                </span>
+              </div>
+            </footer>
+          </main>
         </div>
         {/* Mesures hébergées par Vercel, sans cookie : aucun bandeau de
             consentement à afficher. Inactives hors production.

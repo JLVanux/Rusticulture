@@ -25,7 +25,7 @@ const MESSAGES = [
  * l'impression du service qui fonctionne. C'est le même geste que dans un vrai
  * salon, et ça ne coûte qu'une opacité.
  */
-export function MessagesDiscord() {
+export function MessagesDiscord({ immediat = false }: { immediat?: boolean } = {}) {
   const cadre = useRef<HTMLDivElement>(null);
   const [affiches, setAffiches] = useState(0);
 
@@ -34,6 +34,13 @@ export function MessagesDiscord() {
     if (sobre || !cadre.current) {
       setAffiches(MESSAGES.length);
       return;
+    }
+
+    // Dans le hero, la section est déjà visible au chargement : attendre une
+    // entrée dans l'écran ne déclencherait jamais rien.
+    if (immediat) {
+      const t = MESSAGES.map((_, i) => setTimeout(() => setAffiches(i + 1), 400 + i * 900));
+      return () => t.forEach(clearTimeout);
     }
 
     const minuteries: ReturnType<typeof setTimeout>[] = [];
@@ -53,7 +60,7 @@ export function MessagesDiscord() {
       observateur.disconnect();
       minuteries.forEach(clearTimeout);
     };
-  }, []);
+  }, [immediat]);
 
   return (
     <div ref={cadre} className="rounded-sm border border-trait bg-case-creuse p-4">

@@ -195,6 +195,7 @@ export default function PageMinuteurs() {
               ))}
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 max={600}
                 aria-label="Minutes écoulées depuis la plantation"

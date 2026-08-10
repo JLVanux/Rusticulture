@@ -57,6 +57,7 @@ export default function PageTartes() {
           <Champ label="Récolte de base par nœud">
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               className="champ"
               value={base}

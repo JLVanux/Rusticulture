@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChaineGenes, EditeurGenes } from "@/components/Genes";
-import { IconeRessource } from "@/components/IconeRessource";
+import { IconeRessource } from "@/components/IconePlante";
 import { Champ, Choix, Details } from "@/components/Ui";
 import type { Genome } from "@/data/game";
 import { parseGenome } from "@/lib/crossbreed";
@@ -187,6 +187,7 @@ export function SectionObjectifs({
                     <Champ label="Objectif">
                       <input
                         type="number"
+                        inputMode="numeric"
                         min={1}
                         className="champ"
                         value={cible}
@@ -212,6 +213,7 @@ export function SectionObjectifs({
                     <Champ label="Combien">
                       <input
                         type="number"
+                        inputMode="numeric"
                         min={1}
                         className="champ"
                         value={cible}

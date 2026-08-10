@@ -253,6 +253,7 @@ alter table objectifs   enable row level security;
 alter table activites   enable row level security;
 
 -- Profils : chacun voit le sien, et ceux des membres de ses fermes.
+drop policy if exists "voir les profils de mes fermes" on profils;
 create policy "voir les profils de mes fermes" on profils for select
   using (
     id = auth.uid()
@@ -263,37 +264,47 @@ create policy "voir les profils de mes fermes" on profils for select
     )
   );
 
+drop policy if exists "modifier mon profil" on profils;
 create policy "modifier mon profil" on profils for update
   using (id = auth.uid()) with check (id = auth.uid());
 
 -- Fermes
+drop policy if exists "voir mes fermes" on fermes;
 create policy "voir mes fermes" on fermes for select
   using (est_membre_ferme(id));
 
+drop policy if exists "creer une ferme" on fermes;
 create policy "creer une ferme" on fermes for insert
   with check (cree_par = auth.uid());
 
+drop policy if exists "le proprietaire modifie la ferme" on fermes;
 create policy "le proprietaire modifie la ferme" on fermes for update
   using (est_proprietaire(id)) with check (est_proprietaire(id));
 
+drop policy if exists "le proprietaire supprime la ferme" on fermes;
 create policy "le proprietaire supprime la ferme" on fermes for delete
   using (est_proprietaire(id));
 
 -- Membres
+drop policy if exists "voir les membres de mes fermes" on membres;
 create policy "voir les membres de mes fermes" on membres for select
   using (est_membre_ferme(ferme_id));
 
+drop policy if exists "le proprietaire gere les membres" on membres;
 create policy "le proprietaire gere les membres" on membres for all
   using (est_proprietaire(ferme_id)) with check (est_proprietaire(ferme_id));
 
 -- Un membre peut toujours quitter une ferme de lui-même.
+drop policy if exists "quitter une ferme" on membres;
 create policy "quitter une ferme" on membres for delete
   using (profil_id = auth.uid());
 
 -- Wipes : lecture par tous les membres, écriture réservée au propriétaire.
+drop policy if exists "voir les wipes" on wipes;
 create policy "voir les wipes" on wipes for select
   using (est_membre_ferme(ferme_id));
 
+drop policy if exists "le proprietaire gere les wipes" on wipes;
 create policy "le proprietaire gere les wipes" on wipes for all
   using (est_proprietaire(ferme_id)) with check (est_proprietaire(ferme_id));
 
@@ -305,16 +316,20 @@ begin
   foreach t in array array['graines', 'plantations', 'timers', 'recoltes', 'objectifs']
   loop
     execute format($f$
+      drop policy if exists "lire %1$s" on %1$s;
       create policy "lire %1$s" on %1$s for select
         using (est_membre_ferme(ferme_du_wipe(wipe_id)));
 
+      drop policy if exists "ecrire %1$s" on %1$s;
       create policy "ecrire %1$s" on %1$s for insert
         with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
 
+      drop policy if exists "modifier %1$s" on %1$s;
       create policy "modifier %1$s" on %1$s for update
         using (peut_ecrire_ferme(ferme_du_wipe(wipe_id)))
         with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
 
+      drop policy if exists "supprimer %1$s" on %1$s;
       create policy "supprimer %1$s" on %1$s for delete
         using (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
     $f$, t);
@@ -323,9 +338,11 @@ end $$;
 
 -- Activités : lecture et ajout seulement. Pas de modification, pas de
 -- suppression — l'historique ne se réécrit pas.
+drop policy if exists "lire les activites" on activites;
 create policy "lire les activites" on activites for select
   using (est_membre_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "ajouter une activite" on activites;
 create policy "ajouter une activite" on activites for insert
   with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)) and acteur = auth.uid());
 

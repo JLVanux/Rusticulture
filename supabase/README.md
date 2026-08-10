@@ -274,3 +274,32 @@ Chaque action notable écrit une ligne dans `activites` : ajout de graines, impo
 Un type inconnu n'est pas traité comme une erreur : une version plus ancienne du site peut lire des activités écrites par une plus récente, et affiche alors une phrase neutre plutôt que rien.
 
 Les échecs d'écriture du journal sont ignorés : un historique manquant ne doit jamais empêcher l'action elle-même.
+
+---
+
+# Rejouer une migration
+
+Toutes les migrations sont **rejouables** : on peut les exécuter deux fois sans erreur.
+
+Ce n'était pas le cas au départ, et ça se paie exactement au mauvais moment. `create table` accepte `if not exists`, `create function` accepte `or replace` — mais **`create policy` n'a aucune variante de ce genre**. Rejouer une migration échouait donc sur la première politique déjà présente, et comme le SQL Editor exécute tout dans une transaction, l'échec annulait aussi les colonnes ajoutées juste avant.
+
+D'où la règle : **toujours faire précéder un `create policy` d'un `drop policy if exists`**, y compris dans les politiques générées en boucle.
+
+Le symptôme : `ERROR: 42710: policy "..." for table "..." already exists`.
+
+---
+
+# Un seul fichier
+
+`supabase/schema.sql` réunit toutes les migrations. C'est celui à coller dans le SQL Editor : un bloc, une exécution.
+
+Il est **rejouable**, donc on peut le repasser après chaque livraison sans se demander lesquelles ont déjà été appliquées — et sans risquer qu'un échec en cours de route laisse la base à moitié à jour.
+
+Les fichiers de `migrations/` sont conservés : ce sont eux qui portent l'historique et la raison de chaque décision. `schema.sql` est **régénéré depuis eux**, jamais modifié à la main.
+
+Certaines étapes se corrigent l'une l'autre — la 0004 remplace une fonction de la 0001. C'est voulu : l'enchaînement converge vers le bon état, alors qu'un schéma réécrit à la main risquerait d'oublier une politique au passage.
+
+## Deux réglages manuels, avant d'exécuter
+
+1. **Authentication → Sign In / Providers → Email** : activer le fournisseur et les inscriptions, **désactiver « Confirm email »**. Sans ça, la création de compte échoue — le site ne demande pas d'adresse.
+2. **Database → Extensions** : activer `pg_cron` et `pg_net`. Sans elles, le planificateur échoue et les notifications ne partent jamais.

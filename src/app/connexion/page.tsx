@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Champ, Choix, Details, EnTetePage, Note, Page } from "@/components/Ui";
-import { supprimerMonCompte, useSession } from "@/lib/compte";
+import { changerMotDePasse, supprimerMonCompte, useSession } from "@/lib/compte";
+import { ProfilPublic } from "@/components/ProfilPublic";
 import { adresseDerivee, pseudoValable } from "@/lib/pseudo";
 import { messageErreur, supabase, supabaseConfigure } from "@/lib/supabase";
 
@@ -17,6 +18,9 @@ export default function PageCompte() {
   const [pseudo, setPseudo] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [occupe, setOccupe] = useState(false);
+  const [ancienMdp, setAncienMdp] = useState("");
+  const [nouveauMdp, setNouveauMdp] = useState("");
+  const [messageMdp, setMessageMdp] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
   async function valider() {
@@ -92,6 +96,67 @@ export default function PageCompte() {
         </div>
 
         <div className="mt-10">
+          <ProfilPublic />
+
+          <Details titre="Changer mon mot de passe">
+            <p className="text-[14px] leading-relaxed text-cendre">
+              Aucune adresse e-mail n&apos;étant demandée, il n&apos;existe pas de récupération : ce
+              changement est la seule reprise en main possible si ton mot de passe a fuité.
+            </p>
+            <div className="mt-4 space-y-3">
+              <Champ label="Mot de passe actuel">
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  className="champ"
+                  value={ancienMdp}
+                  onChange={(e) => setAncienMdp(e.target.value)}
+                />
+              </Champ>
+              <Champ label="Nouveau mot de passe" aide="Huit caractères au minimum.">
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  className="champ"
+                  value={nouveauMdp}
+                  onChange={(e) => setNouveauMdp(e.target.value)}
+                />
+              </Champ>
+              <button
+                type="button"
+                className="bouton bouton-primaire"
+                disabled={occupe || ancienMdp.length < 1 || nouveauMdp.length < 8}
+                onClick={async () => {
+                  setOccupe(true);
+                  setErreur(null);
+                  try {
+                    await changerMotDePasse(ancienMdp, nouveauMdp);
+                    setAncienMdp("");
+                    setNouveauMdp("");
+                    setMessageMdp("Mot de passe changé.");
+                  } catch (e) {
+                    setErreur(messageErreur(e));
+                  } finally {
+                    setOccupe(false);
+                  }
+                }}
+              >
+                Changer
+              </button>
+              {messageMdp && (
+                <p className="font-mono text-[13px] text-gene-g">{messageMdp}</p>
+              )}
+            </div>
+          </Details>
+
+          <Details titre="Changer de pseudo">
+            <p className="text-[14px] leading-relaxed text-feuille-200">
+              Ce n&apos;est pas possible : le pseudo est ton identifiant de connexion. Le modifier
+              t&apos;empêcherait de te reconnecter. Si tu tiens à en changer, crée un nouveau compte et
+              rejoins la ferme avec le code d&apos;invitation.
+            </p>
+          </Details>
+
           <Details titre="Supprimer mon compte">
             <p className="text-[14px] leading-relaxed text-feuille-200">
               La suppression est immédiate et définitive : ton compte, tes appartenances et tout ce qui te
@@ -122,13 +187,6 @@ export default function PageCompte() {
             </button>
           </Details>
 
-          <Details titre="Changer de pseudo">
-            <p className="text-[14px] leading-relaxed text-feuille-200">
-              Ce n&apos;est pas possible : le pseudo est ton identifiant de connexion. Le modifier
-              t&apos;empêcherait de te reconnecter. Si tu tiens à en changer, crée un nouveau compte et
-              rejoins la ferme avec le code d&apos;invitation.
-            </p>
-          </Details>
         </div>
       </Page>
     );

@@ -7,7 +7,7 @@ import { formatNombre } from "@/lib/model";
 import { usePlantations, useProductionEstimee } from "@/lib/plantations";
 import { useRecoltes, useStatistiques } from "@/lib/recoltes";
 import { ilYA } from "@/lib/activites";
-import { IconeRessource } from "@/components/IconeRessource";
+import { IconeRessource } from "@/components/IconePlante";
 import { EvolutionRecoltes } from "@/components/Evolution";
 import { SectionBadges } from "@/components/Badges";
 import { useGraines } from "@/lib/graines";

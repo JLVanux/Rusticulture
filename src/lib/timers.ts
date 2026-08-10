@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Genome, PlanteId } from "@/data/game";
-import { parseGenome, formatGenome } from "@/lib/crossbreed";
+import { parseGenome, formatGenome, GENOME_VIDE } from "@/lib/crossbreed";
 import { useMinuteurs, type Minuteur } from "@/lib/hooks";
 import { peutEcrire } from "@/lib/compte";
 import { journaliser, useFermeActive } from "@/lib/graines";
@@ -140,7 +140,7 @@ export function useTimers() {
           id: idUnique(),
           nom: t.nom,
           plante: t.plante,
-          genome: t.genome ?? ["X", "X", "X", "X", "X", "X"],
+          genome: t.genome ?? GENOME_VIDE,
           debut: t.debut,
           minutesCroisement: t.minutesCroisement,
           minutesMur: t.minutesMur,

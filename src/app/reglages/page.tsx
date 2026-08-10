@@ -168,6 +168,7 @@ export default function PageReglages() {
             <Champ label="Mesuré (minutes)">
               <input
                 type="number"
+                inputMode="numeric"
                 min={1}
                 className="champ"
                 value={calMinutes}
@@ -222,6 +223,7 @@ export default function PageReglages() {
             <Champ label={`Récolté (${PLANTE_PAR_ID[renPlante].ressource})`}>
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 step="0.5"
                 className="champ"

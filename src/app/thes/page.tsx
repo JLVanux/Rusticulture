@@ -201,6 +201,7 @@ export default function PageThes() {
               <Champ label="Bacs par couleur">
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   className="champ"
                   value={bacsParCouleur}
@@ -226,6 +227,7 @@ export default function PageThes() {
                 </span>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={0}
                   className="champ"
                   value={stock[b.id]}

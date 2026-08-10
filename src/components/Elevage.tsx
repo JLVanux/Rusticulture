@@ -77,6 +77,7 @@ export function SectionElevage() {
                     <Champ label="Poulaillers">
                       <input
                         type="number"
+                        inputMode="numeric"
                         min={0}
                         className="champ"
                         value={brouillon.poulaillers}
@@ -90,6 +91,7 @@ export function SectionElevage() {
                     <Champ label="Poules / coop">
                       <input
                         type="number"
+                        inputMode="numeric"
                         min={1}
                         max={POULES_MAX}
                         className="champ"

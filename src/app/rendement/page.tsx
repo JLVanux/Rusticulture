@@ -76,6 +76,7 @@ export default function PageRendement() {
           <Champ label="Grands bacs">
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               max={64}
               className="champ"

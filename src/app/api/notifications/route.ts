@@ -8,6 +8,7 @@ import {
   cartePointQuotidien,
   carteMembreArrive,
   carteMembreParti,
+  carteGraineParfaite,
   carteMur,
   corpsWebhook,
   COULEURS,
@@ -49,6 +50,7 @@ interface Preferences {
   notif_plantation: boolean;
   notif_membre: boolean;
   notif_membre_parti: boolean;
+  notif_graine_parfaite: boolean;
   notif_recolte_saisie: boolean;
   notif_point_quotidien: boolean;
   notif_deperit: boolean;
@@ -101,7 +103,7 @@ export async function GET(requete: Request) {
   let requetePrefs = sb
     .from("integrations")
     .select(
-      "ferme_id, webhook_discord, notif_croisement, notif_recolte, notif_deperit, notif_plantation, notif_recolte_saisie, notif_membre, notif_membre_parti, notif_point_quotidien, heure_point"
+      "ferme_id, webhook_discord, notif_croisement, notif_recolte, notif_deperit, notif_plantation, notif_recolte_saisie, notif_membre, notif_membre_parti, notif_graine_parfaite, notif_point_quotidien, heure_point"
     )
     .eq("actif", true)
     .not("webhook_discord", "is", null);
@@ -236,9 +238,10 @@ async function rassembler(
   // Ces événements se produisent dans le site, pas dans le temps. On les lit
   // depuis `activites` plutôt que de les envoyer depuis le navigateur : le
   // webhook est un secret, il ne doit jamais y descendre.
-  if (p.notif_recolte_saisie || p.notif_membre || p.notif_membre_parti) {
+  if (p.notif_recolte_saisie || p.notif_membre || p.notif_membre_parti || p.notif_graine_parfaite) {
     const types: string[] = [];
     if (p.notif_recolte_saisie) types.push("recolte_enregistree");
+    if (p.notif_graine_parfaite) types.push("graine_parfaite");
     if (p.notif_membre) types.push("membre_rejoint");
     if (p.notif_membre_parti) types.push("membre_parti", "membre_retire");
 

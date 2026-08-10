@@ -201,6 +201,14 @@ export function useGraines(plante?: PlanteId) {
         }
       }
 
+      // Une série sans gène rouge est l'événement dont on est fier : elle a
+      // sa propre entrée pour que la notification puisse la reprendre.
+      for (const code of compte.keys()) {
+        if (!code.split("").some((l) => l === "W" || l === "X")) {
+          await journaliser(wipe.id, "graine_parfaite", { genes: code, plante: p });
+        }
+      }
+
       await journaliser(wipe.id, "graines_ajoutees", {
         nombre: genomes.length,
         plante: p,

@@ -22,15 +22,19 @@ create table if not exists parcours (
 
 alter table parcours enable row level security;
 
+drop policy if exists "lire parcours" on parcours;
 create policy "lire parcours" on parcours for select
   using (est_membre_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "ecrire parcours" on parcours;
 create policy "ecrire parcours" on parcours for insert
   with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "modifier parcours" on parcours;
 create policy "modifier parcours" on parcours for update
   using (peut_ecrire_ferme(ferme_du_wipe(wipe_id)))
   with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "supprimer parcours" on parcours;
 create policy "supprimer parcours" on parcours for delete
   using (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));

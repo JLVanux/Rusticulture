@@ -171,7 +171,9 @@ export function EvolutionRecoltes({
         <summary className="cursor-pointer font-mono text-[12px] uppercase tracking-wider text-feuille-400 hover:text-feuille-200">
           Voir les chiffres
         </summary>
-        <table className="mt-3 w-full text-left text-[13px]">
+        {/* Comme les autres tableaux : il défile plutôt que de déborder. */}
+        <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[16rem] text-left text-[13px]">
           <thead>
             <tr className="border-b border-white/10">
               <th className="pb-1.5 font-mono text-[11px] uppercase tracking-wider text-feuille-400">Jour</th>
@@ -192,6 +194,7 @@ export function EvolutionRecoltes({
               ))}
           </tbody>
         </table>
+        </div>
       </details>
     </section>
   );

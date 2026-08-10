@@ -91,30 +91,6 @@ export function EditeurGenes({
   );
 }
 
-/** Barre de probabilité par gène pour une case donnée. */
-export function BarreDistribution({ dist }: { dist: Distribution }) {
-  const entrees = GENE_LETTERS.map((l) => [l, dist[l] ?? 0] as const).filter(([, p]) => p > 0.0001);
-  return (
-    <div className="w-full">
-      <div className="flex h-2 w-full overflow-hidden rounded-sm bg-nuit-600">
-        {entrees.map(([l, p]) => (
-          <span
-            key={l}
-            style={{ width: `${p * 100}%`, background: GENES[l].couleur }}
-            title={`${l} · ${Math.round(p * 100)} %`}
-          />
-        ))}
-      </div>
-      <div className="mt-1 flex flex-wrap gap-x-2 font-mono text-[10px] text-feuille-400">
-        {entrees.map(([l, p]) => (
-          <span key={l} style={{ color: GENES[l].couleur }}>
-            {l} {Math.round(p * 100)}%
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /** Légende des cinq gènes. */
 export function LegendeGenes() {

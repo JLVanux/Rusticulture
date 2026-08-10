@@ -45,6 +45,7 @@ export default function PagePoulailler() {
           <Champ label="Poulaillers">
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               className="champ"
               value={poulaillers}
@@ -56,6 +57,7 @@ export default function PagePoulailler() {
           <Champ label="Poules / coop">
             <input
               type="number"
+              inputMode="numeric"
               min={1}
               max={POULES_MAX}
               className="champ"

@@ -118,6 +118,9 @@ export default function PageWipes() {
                       placeholder="Wipe de septembre"
                       value={nom}
                       onChange={(e) => setNom(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && nom.trim()) void demarrerNouveau();
+                      }}
                     />
                   </Champ>
                   <div className="flex flex-wrap items-end gap-3">
@@ -135,6 +138,7 @@ export default function PageWipes() {
                       <Champ label="Joueurs">
                         <input
                           type="number"
+                          inputMode="numeric"
                           min={1}
                           className="champ"
                           value={nbJoueurs}

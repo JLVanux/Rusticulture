@@ -1,7 +1,7 @@
 "use client";
 
 import { PLANTE_PAR_ID, type Genome, type PlanteId } from "@/data/game";
-import { formatGenome } from "@/lib/crossbreed";
+import { formatGenome, GENOME_VIDE } from "@/lib/crossbreed";
 import type { GraineUnifiee } from "@/lib/graines";
 import { calculerCroissance, calculerRendement, formatDuree, formatNombre, type Conditions, type Constantes } from "@/lib/model";
 import { calculerProgression, type Objectif } from "@/lib/objectifs";
@@ -262,7 +262,7 @@ function meilleurRemplacement(c: ContexteFerme): Recommandation | null {
   } | null = null;
 
   for (const p of c.plantations) {
-    const actuel: Genome = p.genome ?? ["X", "X", "X", "X", "X", "X"];
+    const actuel: Genome = p.genome ?? GENOME_VIDE;
     const plants = (CONTENANT_PAR_ID[p.contenant]?.plants ?? 1) * p.quantite;
     const avant = debitParHeure(p.plante, actuel, plants, c);
 
@@ -299,7 +299,7 @@ function meilleurRemplacement(c: ContexteFerme): Recommandation | null {
     pourquoi: `Tu as ${meilleur.graine.quantite} graines ${formatGenome(
       meilleur.graine.genome
     )} en réserve, meilleures que les ${formatGenome(
-      meilleur.plantation.genome ?? ["X", "X", "X", "X", "X", "X"]
+      meilleur.plantation.genome ?? GENOME_VIDE
     )} actuellement déclarées${
       meilleur.plantation.genome ? "" : " — aucun gène renseigné, donc supposés bruts"
     }.`,

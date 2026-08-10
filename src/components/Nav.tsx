@@ -3,9 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useAdmin } from "@/lib/bases";
 
 /**
  * Navigation.
+ *
+ * Dix-sept entrées, c'était trop. Trois s'en vont sans qu'aucune page ne
+ * disparaisse :
+ *
+ * - **Scanner** est mis en avant sur ORDINATEUR et retiré de la barre du pouce :
+ *   le partage d'écran n'existe pas sur téléphone, et de toute façon on joue à
+ *   Rust sur PC. L'inverse avait été fait par réflexe, sans regarder où la
+ *   fonctionnalité peut réellement servir.
+ * - **Wipes** descend dans l'administration. On clôture un wipe une fois par
+ *   serveur : c'est un réglage, pas une consultation quotidienne.
+ * - **Confidentialité** passe en pied de page, comme partout ailleurs.
  *
  * Sur téléphone, la barre est EN BAS. C'est là que le pouce arrive quand on
  * tient l'appareil d'une main — un menu en haut d'un écran de 6 pouces oblige
@@ -23,7 +35,6 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
     liens: [
       { href: "/ferme", label: "Tableau de bord" },
       { href: "/statistiques", label: "Statistiques" },
-      { href: "/wipes", label: "Wipes" },
       { href: "/equipe", label: "Équipe" },
     ],
   },
@@ -31,7 +42,7 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
     titre: "Génétique",
     liens: [
       { href: "/bac", label: "Gènes parfaits" },
-      { href: "/scanner", label: "Scanner" },
+      { href: "/scanner", label: "Scanner l'écran" },
       { href: "/genetique", label: "Mes graines" },
     ],
   },
@@ -48,6 +59,7 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
     titre: "Sur le terrain",
     liens: [
       { href: "/minuteurs", label: "Minuteurs" },
+      { href: "/bases", label: "Bases de farm" },
       { href: "/raid", label: "Coût de raid" },
     ],
   },
@@ -55,9 +67,9 @@ const GROUPES: { titre: string; liens: { href: string; label: string }[] }[] = [
     titre: "",
     liens: [
       { href: "/connexion", label: "Mon compte" },
+      { href: "/wipes", label: "Wipes" },
       { href: "/reglages", label: "Réglages" },
       { href: "/aide", label: "Aide" },
-      { href: "/confidentialite", label: "Confidentialité" },
     ],
   },
 ];
@@ -66,12 +78,26 @@ const RACCOURCIS = [
   { href: "/ferme", label: "Ferme", icone: <IconeFerme /> },
   { href: "/bac", label: "Gènes", icone: <IconeGrille /> },
   { href: "/minuteurs", label: "Minuteurs", icone: <IconeMinuteur /> },
-  { href: "/scanner", label: "Scanner", icone: <IconeScanner /> },
+  { href: "/genetique", label: "Graines", icone: <IconeGraine /> },
 ];
 
 export default function Nav() {
   const chemin = usePathname();
   const [tiroir, setTiroir] = useState(false);
+  // L'entrée n'apparaît que pour un administrateur. Ce n'est qu'un confort :
+  // la page elle-même refuse l'accès, et les politiques de la base refusent
+  // toute écriture — masquer un lien n'a jamais protégé quoi que ce soit.
+  const { admin } = useAdmin();
+
+  const groupes = admin
+    ? [
+        ...GROUPES.slice(0, -1),
+        {
+          titre: "",
+          liens: [...GROUPES[GROUPES.length - 1].liens, { href: "/admin", label: "Administration" }],
+        },
+      ]
+    : GROUPES;
 
   useEffect(() => setTiroir(false), [chemin]);
 
@@ -96,7 +122,7 @@ export default function Nav() {
             <Logo />
           </Link>
           <nav className="mt-8 space-y-6">
-            {GROUPES.map((g, i) => (
+            {groupes.map((g, i) => (
               <div key={i}>
                 {g.titre && <div className="eyebrow mb-1.5 px-3">{g.titre}</div>}
                 <ul className="space-y-0.5">
@@ -138,7 +164,7 @@ export default function Nav() {
               <span className="h-1 w-10 rounded-sm bg-trait-vif" aria-hidden />
             </div>
             <nav className="grid gap-6 px-5 pt-2 sm:grid-cols-2">
-              {GROUPES.map((g, i) => (
+              {groupes.map((g, i) => (
                 <div key={i}>
                   {g.titre && <div className="eyebrow mb-1.5 px-3">{g.titre}</div>}
                   <ul className="space-y-0.5">
@@ -271,6 +297,15 @@ function IconeMinuteur() {
       <circle cx="12" cy="13" r="8" />
       <path d="M12 9v4l2.5 2" />
       <path d="M9 2h6" />
+    </svg>
+  );
+}
+
+function IconeGraine() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" {...trait}>
+      <path d="M12 21c-4 0-7-3-7-7 0-5 4-9 9-11 1 6-1 11-5 13" />
+      <path d="M8 20c1-4 3-7 6-9" />
     </svg>
   );
 }

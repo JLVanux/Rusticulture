@@ -231,8 +231,3 @@ export const MODELES: {
   { libelle: "Récolter 5 000 baies", type: "production", ressource: "baies", cible: 5000 },
 ];
 
-export function nomRessource(r: string | null): string {
-  if (!r) return "";
-  const plante = Object.values(PLANTE_PAR_ID).find((p) => p.ressource === r);
-  return plante?.ressource ?? r;
-}

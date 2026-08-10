@@ -1,51 +1,59 @@
-Notifications Discord repensées, mouvements d'équipe, icônes et planificateur pg_cron
+Accueil refondu, profils, répertoire de bases, administration et schéma en un fichier
 
-Notifications — écrites pour une situation
-Quelqu'un est en pleine partie, la notification tombe, il a deux secondes pour
-trancher une seule question : est-ce que j'arrête ce que je fais pour rentrer à
-la base ? Tout l'ordre du message découle de là — ce qui se passe, combien ça
-rapporte, où, combien de temps il reste. Le reste a été retiré.
+Accueil — point d'entrée plutôt que plaquette
+- Le hero annonçait sans rien montrer, toute la preuve était en bas de page. Il
+  affiche désormais la promesse à gauche et le vrai message Discord à droite,
+  qui se compose dès le chargement.
+- Six sections ramenées à quatre. « Tu plantes → Discord prévient → tu
+  récoltes » et « du clone à la récolte parfaite » racontaient la même chose.
+- Une ligne par carte d'outil. Si une idée demande trois phrases, elle a sa
+  place sur sa propre page.
+- Pas d'émojis : CHARTE.md les interdit. Huit icônes au trait, dans le style de
+  la navigation.
+- La partie pédagogique n'est pas supprimée, elle change de priorité — on
+  utilise d'abord, on comprend ensuite.
 
-- La récolte estimée manquait, et c'est l'information décisive : personne ne
-  traverse la carte sans savoir si ça vaut le trajet. Elle est calculée par le
-  moteur du site pour un grand bac plein en conditions idéales, et présentée
-  comme une estimation.
-- Le dépérissement devient une alerte chiffrée : « tu perds ≈ 163 tissu si
-  personne n'y va » plutôt qu'un rappel abstrait.
-- La carte de croisement dit explicitement que le site ne connaît PAS le
-  résultat — il faut aller le lire en jeu. Laisser croire le contraire serait
-  pire que de se taire.
-- Passage du texte brut aux cartes : bandeau de couleur, titre, champs alignés.
-  La couleur dit l'urgence avant même la lecture.
-- Les gènes sont coloriés via les blocs ANSI que Discord accepte. Sur un client
-  qui ne les affiche pas, le bloc reste lisible en noir et blanc.
-- La plantation inverse l'ordre, exprès : aucune action n'est attendue, c'est ce
-  qui vient d'être mis en terre qui intéresse l'équipe.
-- Toutes les notifications ont le même format. Les récoltes et le point
-  quotidien passaient par un simple découpage de texte : deux mises en forme
-  dans le même salon donnent l'impression de deux outils.
-- Arrivées et départs notifiés, activables séparément. Journalisés par une
-  fonction privilégiée : un membre qui part n'a plus le droit d'écrire dans la
-  ferme au moment où l'on veut noter son départ, le journal doit donc précéder
-  la suppression.
-- Neuf réglages par ferme, tout éteint par défaut sauf les alertes de culture.
-  Un webhook qui commente chaque geste se fait retirer dans la semaine.
+Profils
+- Le compte ne permettait rien : ni changer son mot de passe, ni se présenter
+  autrement que par son identifiant.
+- Changement de mot de passe, avec vérification de l'ancien. Supabase ne le
+  demande pas ; sans ce contrôle, une session laissée ouverte suffirait à
+  verrouiller quelqu'un hors de son compte — et sans e-mail, aucun recours.
+- Nom affiché distinct du pseudo, qui reste l'identifiant de connexion.
+- Avatars choisis dans une liste fermée, pas téléversés : accepter un fichier,
+  c'est hériter d'un devoir de modération.
+- Profil privé par défaut, page publique /u/pseudo sur consentement. La page
+  ne distingue pas « profil privé » de « pseudo inexistant » : sinon elle
+  devient un moyen de savoir qui est inscrit.
 
-Planificateur
-- pg_cron remplace GitHub Actions, dont les runners gratuits accusaient dix à
-  trente minutes de retard — constaté en production. La base s'appelle
-  elle-même toutes les minutes et ne se met plus en pause faute d'activité.
-- Le secret vit dans une table sans aucune politique : il n'a pas sa place dans
-  un fichier versionné.
+Répertoire de bases et administration
+- Seul YouTube est accepté, et on ne stocke pas une URL mais l'identifiant de
+  la vidéo, contraint par la base. Une URL libre pourrait mener n'importe où.
+- Titre et chaîne remplis automatiquement via oEmbed : aucune clé, aucun quota.
+  La miniature non plus n'en demande.
+- La description est lue pour pré-remplir, jamais pour valider — une lecture
+  automatique se trompe, et c'est acceptable parce qu'un humain corrige.
+- Un administrateur publie directement, tout compte propose et attend
+  validation. La politique refuse la publication à qui n'est pas administrateur.
+- Modération sur la page du répertoire, pas dans un écran séparé : on relit là
+  où l'on voit les bases telles que les visiteurs les voient.
+- Filtre par taille d'équipe : solo, solo/duo, duo/trio, groupe.
 
-Icônes
-- Structure alignée sur les fichiers réels : à plat, en .jpg, une image par
-  culture. Les trois états graine/buisson/récolte n'existaient pas en images.
-- Règle de nommage dans ICONES.md : minuscules, sans accent. macOS confond
-  Citrouille.jpg et citrouille.jpg là où Vercel les distingue, et un accent ne
-  s'encode pas pareil sur les deux systèmes — deux défauts qui ne se voient
-  qu'une fois en ligne.
-- Le dossier public n'est plus livré dans l'archive ni touché par le script de
-  mise à jour : il appartient à l'utilisateur, et l'inclure effaçait ses images.
+Base de données
+- supabase/schema.sql réunit toutes les migrations en un fichier rejouable.
+- `create policy` n'a pas de variante « si absent » : rejouer une migration
+  échouait, et comme le SQL Editor travaille en transaction, l'échec annulait
+  aussi tout ce qui précédait. Les cinq migrations concernées sont corrigées.
 
-Migrations à appliquer : 0011 (à relancer), 0013.
+Nettoyage
+- `lib/reveil.ts` supprimé : il compensait le retard de GitHub Actions, devenu
+  inutile depuis pg_cron.
+- `GENOME_VIDE` n'était pas mort, il était ignoré — la même liste recopiée à la
+  main dans trois fichiers.
+- Quatre fonctions mortes retirées, dont une qui renvoyait son propre argument.
+- Menu de 17 à 15 entrées, sans qu'aucune page disparaisse.
+- Seize champs numériques sur dix-sept n'ouvraient pas le clavier numérique sur
+  téléphone : `type="number"` ne suffit pas, il faut `inputMode`.
+
+Migrations : exécuter supabase/schema.sql (rejouable).
+Puis : update profils set administrateur = true where pseudo = 'TON_PSEUDO';

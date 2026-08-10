@@ -31,15 +31,19 @@ create unique index if not exists elevages_un_par_wipe on elevages (wipe_id);
 
 alter table elevages enable row level security;
 
+drop policy if exists "lire elevages" on elevages;
 create policy "lire elevages" on elevages for select
   using (est_membre_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "ecrire elevages" on elevages;
 create policy "ecrire elevages" on elevages for insert
   with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "modifier elevages" on elevages;
 create policy "modifier elevages" on elevages for update
   using (peut_ecrire_ferme(ferme_du_wipe(wipe_id)))
   with check (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));
 
+drop policy if exists "supprimer elevages" on elevages;
 create policy "supprimer elevages" on elevages for delete
   using (peut_ecrire_ferme(ferme_du_wipe(wipe_id)));

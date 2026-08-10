@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PLANTE_PAR_ID, type PlanteId } from "@/data/game";
+import { PLANTES, PLANTE_PAR_ID, type PlanteId } from "@/data/game";
 
 /**
  * Icône d'une culture, telle qu'elle apparaît en jeu.
@@ -83,4 +83,37 @@ export function IconeObjet({
       loading="lazy"
     />
   );
+}
+
+// -----------------------------------------------------------------------------
+// Par ressource
+// -----------------------------------------------------------------------------
+
+/**
+ * Plusieurs plantes partagent une ressource : les cinq baies donnent toutes des
+ * « baies ». On prend la première qui correspond, ce qui suffit à donner un
+ * repère visuel sans prétendre désigner une variété précise.
+ */
+const PAR_RESSOURCE = new Map<string, PlanteId>();
+for (const p of PLANTES) {
+  if (!PAR_RESSOURCE.has(p.ressource)) PAR_RESSOURCE.set(p.ressource, p.id);
+}
+
+export function IconeRessource({
+  ressource,
+  taille = 20,
+  className = "",
+}: {
+  ressource: string;
+  taille?: number;
+  className?: string;
+}) {
+  // Les œufs ne viennent d'aucune plante : ils ont leur propre fichier.
+  if (ressource === "œufs" || ressource === "oeufs") {
+    return <IconeObjet fichier="oeuf" nom="Œuf" taille={taille} className={className} />;
+  }
+
+  const plante = PAR_RESSOURCE.get(ressource);
+  if (!plante) return null;
+  return <IconePlante plante={plante} taille={taille} className={className} />;
 }

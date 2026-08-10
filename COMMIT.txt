@@ -1,41 +1,50 @@
-Cartes Discord harmonisées, mouvements d'équipe, icônes et planificateur pg_cron
+Notifications Discord repensées, mouvements d'équipe, icônes et planificateur pg_cron
 
-Notifications Discord
-- Les messages passent du texte brut aux cartes : bandeau de couleur, titre,
-  champs alignés, pied de page. La couleur fait le travail que le texte ne peut
-  pas faire — on sait de quoi il s'agit avant d'avoir lu.
-- Les gènes sont coloriés dans le message, via les blocs ANSI que Discord
-  accepte. Sur un client qui ne les affiche pas, le bloc reste lisible en noir
-  et blanc.
-- L'ordre de lecture suit ce qu'on cherche : le bac dans le titre, puis la
-  plante, les gènes, et le temps restant avant chaque échéance. L'auteur descend
-  en pied de page — savoir qui a planté n'engage aucune action.
-- Le temps avant récolte manquait. C'est pourtant l'information qui décide si on
-  repose le téléphone ou si on retourne à la base. La notification de plantation
-  est donc tirée du minuteur et non du journal : seule cette ligne connaît les
-  durées.
-- Toutes les notifications ont désormais le même format. Les récoltes et le
-  point quotidien passaient par un simple découpage de texte : deux mises en
-  forme dans le même salon donnent l'impression de deux outils.
+Notifications — écrites pour une situation
+Quelqu'un est en pleine partie, la notification tombe, il a deux secondes pour
+trancher une seule question : est-ce que j'arrête ce que je fais pour rentrer à
+la base ? Tout l'ordre du message découle de là — ce qui se passe, combien ça
+rapporte, où, combien de temps il reste. Le reste a été retiré.
+
+- La récolte estimée manquait, et c'est l'information décisive : personne ne
+  traverse la carte sans savoir si ça vaut le trajet. Elle est calculée par le
+  moteur du site pour un grand bac plein en conditions idéales, et présentée
+  comme une estimation.
+- Le dépérissement devient une alerte chiffrée : « tu perds ≈ 163 tissu si
+  personne n'y va » plutôt qu'un rappel abstrait.
+- La carte de croisement dit explicitement que le site ne connaît PAS le
+  résultat — il faut aller le lire en jeu. Laisser croire le contraire serait
+  pire que de se taire.
+- Passage du texte brut aux cartes : bandeau de couleur, titre, champs alignés.
+  La couleur dit l'urgence avant même la lecture.
+- Les gènes sont coloriés via les blocs ANSI que Discord accepte. Sur un client
+  qui ne les affiche pas, le bloc reste lisible en noir et blanc.
+- La plantation inverse l'ordre, exprès : aucune action n'est attendue, c'est ce
+  qui vient d'être mis en terre qui intéresse l'équipe.
+- Toutes les notifications ont le même format. Les récoltes et le point
+  quotidien passaient par un simple découpage de texte : deux mises en forme
+  dans le même salon donnent l'impression de deux outils.
 - Arrivées et départs notifiés, activables séparément. Journalisés par une
   fonction privilégiée : un membre qui part n'a plus le droit d'écrire dans la
   ferme au moment où l'on veut noter son départ, le journal doit donc précéder
   la suppression.
+- Neuf réglages par ferme, tout éteint par défaut sauf les alertes de culture.
+  Un webhook qui commente chaque geste se fait retirer dans la semaine.
 
 Planificateur
 - pg_cron remplace GitHub Actions, dont les runners gratuits accusaient dix à
   trente minutes de retard — constaté en production. La base s'appelle
-  elle-même toutes les minutes, et ne se met plus en pause faute d'activité.
+  elle-même toutes les minutes et ne se met plus en pause faute d'activité.
 - Le secret vit dans une table sans aucune politique : il n'a pas sa place dans
   un fichier versionné.
 
 Icônes
 - Structure alignée sur les fichiers réels : à plat, en .jpg, une image par
   culture. Les trois états graine/buisson/récolte n'existaient pas en images.
-- Règle de nommage documentée dans ICONES.md : minuscules, sans accent. macOS
-  confond Citrouille.jpg et citrouille.jpg là où Vercel les distingue, et un
-  accent ne s'encode pas pareil sur les deux systèmes — deux défauts qui ne se
-  voient qu'une fois en ligne.
+- Règle de nommage dans ICONES.md : minuscules, sans accent. macOS confond
+  Citrouille.jpg et citrouille.jpg là où Vercel les distingue, et un accent ne
+  s'encode pas pareil sur les deux systèmes — deux défauts qui ne se voient
+  qu'une fois en ligne.
 - Le dossier public n'est plus livré dans l'archive ni touché par le script de
   mise à jour : il appartient à l'utilisateur, et l'inclure effaçait ses images.
 
